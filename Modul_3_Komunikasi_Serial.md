@@ -25,7 +25,7 @@
   - [PERCOBAAN 3 — Komunikasi SPI Antar ESP32 (Master-Slave)](#percobaan-3--komunikasi-spi-antar-esp32-master-slave)
   - [PERCOBAAN 4 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-4--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
   - [PERCOBAAN 5 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-5--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
-- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
 ---
@@ -770,12 +770,9 @@ void loop() {
 | `trans.length` | Panjang transaksi dinyatakan dalam satuan **bit**, bukan byte |
 | Perbandingan waktu (`micros()`) | Satu transaksi 7-byte via DMA umumnya lebih efisien dibanding 7 kali pemanggilan `SPI.transfer()` satu-per-satu seperti pada Percobaan 4, karena overhead per-panggilan fungsi pada CPU berkurang |
 
-**Tugas Akhir Modul 3:**
-Rancang sistem akuisisi data sederhana yang menggabungkan beberapa topik modul ini — misalnya: satu ESP32 membaca data akselerometer dari MPU6500 (SPI) dan menampilkannya pada OLED (I2C), lalu mengirimkan data tersebut ke ESP32 kedua melalui **UART atau I2C**, dan ESP32 kedua menampilkan data yang diterima pada Serial Monitor (format timestamp + nilai akselerometer).
-
 ---
 
-## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+## F. Tugas Modul
 
 [Wokwi](https://wokwi.com) mendukung **simulasi multi-board dalam satu project** — dua (atau lebih) ESP32 dapat diletakkan pada satu diagram dan saling terhubung melalui pin virtual, cocok untuk mensimulasikan Percobaan board-to-board (UART, I2C, dan SPI) tanpa hardware fisik ganda. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 

@@ -18,7 +18,8 @@ Ikuti langkah-langkah di bawah ini secara berurutan — jangan lompat-lompat, ka
 9. [Instalasi Driver USB](#9-instalasi-driver-usb)
 10. [Uji Coba: Upload Program Pertama](#10-uji-coba-upload-program-pertama)
 11. [Troubleshooting (Masalah Umum)](#11-troubleshooting-masalah-umum)
-12. [Referensi](#12-referensi)
+12. [(Opsional) Priming Package & Library ke Cache Lokal](#12-opsional-priming-package--library-ke-cache-lokal)
+13. [Referensi](#13-referensi)
 
 ---
 
@@ -273,7 +274,36 @@ Jika masalah masih berlanjut, catat pesan error lengkap yang muncul di terminal,
 
 ---
 
-## 12. Referensi
+## 12. (Opsional) Priming Package & Library ke Cache Lokal
+
+Sepanjang praktikum ini, kamu akan membuat **banyak project PlatformIO terpisah** (umumnya satu project baru per Percobaan). Setiap kali membuat project baru, PlatformIO perlu menyiapkan *platform*/toolchain serta library yang dibutuhkan untuk project tersebut. Kabar baiknya: PlatformIO menyimpan package yang pernah diunduh di **cache lokal pada komputer kamu**, sehingga project-project berikutnya yang membutuhkan komponen yang sama tidak perlu mengunduh ulang dari internet — cukup diambil dari cache, jauh lebih cepat dan tetap bisa berjalan meski koneksi internet lambat/terbatas.
+
+Karena itu, disarankan melakukan **priming** (mengunduh di awal) untuk platform dan library yang akan dipakai berulang sepanjang modul, sebelum mulai praktikum:
+
+1. Buka **Terminal** PlatformIO di VSCode (`Ctrl+` ` atau melalui ikon PlatformIO → **PIO Home** → **Terminal**, atau menu **Terminal → New Terminal**)
+2. Unduh platform/toolchain untuk kedua board yang dipakai sepanjang praktikum — ini bagian yang **paling besar ukurannya** (bisa ratusan MB), jadi paling penting untuk di-priming di awal saat koneksi masih stabil:
+   ```bash
+   pio pkg install --platform espressif32
+   pio pkg install --platform ststm32
+   ```
+3. *(Opsional, lebih lanjut)* Untuk priming library yang dipakai berulang di beberapa modul, buat satu project sementara (boleh dihapus setelah selesai) dengan `platformio.ini` berikut, lalu jalankan **`pio run`** sekali:
+   ```ini
+   [env:esp32dev]
+   platform = espressif32
+   board = esp32dev
+   framework = arduino
+   lib_deps =
+       adafruit/Adafruit SH110X@^2.1.11
+       adafruit/Adafruit GFX Library@^1.11.9
+       madhephaestus/ESP32Servo@^3.0.0
+   ```
+4. Setelah proses ini selesai, seluruh platform dan library di atas tersimpan di cache lokal PlatformIO. Project baru yang kamu buat sepanjang praktikum (meskipun `lib_deps`-nya di-declare ulang di tiap project, sesuai kebiasaan pada modul-modul ini) akan mengambil dari cache ini terlebih dahulu.
+
+> 💡 **Catatan:** Cache ini tersimpan **per-laptop/PC**, bukan per-akun PlatformIO — jadi kalau kamu berpindah komputer (mis. dari laptop pribadi ke komputer lab, atau sebaliknya), proses priming ini perlu diulang di komputer tersebut.
+
+---
+
+## 13. Referensi
 1. Visual Studio Code Official Documentation, https://code.visualstudio.com/docs
 2. PlatformIO Documentation, https://docs.platformio.org/
 3. STMicroelectronics, *STSW-LINK009 — ST-Link USB Driver*, https://www.st.com/en/development-tools/stsw-link009.html

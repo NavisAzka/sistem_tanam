@@ -25,7 +25,7 @@
   - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-esp32--framework-arduino)
   - [PERCOBAAN 4 — Debouncing pada Input Tombol GPIO (ESP32 + Framework Arduino)](#percobaan-4--debouncing-pada-input-tombol-gpio-esp32--framework-arduino)
   - [PERCOBAAN 5 — Level Shifter: Pengukuran Tegangan Input dan Output (ESP32 + Framework Arduino)](#percobaan-5--level-shifter-pengukuran-tegangan-input-dan-output-esp32--framework-arduino)
-- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
 ---
@@ -281,7 +281,7 @@ Mahasiswa mampu memahami, mengimplementasikan, dan membandingkan pembacaan tombo
 4. Upload **Kode Program A (Eksternal)**, uji kedua tombol, dan catat hasilnya pada Serial Monitor
 5. Lepas kedua resistor eksternal (kabel tombol ke GPIO, GND, dan 3.3V tetap terpasang) sesuai skema Bagian B
 6. Upload **Kode Program B (Internal)**, uji kedua tombol yang sama, dan catat hasilnya pada Serial Monitor
-7. Bandingkan hasil Kode Program A dan B untuk pin yang sama
+7. Bandingkan hasil Kode Program A dan B untuk pin yang sama — keduanya seharusnya menunjukkan **logika identik** (pull-up: default HIGH, LOW saat ditekan; pull-down: default LOW, HIGH saat ditekan), meskipun cara pemasangan resistornya berbeda. Jika hasilnya berkebalikan atau tidak konsisten, periksa kembali apakah resistor eksternal benar-benar sudah dilepas sebelum menguji Kode Program B
 
 **Skema Rangkaian — Bagian A (Pull-up/Pull-down Eksternal):**
 
@@ -372,7 +372,7 @@ Mahasiswa mampu mengidentifikasi permasalahan bouncing pada tombol mekanik dan m
 2. Implementasikan program dengan **dua variabel counter sekaligus** — satu tanpa debouncing (`counterNoDebounce`) dan satu dengan debouncing (`counterWithDebounce`) — sesuai kode di bawah
 3. Tekan tombol satu kali secara normal, amati dan bandingkan kedua nilai counter yang tampil bersamaan pada Serial Monitor
 4. Ulangi penekanan beberapa kali — amati bahwa `counterNoDebounce` sering bertambah lebih dari 1 untuk satu kali tekan (indikasi bouncing), sedangkan `counterWithDebounce` konsisten bertambah tepat 1
-5. Terapkan konsep debouncing yang sama (bagian "Dengan Debouncing" pada kode) pada tombol pull-down eksternal (GPIO 33) dari Percobaan 3 — perhatikan bahwa logikanya aktif HIGH, kebalikan dari pushbutton pada percobaan ini
+5. Terapkan konsep debouncing yang sama (bagian "Dengan Debouncing" pada kode) pada tombol pull-down eksternal (GPIO 33) dari Percobaan 3 — perhatikan bahwa logikanya aktif HIGH, kebalikan dari pushbutton pada percobaan ini. Sesuaikan kondisi pemicu counter dari `stableState == LOW` menjadi `stableState == HIGH`, lalu verifikasi dengan cara yang sama seperti poin 3–4: counter harus bertambah tepat 1 per tekanan, tanpa duplikasi akibat bouncing
 
 **Kode Program (Perbandingan Counter Tanpa vs Dengan Debouncing):**
 ```cpp
@@ -440,7 +440,7 @@ void loop() {
 **Analisis Setelah Program Berjalan:**
 1. Tekan tombol satu kali secara normal, catat nilai `counterNoDebounce` dan `counterWithDebounce` — hitung selisihnya sebagai indikasi jumlah bouncing yang terjadi
 2. Ulangi pengujian dengan gaya penekanan berbeda (cepat/tegas vs pelan/ragu-ragu), amati apakah pola bouncing pada `counterNoDebounce` berbeda
-3. Ubah nilai `DEBOUNCE_DELAY` menjadi lebih kecil (mis. 10ms) dan lebih besar (mis. 200ms), amati pada nilai berapa debounce mulai terasa "lambat merespons" atau bouncing mulai lolos tidak tersaring
+3. Ubah nilai `DEBOUNCE_DELAY` menjadi 10ms, **Build & Upload** ulang dan amati apakah bouncing mulai lolos tidak tersaring, lalu ubah menjadi 200ms dan amati apakah respons tombol mulai terasa lambat
 
 ---
 
@@ -520,25 +520,29 @@ void loop() {
 
 ---
 
-**Tugas Akhir Modul 1:**
-Implementasikan sistem penghitung akses sederhana menggunakan tombol dengan konfigurasi **pull-down eksternal** (GPIO 33, Percobaan 3) yang telah diterapkan debouncing (Percobaan 4) — program harus mampu mendeteksi dan menghitung jumlah penekanan valid secara akurat (tanpa duplikasi akibat bouncing, dengan logika aktif HIGH yang benar), ditampilkan melalui Serial Monitor.
-
----
-
-## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+## F. Tugas Modul
 
 [Wokwi](https://wokwi.com) adalah simulator elektronik berbasis browser yang mendukung ESP32 secara native (termasuk Serial Monitor, virtual Logic Analyzer, dan simulasi *contact bouncing* pada pushbutton), sehingga cocok digunakan untuk eksplorasi mandiri di luar jam praktikum tanpa perlu hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
 > **Catatan:** Wokwi belum mendukung board STM32 Blackpill secara native, sehingga tugas ini difokuskan pada bagian ESP32 (Percobaan 3–4). Jika ingin bereksperimen dengan STM32, gunakan board Nucleo yang tersedia di Wokwi sebagai gantinya (opsional, tidak wajib).
 
 **Tugas 1 — Gabungan Pull-up/Pull-down & Debouncing:**
-1. Buat project Wokwi baru dengan board **ESP32**, lalu rangkai **dua pushbutton virtual**: satu dikonfigurasi pull-up (eksternal atau internal, bebas dipilih) dan satu lagi pull-down
+1. Buat project Wokwi baru dengan board **ESP32**, lalu rangkai **dua pushbutton virtual**: satu dikonfigurasi pull-up eksternal (GPIO 32) dan satu lagi pull-down eksternal (GPIO 33), sesuai skema Percobaan 3 Bagian A
 2. Gabungkan logika debouncing (Percobaan 4) pada **kedua** tombol tersebut, lalu implementasikan sistem penghitung akses masuk/keluar (tombol 1 = masuk, tombol 2 = keluar), dengan total pengunjung ditampilkan pada Serial Monitor
 3. Tambahkan komponen **Logic Analyzer** dari Wokwi pada salah satu pin tombol untuk merekam bentuk sinyal mentah (dengan bouncing) — Wokwi secara default mensimulasikan efek bouncing kontak mekanik pada pushbutton virtual
 4. Ambil screenshot rangkaian dan hasil rekaman Logic Analyzer, lalu jelaskan pada laporan bagaimana pola bouncing yang teramati dibandingkan dengan hasil pengamatan pada Percobaan 4 (hardware asli)
 
 **Tugas 2 — Eksplorasi Mandiri:**
-Modifikasi Tugas 1 agar total pengunjung tidak dapat bernilai negatif (mis. tombol "keluar" ditolak jika total sudah 0), dan tambahkan LED indikator yang menyala saat ruangan penuh (mis. total ≥ 5).
+Modifikasi Tugas 1 agar total pengunjung tidak dapat bernilai negatif — tombol "keluar" ditolak (diabaikan) jika total sudah 0 — dan tambahkan LED indikator yang menyala saat total pengunjung mencapai 5 atau lebih.
+
+**Tugas 3 (Bonus) — Implementasi Level Register:**
+Percobaan 2 (Blink ESP32 ESP-IDF) pada modul ini dapat diimplementasikan ulang **tanpa API framework** (tanpa `gpio_set_level()`), langsung memanipulasi register GPIO sesuai Technical Reference Manual — nilai tambah untuk memahami apa yang sebenarnya dikerjakan fungsi tersebut di baliknya. Kerjakan (boleh di Wokwi maupun hardware asli):
+
+| Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
+|---|---|---|---|
+| Percobaan 2 (Blink ESP32 ESP-IDF) | `gpio_set_level()` | `GPIO.out_w1ts` (set), `GPIO.out_w1tc` (clear) | Kedua register ini *write-1-to-set*/*write-1-to-clear* — tulis bitmask `(1 << pin)`, bukan menulis nilai langsung ke `GPIO.out` |
+
+**Deliverable:** kode program level-register, beserta penjelasan tiap baris register yang ditulis (rujuk ke datasheet/reference manual terkait), dan perbandingan perilaku (mis. kecepatan eksekusi, kompleksitas kode) dengan versi API tingkat tinggi pada Percobaan aslinya.
 
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 

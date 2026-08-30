@@ -6,7 +6,7 @@ Dokumen .md sudah mereferensikan gambar-gambar ini langsung lewat syntax:
     ![deskripsi](img/nama_file.png)
 sehingga begitu file gambar dengan nama yang sesuai diletakkan di sini, gambar akan otomatis muncul.
 
-Total: 47 gambar (20 dari setup_vscode_platformio.md + 27 dari Modul 1-5)
+Total: 47 gambar (14 dari setup_vscode_platformio.md + 33 dari Modul 1-5)
 
 -----------------------------------------------------------------------------
 setup_vscode_platformio.md
@@ -54,15 +54,14 @@ No | Nama File                       | Deskripsi
 05 | grafik_pwm_duty_cycle.png       | Grafik sinyal PWM pada beberapa duty cycle berbeda (25%, 50%, 75%)
 06 | diagram_pulsa_servo.png         | Diagram lebar pulsa sinyal servo (1ms-2ms dalam periode 20ms) beserta sudut yang dihasilkan
 07 | wiring_motor_stepper.png        | Diagram wiring motor stepper NEMA17 ke driver A4988/DRV8825
+08 | wiring_esc_brushless.png        | Diagram wiring ESC ke ESP32 (sinyal PWM) dan ke baterai LiPo (daya utama), beserta motor brushless
 
 -----------------------------------------------------------------------------
 Modul_3_Komunikasi_Serial.md
 -----------------------------------------------------------------------------
 No | Nama File                       | Deskripsi
-01 | wiring_uart_silang.png          | Diagram wiring UART silang antar dua board (TX-RX silang, GND bersama)
-02 | diagram_bus_i2c.png             | Diagram bus I2C dengan satu master dan beberapa slave berbagi SDA/SCL
-03 | wiring_spi_master_slave.png     | Diagram wiring SPI master-slave (MOSI-MOSI, MISO-MISO, SCK-SCK, CS-CS)
-04 | diagram_blocking_vs_dma.png     | Diagram blok perbandingan transfer data blocking vs DMA
+01 | diagram_bus_i2c.png             | Diagram bus I2C dengan satu master dan beberapa slave berbagi SDA/SCL
+02 | diagram_blocking_vs_dma.png     | Diagram blok perbandingan transfer data blocking vs DMA
 
 -----------------------------------------------------------------------------
 Modul_4_Interrupt_Timer_Watchdog_Multitasking.md
@@ -82,3 +81,10 @@ No | Nama File                       | Deskripsi
 03 | diagram_kalman_filter.png       | Diagram blok siklus predict-update Kalman filter, beserta perbandingan dengan filter alpha
 04 | diagram_closed_loop.png         | Diagram blok sistem kontrol closed-loop, beserta grafik respons on-off vs P
 05 | diagram_blok_pid.png            | Diagram blok kontroler PID beserta grafik respons sistem sebelum/sesudah tuning
+06 | wiring_encoder_esp32.png        | Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32 (Percobaan 1)
+07 | plot_filter_alpha_contoh.png    | Contoh tampilan Serial Plotter: RPM_Mentah bergerigi vs RPM_Alpha yang lebih halus (Percobaan 2)
+08 | plot_filter_kalman_contoh.png   | Contoh tampilan Serial Plotter 3 garis: RPM_Mentah, RPM_Alpha, RPM_Kalman (Percobaan 3)
+09 | wiring_motor_encoder_gabungan.png | Wiring diagram gabungan encoder + driver motor + ESP32 dalam satu rangkaian (Percobaan 4-5)
+10 | plot_onoff_vs_p_contoh.png      | Contoh grafik Serial Plotter: mode on-off (osilasi) vs mode P (stabil dengan selisih) (Percobaan 4)
+11 | wiring_pid_lengkap.png          | Wiring diagram sistem lengkap: encoder + driver motor + 2 tombol target RPM (Percobaan 5)
+12 | plot_pid_sebelum_sesudah_tuning.png | Contoh grafik Serial Plotter respons sistem sebelum vs sesudah tuning PID (Percobaan 5)

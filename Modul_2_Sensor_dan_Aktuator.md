@@ -2,7 +2,7 @@
 # SENSOR BERDASARKAN BASIS PENGUKURAN & AKTUATOR MOTOR
 
 **Mata Kuliah:** Praktikum Mikrokontroler & Embedded System
-**Alokasi Waktu:** 5 x Percobaan (@ 100–150 menit)
+**Alokasi Waktu:** 6 x Percobaan (@ 100–150 menit)
 **Platform:** ESP32 (Framework Arduino)
 **IDE:** VSCode + PlatformIO
 
@@ -22,6 +22,7 @@
   - [C.6 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC](#c6-pwm-pulse-width-modulation--kontrol-kecepatan-motor-dc)
   - [C.7 Kontrol Posisi Motor Servo](#c7-kontrol-posisi-motor-servo)
   - [C.8 Motor Stepper](#c8-motor-stepper)
+  - [C.9 ESC (Electronic Speed Controller) dan Motor Brushless](#c9-esc-electronic-speed-controller-dan-motor-brushless)
 - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
 - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
   - [PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif](#percobaan-1--sensor-resistif-kapasitif-dan-induktif)
@@ -29,7 +30,8 @@
   - [PERCOBAAN 3 — Aktuator Motor DC](#percobaan-3--aktuator-motor-dc)
   - [PERCOBAAN 4 — Aktuator Motor Stepper](#percobaan-4--aktuator-motor-stepper)
   - [PERCOBAAN 5 — Aktuator Motor Servo](#percobaan-5--aktuator-motor-servo)
-- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+  - [PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC)](#percobaan-6--aktuator-esc--motor-brushless-bldc)
+- [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
 ---
@@ -44,6 +46,7 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 5. Mengimplementasikan kontrol kecepatan dan arah motor DC menggunakan sinyal PWM
 6. Mengimplementasikan kontrol motor stepper menggunakan sinyal step/direction
 7. Mengimplementasikan kontrol posisi motor servo menggunakan sinyal PWM
+8. Menjelaskan prinsip kerja ESC (Electronic Speed Controller) serta mengimplementasikan proses arming dan kontrol kecepatan motor brushless (BLDC) menggunakan sinyal PWM
 
 ---
 
@@ -67,7 +70,10 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 | 14 | Driver motor stepper | mis. A4988/DRV8825 | 1 |
 | 15 | Servo motor | SG90 | 1 |
 | 16 | Catu daya eksternal | sesuai kebutuhan motor DC/stepper (jangan gunakan 5V dari USB langsung) | 1 |
-| 17 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
+| 17 | ESC (Electronic Speed Controller) | mis. ESC brushless 20-30A (RC hobby) | 1 |
+| 18 | Motor brushless (BLDC) | mis. motor brushless RC 2200KV, **tanpa propeller/baling-baling terpasang** | 1 |
+| 19 | Baterai LiPo | 2S–3S (7.4V–11.1V), sesuai spesifikasi ESC dan motor | 1 |
+| 20 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
 
 ---
 
@@ -124,6 +130,19 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 
 ![Gambar 7: Diagram wiring motor stepper NEMA17 ke driver A4988/DRV8825, beserta pin STEP/DIR/EN/RESET ke ESP32](img/wiring_motor_stepper.png)
 
+### C.9 ESC (Electronic Speed Controller) dan Motor Brushless
+Motor **brushless (BLDC — Brushless DC Motor)** tidak dapat dikendalikan langsung oleh driver H-bridge sederhana seperti motor DC biasa, karena memerlukan **komutasi elektronik** — pengaturan urutan pemberian arus ke tiga lilitan stator secara presisi agar rotor berputar. Tugas ini dilakukan oleh **ESC (Electronic Speed Controller)**, rangkaian elektronik yang menerima sinyal kontrol sederhana dari mikrokontroler dan menerjemahkannya menjadi pola komutasi 3-fasa untuk motor.
+
+Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz (periode 20ms), dengan lebar pulsa menentukan besar throttle — umumnya **1000µs merepresentasikan throttle minimum** (motor berhenti/idle) dan **2000µs merepresentasikan throttle maksimum**. Karena kesamaan format sinyal ini, ESC dapat dikendalikan menggunakan library yang sama dengan motor servo (mis. **ESP32Servo**), cukup menggunakan fungsi `writeMicroseconds()` untuk mengatur lebar pulsa secara langsung (dalam mikrodetik), alih-alih `write(angle)` yang bekerja dalam satuan derajat.
+
+**Arming ESC:** hampir seluruh ESC mengharuskan proses **arming** sebelum dapat menjalankan motor — yaitu mengirim sinyal throttle minimum (1000µs) secara stabil selama beberapa detik setelah ESC dinyalakan. Ini adalah mekanisme keamanan: ESC akan menolak menjalankan motor pada throttle sembarang saat pertama kali menyala, untuk mencegah motor tiba-tiba berputar kencang akibat sinyal acak/tidak valid (mis. saat mikrokontroler baru boot). Banyak ESC memberikan bunyi *beep* khas sebagai indikasi proses arming berhasil.
+
+**Catu daya:** ESC menerima daya utama untuk motor langsung dari baterai (umumnya **LiPo 2S–4S, 7.4V–14.8V**) melalui jalur terpisah dari jalur sinyal kontrol. Jalur sinyal tetap berada pada level logika rendah (3.3V/5V) yang aman bagi ESP32. **GND sinyal dan GND baterai harus disatukan (common ground)** agar referensi tegangan sinyal PWM konsisten dengan ESC.
+
+> ⚠️ **Peringatan Keselamatan:** Motor brushless berputar sangat cepat dan bertenaga. **Selalu lepas propeller/baling-baling** sebelum menguji program, dan pastikan motor terpasang aman (tidak bisa terlempar) sebelum menyambungkan baterai. Jangan pernah menyentuh motor atau ESC saat baterai terhubung dan program sedang berjalan.
+
+![Gambar 8: Diagram wiring ESC ke ESP32 (sinyal PWM) dan ke baterai LiPo (daya utama), beserta motor brushless 3-fasa](img/wiring_esc_brushless.png)
+
 ---
 
 ## D. Persiapan Sebelum Praktikum
@@ -140,7 +159,7 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
    board = esp32dev
    framework = arduino
    ```
-4. Untuk Percobaan 5 (Motor Servo), tambahkan library **ESP32Servo** melalui PlatformIO Library Manager atau tambahkan pada `platformio.ini`:
+4. Untuk Percobaan 5 (Motor Servo) dan Percobaan 6 (ESC & Motor Brushless), tambahkan library **ESP32Servo** melalui PlatformIO Library Manager atau tambahkan pada `platformio.ini`:
    ```ini
    lib_deps = madhephaestus/ESP32Servo@^3.0.0
    ```
@@ -320,7 +339,7 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor DC melalui driver (mis. L298N) sesuai skema, gunakan catu daya eksternal untuk motor (bukan 5V dari USB langsung)
+1. Rangkai motor DC melalui driver L298N sesuai skema, gunakan catu daya eksternal untuk motor (bukan 5V dari USB langsung)
 2. Implementasikan kontrol PWM pada pin ENA untuk mengatur kecepatan, serta IN1/IN2 untuk mengatur arah (maju/mundur/berhenti)
 3. Uji kendali motor melalui perintah teks pada Serial Monitor (`F` = maju, `B` = mundur, `S` = berhenti, angka 0–255 = atur PWM)
 4. Amati perubahan kecepatan putar motor saat nilai PWM diubah
@@ -441,8 +460,8 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor stepper melalui driver (mis. A4988/DRV8825) sesuai skema, gunakan catu daya eksternal sesuai spesifikasi motor
-2. Implementasikan fungsi untuk menggerakkan motor sejumlah step tertentu (mis. setara 90°)
+1. Rangkai motor stepper melalui driver A4988 sesuai skema, gunakan catu daya eksternal sesuai spesifikasi motor
+2. Implementasikan fungsi untuk menggerakkan motor sejumlah step yang setara dengan 90° (lihat kode program di bawah)
 3. Uji program dan amati pergerakan motor stepper, hitung apakah jumlah step yang diberikan sesuai dengan sudut putar yang diharapkan
 4. Sebagai latihan tambahan, ukur waktu antar pulsa (`delayMicroseconds`) minimum yang masih membuat motor berputar dengan lancar (tanpa "kehilangan step")
 
@@ -552,16 +571,99 @@ void loop() {
 | `myServo.attach(SERVO_PIN)` | Menghubungkan objek `Servo` ke pin PWM yang digunakan, library akan mengatur frekuensi 50Hz secara otomatis |
 | `myServo.write(angle)` | Mengatur posisi sudut servo (0–180 derajat) — library mengonversi nilai sudut menjadi lebar pulsa yang sesuai |
 
-**Tugas Akhir Modul 2:**
-Rancang sistem yang menggabungkan minimal satu sensor dari tiap basis pengukuran (resistif, kapasitif/induktif, dan basis lain) dengan salah satu aktuator (motor DC, stepper, atau servo) sebagai respons — misalnya indikator jarak menggunakan servo sebagai penunjuk (mirip jarum meter) berdasarkan pembacaan sensor ultrasonik, atau sistem buka-tutup otomatis menggunakan motor stepper yang dipicu oleh sensor hall effect/touch.
+---
+
+### PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC)
+
+**Tujuan:**
+Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, serta mengimplementasikan proses arming dan kontrol kecepatan motor menggunakan sinyal PWM (mikrodetik) melalui library ESP32Servo.
+
+**Skema Rangkaian:**
+
+| Komponen | Pin ESP32 / Sumber | Keterangan |
+|---|---|---|
+| ESC — Sinyal (PWM) | GPIO 18 | Sinyal kontrol dari ESP32 ke ESC |
+| ESC — GND (sinyal) | GND | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
+| ESC — Power (input daya) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
+| Motor brushless (BLDC) | 3 kabel fasa (A/B/C) ke output ESC | Urutan kabel menentukan arah putar — tukar posisi 2 dari 3 kabel untuk membalik arah |
+
+> ⚠️ **Sebelum melanjutkan:** pastikan **propeller/baling-baling sudah dilepas** dari motor, dan motor terpasang aman pada tempatnya.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+lib_deps = madhephaestus/ESP32Servo@^3.0.0
+```
+
+**Langkah Kerja:**
+1. Pastikan propeller/baling-baling **sudah dilepas** dari motor brushless (keselamatan) sebelum melanjutkan
+2. Rangkai ESC sesuai skema: sinyal ke GPIO 18, GND sinyal disatukan dengan GND ESP32, dan jalur daya (power) ESC ke baterai LiPo — **terpisah** dari power ESP32
+3. Upload kode program di bawah — program akan otomatis melakukan **arming** (mengirim throttle minimum 1000µs selama 5 detik) sebelum menjalankan motor pada kecepatan tetap 1700µs
+4. Amati Serial Monitor: pesan "Arming ESC..." muncul terlebih dahulu, diikuti bunyi *beep* dari ESC (jika ada) sebagai indikasi arming berhasil, baru kemudian motor mulai berputar setelah pesan "ESC armed." tercetak
+5. Jika motor tidak berputar sama sekali, periksa kembali: kabel sinyal terhubung ke pin yang benar, GND sinyal dan GND baterai satu jalur (common ground), dan tegangan baterai sesuai spesifikasi ESC
+
+**Kode Program (Arming ESC & Kontrol Kecepatan Motor Brushless):**
+```cpp
+#include <Arduino.h>
+#include <ESP32Servo.h>
+
+#define ESC_PIN 18
+
+Servo esc;
+
+const int ESC_MIN = 1000;
+const int ESC_SPEED = 1700;
+
+void setup()
+{
+    Serial.begin(115200);
+
+    esc.setPeriodHertz(50);
+    esc.attach(ESC_PIN, 1000, 2000);
+
+    // Arming ESC pada throttle minimum
+    Serial.println("Arming ESC...");
+    esc.writeMicroseconds(ESC_MIN);
+
+    delay(5000);
+
+    // Jalankan motor pada 1700 us
+    Serial.println("ESC armed.");
+    Serial.println("Motor berjalan pada 1700 us");
+
+    esc.writeMicroseconds(ESC_SPEED);
+}
+
+void loop()
+{
+    // Motor tetap berjalan pada 1700 us
+}
+```
+
+**Penjelasan Kode:**
+| Bagian | Penjelasan |
+|---|---|
+| `esc.setPeriodHertz(50)` | Menetapkan frekuensi sinyal PWM ke 50Hz (periode 20ms), sesuai standar sinyal kontrol ESC/servo |
+| `esc.attach(ESC_PIN, 1000, 2000)` | Menghubungkan objek `Servo` ke `ESC_PIN`, dengan rentang lebar pulsa 1000–2000 mikrodetik (throttle minimum–maksimum) |
+| `esc.writeMicroseconds(ESC_MIN)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum selama 5 detik agar ESC mengenali sinyal sebagai valid dan siap menerima perintah throttle berikutnya |
+| `esc.writeMicroseconds(ESC_SPEED)` | Mengatur kecepatan motor langsung dalam satuan mikrodetik (bukan derajat seperti servo biasa) — 1700µs berada di antara throttle minimum (1000µs) dan maksimum (2000µs), sehingga motor berputar pada kecepatan menengah |
+| `loop()` kosong | Kecepatan motor sudah diatur sekali di `setup()` dan tidak diubah lagi — sinyal PWM tetap dipertahankan oleh library di latar belakang tanpa perlu kode tambahan pada `loop()` |
+
+**Analisis Setelah Program Berjalan:**
+1. Amati durasi proses arming (5 detik) — jelaskan mengapa proses ini penting dilakukan sebelum ESC menerima perintah throttle lain
+2. Ubah nilai `ESC_SPEED` ke beberapa nilai berbeda (mis. 1300, kemudian 1900), upload ulang untuk tiap nilai, dan amati perubahan kecepatan putar motor — pastikan nilainya tetap berada pada rentang 1000–2000
+3. Diskusikan mengapa ESC dapat dikendalikan menggunakan library `ESP32Servo` yang sama dengan motor servo, meskipun keduanya menggerakkan jenis aktuator yang sangat berbeda (motor brushless 3-fasa vs servo)
 
 ---
 
-## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+## F. Tugas Modul
 
 [Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta LDR, potensiometer, HC-SR04, servo motor, dan motor DC — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-> **Catatan:** Modul touch sensor TTP223 dan hall effect sensor kemungkinan belum tersedia sebagai part bawaan Wokwi. Sebagai gantinya, gunakan **potensiometer** atau **slide switch virtual** untuk mensimulasikan sinyal digital HIGH/LOW pengganti kedua sensor tersebut pada bagian yang membutuhkannya.
+> **Catatan:** Modul touch sensor TTP223 dan hall effect sensor kemungkinan belum tersedia sebagai part bawaan Wokwi. Sebagai gantinya, gunakan **slide switch virtual** untuk mensimulasikan sinyal digital HIGH/LOW pengganti kedua sensor tersebut pada bagian yang membutuhkannya.
 
 **Tugas 1 — Indikator Jarak Otomatis (Wokwi):**
 1. Buat project Wokwi baru dengan board **ESP32**, rangkai sensor **HC-SR04** dan **servo motor**
@@ -571,6 +673,15 @@ Rancang sistem yang menggabungkan minimal satu sensor dari tiap basis pengukuran
 
 **Tugas 2 — Eksplorasi Mandiri:**
 Ganti servo pada Tugas 1 dengan motor DC (via driver, kendalikan menggunakan PWM) sehingga kecepatan putar motor merepresentasikan jarak objek, alih-alih posisi sudut. Bandingkan kelebihan/kekurangan representasi jarak melalui sudut (servo) vs kecepatan (motor DC).
+
+**Tugas 3 (Bonus) — Implementasi Level Register:**
+Percobaan 3 (Ultrasonik HC-SR04) pada modul ini dapat diimplementasikan ulang **tanpa fungsi bawaan `pulseIn()`**, langsung memanipulasi register GPIO. Kerjakan (boleh dikerjakan di Wokwi maupun hardware asli):
+
+| Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
+|---|---|---|---|
+| Percobaan 3 (Ultrasonik HC-SR04) | `pulseIn()` | `GPIO.in` (baca level pin ECHO), `micros()` | Implementasikan ulang `pulseIn()` secara manual: polling `GPIO.in` dalam loop ketat sambil mencatat waktu mulai/selesai transisi LOW→HIGH→LOW pada pin ECHO |
+
+**Deliverable:** kode program level-register, beserta penjelasan tiap baris register yang ditulis, dan perbandingan perilaku (mis. kecepatan eksekusi, akurasi timing, kompleksitas kode) dengan versi API tingkat tinggi pada Percobaan aslinya.
 
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 
@@ -584,3 +695,4 @@ Ganti servo pada Tugas 1 dengan motor DC (via driver, kendalikan menggunakan PWM
 5. Datasheet Driver Motor Stepper A4988/DRV8825
 6. ESP32Servo Library Documentation, https://github.com/madhephaestus/ESP32Servo
 7. PlatformIO Documentation, https://docs.platformio.org/
+8. Oscar Liang, *How Does an ESC / BLDC Motor Work*, https://oscarliang.com/esc-firmware-protocol/ — referensi prinsip kerja ESC dan proses arming

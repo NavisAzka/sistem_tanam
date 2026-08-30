@@ -25,7 +25,7 @@
   - [PERCOBAAN 3 — Timer Interrupt](#percobaan-3--timer-interrupt)
   - [PERCOBAAN 4 — Watchdog Timer](#percobaan-4--watchdog-timer)
   - [PERCOBAAN 5 — Multitasking dengan FreeRTOS](#percobaan-5--multitasking-dengan-freertos)
-- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
 ---
@@ -327,7 +327,7 @@ framework = arduino
 2. Implementasikan hardware timer yang memicu interrupt setiap 500ms
 3. Di dalam ISR, cukup set sebuah flag (`volatile bool`) — jangan langsung memanggil `digitalWrite()` di dalam ISR
 4. Pada `loop()`, periksa flag tersebut dan lakukan toggle LED jika flag aktif
-5. Amati bahwa LED tetap berkedip konsisten meskipun ditambahkan kode lain pada `loop()` (mis. `Serial.println()` tambahan)
+5. Tambahkan `Serial.println("test")` di dalam `loop()` (di luar blok pengecekan flag), lalu amati bahwa LED tetap berkedip konsisten setiap 500ms meskipun ada baris tambahan tersebut
 
 **Kode Program (Timer Interrupt — Toggle LED):**
 ```cpp
@@ -562,16 +562,13 @@ void loop()
 | `xQueueSend(pressQueue, &pressCount, portMAX_DELAY)` | Mengirim data ke queue dari task pembaca tombol; `portMAX_DELAY` berarti menunggu tanpa batas waktu jika queue penuh |
 | `xQueueReceive(pressQueue, &receivedCount, portMAX_DELAY)` | Menerima data dari queue pada task penampil — task ini "tidur" (tidak memakan CPU) selama menunggu data baru masuk |
 
-**Tugas Akhir Modul 4:**
-Rancang sistem yang menggabungkan seluruh topik modul ini dalam satu program: dilengkapi tombol darurat berbasis external interrupt (Percobaan 1) yang dapat me-restart sistem kapan pun dibutuhkan, task pembaca encoder (external interrupt, Percobaan 2) berjalan pada satu core, task timer periodik untuk logging status ke Serial setiap detik (Percobaan 3) pada core lain, watchdog timer aktif untuk menjaga keandalan sistem (Percobaan 4), dan seluruhnya dikelola sebagai task-task FreeRTOS terpisah (Percobaan 5).
-
 ---
 
-## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+## F. Tugas Modul
 
 [Wokwi](https://wokwi.com) menjalankan firmware ESP32 sungguhan di atas simulator berbasis QEMU, sehingga interrupt, timer hardware, watchdog, dan FreeRTOS **benar-benar berjalan** (bukan disimulasikan secara logis saja) — cocok untuk menguji ulang skenario-skenario modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-> **Catatan:** Part **motor DC + encoder quadrature** kemungkinan tidak tersedia di Wokwi sebagai satu kesatuan modul JGB37-520. Sebagai gantinya, gunakan **dua pushbutton virtual** untuk mensimulasikan sinyal Channel A dan Channel B secara manual (ditekan bergantian), atau bangkitkan pulsa quadrature via kode timer sebagai sumber sinyal buatan.
+> **Catatan:** Part **motor DC + encoder quadrature** kemungkinan tidak tersedia di Wokwi sebagai satu kesatuan modul JGB37-520. Sebagai gantinya, gunakan **dua pushbutton virtual** untuk mensimulasikan sinyal Channel A dan Channel B secara manual (ditekan bergantian).
 
 **Tugas 1 — Reproduksi Manual Recovery (Wokwi):**
 1. Buat project Wokwi baru dengan board **ESP32**, rangkai pushbutton darurat (Percobaan 1) dan LED indikator
@@ -581,6 +578,17 @@ Rancang sistem yang menggabungkan seluruh topik modul ini dalam satu program: di
 
 **Tugas 2 — Timer Interrupt + Queue (Wokwi):**
 Gabungkan timer interrupt (Percobaan 3, logging status tiap 1 detik) dengan multitasking FreeRTOS (Percobaan 5) dalam satu project Wokwi: satu task membaca status sebuah pushbutton virtual dan mengirim jumlah penekanan ke queue, sementara timer interrupt terpisah men-trigger flag yang dibaca task lain untuk mencetak status queue setiap detik ke Serial Monitor.
+
+**Tugas 3 (Bonus) — Implementasi Level Register:**
+Percobaan 4 (Watchdog Timer) pada modul ini dapat diimplementasikan ulang **tanpa `esp_task_wdt`**, langsung memanipulasi register Timer Group (MWDT0) sesuai Technical Reference Manual. Kerjakan (boleh dikerjakan di Wokwi maupun hardware asli):
+
+| Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
+|---|---|---|---|
+| Percobaan 4 (Watchdog Timer) | `esp_task_wdt_init()`/`esp_task_wdt_add()`/`esp_task_wdt_reset()` | Register MWDT0 (`TIMG_WDTCONFIG0_REG`, `TIMG_WDTCONFIG1_REG`, `TIMG_WDTCONFIG2_REG`, `TIMG_WDTFEED_REG`, `TIMG_WDTWPROTECT_REG`) | Buka write-protect (`TIMG_WDT_WKEY_VALUE`) sebelum menulis config/feed, lalu kunci kembali setelahnya |
+
+> **Catatan:** register `TIMG_WDTCONFIG*` adalah watchdog hardware yang sama yang juga dipakai bootloader untuk *flashboot protection* — pastikan fungsi inisialisasi watchdog hanya dipanggil sekali di `setup()` (bukan berulang di `loop()`), dan verifikasi nama field terhadap versi ESP-IDF yang terpasang (`soc/timer_group_reg.h`) sebelum digunakan.
+
+**Deliverable:** kode program level-register, penjelasan tiap register yang ditulis (rujuk ke ESP32 Technical Reference Manual bab Timer Group), dan perbandingan perilaku dengan versi API tingkat tinggi pada Percobaan aslinya.
 
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 

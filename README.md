@@ -43,8 +43,8 @@ Dalam modul-modul praktikum ini, kamu akan mempelajari dan mengimplementasikan b
 ### 3. **Komunikasi Serial & Interfacing Modul**
 
 - Komunikasi UART antar board ESP32
-- Komunikasi I2C (master-slave antar board, serta multi-device pada satu bus: OLED + IMU)
-- Komunikasi SPI antar board maupun ke modul sensor eksternal (IMU MPU6500)
+- Komunikasi I2C master-slave antar board ESP32, serta interfacing multi-device pada satu bus (OLED + IMU MPU6050)
+- Komunikasi SPI antar board ESP32 (master-slave), serta interfacing SPI ke modul sensor eksternal (IMU MPU6500)
 - DMA untuk transfer data SPI secara *burst*
 
 ### 4. **Interrupt, Timer, Watchdog, & Multitasking**
