@@ -4,8 +4,12 @@ easyeda*
 layout*
 referensi*/
 Program*/
-3D/
-.claude/
-.vscode/
+3D
+.claude*
+.vscode*/
 import_easyeda*
 Modul_PCB_besar*
+_tes_Modul1/
+
+# remove .claude folder
+_*/
