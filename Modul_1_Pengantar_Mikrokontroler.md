@@ -17,14 +17,14 @@
   - [C.3 ESP32 dan Framework ESP-IDF](#c3-esp32-dan-framework-esp-idf)
   - [C.4 Konfigurasi Pull-up dan Pull-down Resistor pada Tombol](#c4-konfigurasi-pull-up-dan-pull-down-resistor-pada-tombol)
   - [C.5 Debouncing](#c5-debouncing)
-  - [C.6 Level Shifter (Konverter Level Tegangan Logika)](#c6-level-shifter-konverter-level-tegangan-logika)
+  - [C.6 ADC sebagai Mode Akses GPIO Ketiga](#c6-adc-sebagai-mode-akses-gpio-ketiga)
 - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
 - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
   - [PERCOBAAN 1 — Instalasi PlatformIO & Pengenalan STM32 Blackpill (Blink)](#percobaan-1--instalasi-platformio--pengenalan-stm32-blackpill-blink)
   - [PERCOBAAN 2 — Pengenalan ESP32 dengan Framework ESP-IDF (Blink)](#percobaan-2--pengenalan-esp32-dengan-framework-esp-idf-blink)
   - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-esp32--framework-arduino)
   - [PERCOBAAN 4 — Debouncing pada Input Tombol GPIO (ESP32 + Framework Arduino)](#percobaan-4--debouncing-pada-input-tombol-gpio-esp32--framework-arduino)
-  - [PERCOBAAN 5 — Level Shifter: Pengukuran Tegangan Input dan Output (ESP32 + Framework Arduino)](#percobaan-5--level-shifter-pengukuran-tegangan-input-dan-output-esp32--framework-arduino)
+  - [PERCOBAAN 5 — Akses GPIO Analog: Pembacaan ADC dengan LDR (ESP32 + Framework Arduino)](#percobaan-5--akses-gpio-analog-pembacaan-adc-dengan-ldr-esp32--framework-arduino)
 - [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
@@ -40,7 +40,7 @@ Setelah menyelesaikan Modul 1, praktikan mampu:
 5. Mengidentifikasi dan membedakan konfigurasi pembacaan tombol menggunakan pull-up dan pull-down resistor, baik secara eksternal maupun internal
 6. Mengimplementasikan pembacaan GPIO untuk konfigurasi pull-up/pull-down eksternal dan internal pada ESP32 menggunakan framework Arduino
 7. Mengimplementasikan debouncing pada input tombol berbasis GPIO
-8. Menjelaskan fungsi level shifter sebagai konverter level tegangan logika (3.3V ↔ 5V), serta mengukur tegangan sisi input dan output menggunakan multimeter/voltmeter
+8. Menjelaskan ADC sebagai mode akses GPIO ketiga (analog input), selain digital output dan digital input, serta mengimplementasikan pembacaan nilai analog sederhana menggunakan LDR
 
 ---
 
@@ -57,10 +57,9 @@ Setelah menyelesaikan Modul 1, praktikan mampu:
 | 7 | Kabel jumper male-male | — | secukupnya |
 | 8 | LED + resistor 220Ω | untuk uji Blink ESP32 (bila tidak ada LED onboard) | 1 |
 | 9 | Pushbutton (tactile) | untuk pull-up/pull-down eksternal & internal (Percobaan 3) dan debouncing (Percobaan 4) | 2 |
-| 10 | Resistor | 10kΩ, untuk pull-up eksternal dan pull-down eksternal (Percobaan 3) | 2 |
-| 11 | Level shifter (logic level converter) | Bidirectional, mis. modul 4-channel berbasis BSS138 | 1 |
-| 12 | Multimeter/voltmeter | Mode pengukuran tegangan DC | 1 |
-| 13 | Laptop/PC | Windows/Mac/Linux, VSCode terinstal | 1 |
+| 10 | Resistor | 10kΩ, untuk pull-up eksternal, pull-down eksternal (Percobaan 3), dan pembagi tegangan LDR (Percobaan 5) | 3 |
+| 11 | LDR (Light Dependent Resistor) | — | 1 |
+| 12 | Laptop/PC | Windows/Mac/Linux, VSCode terinstal | 1 |
 
 ---
 
@@ -116,16 +115,14 @@ Kontak mekanik pada tombol/saklar menghasilkan beberapa transisi sinyal HIGH-LOW
 
 ![Gambar 4: Grafik sinyal tombol pada osiloskop/logic analyzer yang memperlihatkan bouncing (transisi HIGH-LOW berulang saat kontak menyentuh/lepas), dibandingkan dengan sinyal yang sudah didebounce](img/grafik_bouncing_debounce.png)
 
-### C.6 Level Shifter (Konverter Level Tegangan Logika)
-ESP32 dan STM32 beroperasi pada level logika **3.3V**, sedangkan cukup banyak modul/sensor lain (terutama modul lawas) beroperasi pada level logika **5V**. Menghubungkan langsung output 5V ke pin GPIO 3.3V berisiko merusak mikrokontroler, karena sebagian besar pin GPIO ESP32/STM32 tidak toleran terhadap tegangan di atas ±3.3–3.6V.
+### C.6 ADC sebagai Mode Akses GPIO Ketiga
+Sejauh ini, GPIO telah digunakan dalam dua mode: **digital output** (Percobaan 1–2, menyalakan LED) dan **digital input** (Percobaan 3–4, membaca status tombol/saklar — hanya mengenal dua kondisi, HIGH atau LOW). Mode ketiga yang juga umum digunakan adalah **analog input**, yaitu membaca tegangan yang berubah secara kontinu (bukan hanya dua kondisi), melalui peripheral **ADC (Analog-to-Digital Converter)**.
 
-**Level shifter** adalah rangkaian/modul yang mengonversi level tegangan logika digital dari satu domain (mis. 3.3V) ke domain lain (mis. 5V) atau sebaliknya, tanpa mengubah informasi digital (HIGH/LOW, atau duty cycle bila sinyalnya PWM) yang dibawa oleh sinyal tersebut. Terdapat dua jenis utama:
-- **Unidirectional (satu arah):** hanya mengonversi sinyal pada satu arah aliran data (mis. 3.3V → 5V saja), umumnya berbasis transistor atau gerbang logika sederhana
-- **Bidirectional (dua arah):** dapat mengonversi sinyal pada kedua arah secara otomatis tergantung arah aliran data — umum digunakan pada jalur komunikasi dua arah seperti I2C, biasanya berbasis MOSFET (mis. BSS138 pada modul "4-channel logic level converter")
+ADC mengubah tegangan analog pada suatu pin menjadi nilai digital yang dapat diolah program. ESP32 memiliki ADC internal dengan resolusi default **12-bit** (rentang nilai 0–4095) dan referensi tegangan sekitar **0–3.3V**, diakses melalui fungsi `analogRead(pin)` pada framework Arduino. Perlu diperhatikan bahwa **tidak semua pin GPIO mendukung ADC** — pada ESP32, pin yang mendukung ADC1 (mis. GPIO32–39) lebih disarankan digunakan dibanding ADC2, karena ADC2 memiliki keterbatasan saat modul WiFi sedang aktif.
 
-Modul level shifter bidirectional pada umumnya memiliki dua sisi: **LV (Low Voltage)** dan **HV (High Voltage)**, masing-masing dengan pin VCC dan GND tersendiri, serta beberapa pasang channel sinyal (LV1↔HV1, LV2↔HV2, dst.) yang saling terhubung secara internal.
+> **Catatan:** Percobaan ADC pada modul ini hanya memperkenalkan *cara mengakses* GPIO sebagai input analog menggunakan satu sensor sederhana (LDR). Pembahasan lebih lanjut mengenai klasifikasi sensor berdasarkan basis pengukurannya (resistif, kapasitif, induktif, dan basis lain) beserta ragam sensor/aktuator lain akan dibahas lebih mendalam pada **Modul 2**.
 
-![Gambar 5: Modul level shifter bidirectional 4-channel (mis. berbasis BSS138), menunjukkan label sisi LV dan HV beserta pasangan channelnya](img/modul_level_shifter.png)
+![Gambar 5: Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard](img/modul_ldr_pembagi_tegangan.png)
 
 ---
 
@@ -444,22 +441,16 @@ void loop() {
 
 ---
 
-### PERCOBAAN 5 — Level Shifter: Pengukuran Tegangan Input dan Output (ESP32 + Framework Arduino)
+### PERCOBAAN 5 — Akses GPIO Analog: Pembacaan ADC dengan LDR (ESP32 + Framework Arduino)
 
 **Tujuan:**
-Mahasiswa mampu memahami fungsi level shifter sebagai konverter level tegangan logika, serta mengukur tegangan pada sisi input (LV) dan output (HV) menggunakan multimeter/voltmeter untuk beberapa variasi sinyal input dari ESP32.
+Mahasiswa mampu memahami ADC sebagai mode akses GPIO ketiga (analog input) — melengkapi digital output (Percobaan 1–2) dan digital input (Percobaan 3–4) — serta mengimplementasikan pembacaan nilai analog sederhana menggunakan LDR.
 
 **Skema Rangkaian:**
 
-| Komponen | Pin ESP32 / Sumber | Keterangan |
+| Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Level shifter — LV (VCC) | 3V3 | Tegangan referensi sisi rendah (Low Voltage) |
-| Level shifter — LV (GND) | GND | Ground sisi rendah |
-| Level shifter — HV (VCC) | 5V (pin VIN/5V pada ESP32 DevKit, dari USB) | Tegangan referensi sisi tinggi (High Voltage) |
-| Level shifter — HV (GND) | GND | Ground sisi tinggi, disatukan dengan GND ESP32 |
-| Level shifter — channel LV1 | GPIO 26 | Sinyal digital dari ESP32 (logika 3.3V), sebagai input yang akan dikonversi |
-| Multimeter (voltmeter DC) #1 | Probe (+) → pin LV1, probe (−) → GND | Mengukur tegangan sisi **input** (sebelum konversi) |
-| Multimeter (voltmeter DC) #2 | Probe (+) → pin HV1, probe (−) → GND | Mengukur tegangan sisi **output** (setelah konversi) |
+| LDR (pembagi tegangan dengan resistor 10kΩ) | GPIO 34 | Titik tengah pembagi tegangan ke ADC |
 
 **`platformio.ini`:**
 ```ini
@@ -470,53 +461,42 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai level shifter sesuai skema — pastikan sisi LV terhubung ke 3.3V/GND ESP32, dan sisi HV terhubung ke 5V/GND (GND kedua sisi tetap satu jalur)
-2. Hubungkan GPIO 26 ESP32 ke channel LV1
-3. **Build** dan **Upload** program di bawah — program akan menghasilkan 3 sample sinyal secara bergantian, masing-masing ditahan selama 10 detik dan diberi label pada Serial Monitor
-4. Untuk setiap sample, ukur dan catat tegangan pada pin **LV1** (input) dan **HV1** (output) menggunakan multimeter sebelum sample berikutnya muncul
-5. Bandingkan ketiga pasang hasil pengukuran (LV1 vs HV1) pada tiap sample
+1. Rangkai LDR sebagai pembagi tegangan sesuai skema (satu ujung ke 3.3V, satu ujung lagi ke GND melalui resistor 10kΩ), hubungkan titik tengah ke GPIO 34
+2. Tulis program pembacaan nilai ADC mentah (raw) sekaligus konversinya ke tegangan
+3. **Build** dan **Upload**, buka Serial Monitor
+4. Tutup LDR dengan tangan (gelap) lalu sinari langsung dengan cahaya (mis. senter HP), amati perubahan nilai raw (0–4095) dan tegangan (0–3.3V) secara kontinu
+5. Diskusi: bandingkan dengan pembacaan digital pada Percobaan 3–4 — GPIO analog dapat merepresentasikan lebih dari dua kondisi (bukan hanya HIGH/LOW)
 
-**Kode Program (3 Sample Input Bergantian):**
+**Kode Program (Pembacaan ADC dengan LDR):**
 ```cpp
 #include <Arduino.h>
 
-#define SIGNAL_PIN 26
-#define PWM_CHANNEL 0
-#define PWM_FREQ 1000
-#define PWM_RES 8 // 8-bit -> nilai duty 0-255
-
-void tampilkanSample(uint8_t duty, const char *label) {
-  ledcWrite(PWM_CHANNEL, duty);
-  Serial.printf("=== %s (duty %d/255) — ukur tegangan LV1 & HV1 sekarang ===\n", label, duty);
-  delay(10000); // tahan 10 detik untuk waktu pengukuran multimeter
-}
+#define LDR_PIN 34
 
 void setup() {
   Serial.begin(115200);
-  ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RES);
-  ledcAttachPin(SIGNAL_PIN, PWM_CHANNEL);
 }
 
 void loop() {
-  tampilkanSample(0, "Sample 1: LOW (0%)");
-  tampilkanSample(128, "Sample 2: PWM ~50%");
-  tampilkanSample(255, "Sample 3: HIGH (100%)");
+  int raw = analogRead(LDR_PIN);
+  float voltage = raw * (3.3 / 4095.0);
+
+  Serial.printf("LDR raw: %d | Tegangan: %.2fV\n", raw, voltage);
+  delay(300);
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `ledcSetup()` + `ledcAttachPin()` | Mengonfigurasi channel PWM pada GPIO 26, digunakan untuk menghasilkan 3 sample tegangan yang berbeda |
-| `tampilkanSample(duty, label)` | Mengatur duty cycle PWM, mencetak label sample ke Serial Monitor, lalu menahan nilai tersebut selama 10 detik agar sempat diukur dengan multimeter |
-| Sample 1 (duty 0) | Sinyal LOW konstan (0V) — merepresentasikan kondisi digital LOW |
-| Sample 2 (duty 128) | Sinyal PWM ~50% duty cycle — multimeter DC akan membaca **nilai rata-rata**, bukan tegangan sesaat, karena frekuensi switching (1kHz) jauh lebih cepat dari respons alat ukur |
-| Sample 3 (duty 255) | Sinyal HIGH konstan (3.3V) — merepresentasikan kondisi digital HIGH |
+| `analogRead(LDR_PIN)` | Membaca nilai ADC 12-bit (0–4095) pada pin yang terhubung ke titik tengah pembagi tegangan LDR |
+| `voltage = raw * (3.3 / 4095.0)` | Mengonversi nilai digital ADC menjadi perkiraan tegangan aktual |
+| GPIO 34 | Salah satu pin input-only pada ESP32 klasik yang mendukung ADC1 — lebih disarankan dibanding ADC2, terutama saat WiFi aktif |
 
 **Analisis Setelah Program Berjalan:**
-1. Catat tegangan LV1 dan HV1 pada ketiga sample, lalu hitung rasio HV1/LV1 untuk masing-masing sample
-2. Verifikasi apakah rasio tegangan HV1:LV1 pada ketiga sample konsisten mendekati rasio 5V:3.3V — ini menunjukkan bahwa level shifter hanya mengubah level tegangan, bukan bentuk/duty cycle sinyalnya
-3. Diskusikan mengapa nilai yang terbaca pada Sample 2 (PWM ~50%) berada di antara nilai Sample 1 dan Sample 3, alih-alih terbaca sebagai 0V atau tegangan maksimum
+1. Catat nilai raw ADC dan tegangan hasil konversi pada kondisi **gelap** (LDR ditutup) dan **terang** (LDR disinari langsung)
+2. Amati apakah nilai ADC tetap **stabil** saat LDR tidak disentuh/kondisi cahaya konstan, atau justru berfluktuasi kecil (noise) antar pembacaan
+3. Diskusikan mengapa nilai LDR tidak bisa langsung diartikan sebagai satuan fisik (mis. lux) tanpa kalibrasi lebih lanjut — topik klasifikasi sensor berdasarkan basis pengukuran (termasuk sensor resistif seperti LDR ini) akan dibahas lebih mendalam pada **Modul 2**
 
 ---
 
@@ -524,7 +504,7 @@ void loop() {
 
 [Wokwi](https://wokwi.com) adalah simulator elektronik berbasis browser yang mendukung ESP32 secara native (termasuk Serial Monitor, virtual Logic Analyzer, dan simulasi *contact bouncing* pada pushbutton), sehingga cocok digunakan untuk eksplorasi mandiri di luar jam praktikum tanpa perlu hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-> **Catatan:** Wokwi belum mendukung board STM32 Blackpill secara native, sehingga tugas ini difokuskan pada bagian ESP32 (Percobaan 3–4). Jika ingin bereksperimen dengan STM32, gunakan board Nucleo yang tersedia di Wokwi sebagai gantinya (opsional, tidak wajib).
+> **Catatan:** Wokwi belum mendukung board STM32 Blackpill secara native, sehingga tugas ini difokuskan pada bagian ESP32 (Percobaan 3–5). Jika ingin bereksperimen dengan STM32, gunakan board Nucleo yang tersedia di Wokwi sebagai gantinya (opsional, tidak wajib).
 
 **Tugas 1 — Gabungan Pull-up/Pull-down & Debouncing:**
 1. Buat project Wokwi baru dengan board **ESP32**, lalu rangkai **dua pushbutton virtual**: satu dikonfigurasi pull-up eksternal (GPIO 32) dan satu lagi pull-down eksternal (GPIO 33), sesuai skema Percobaan 3 Bagian A
@@ -555,4 +535,4 @@ Percobaan 2 (Blink ESP32 ESP-IDF) pada modul ini dapat diimplementasikan ulang *
 4. Espressif Systems, *ESP-IDF Programming Guide*, https://docs.espressif.com/
 5. PlatformIO Documentation, https://docs.platformio.org/
 6. Arduino Official Documentation, https://docs.arduino.cc/
-7. Sparkfun, *Bi-Directional Logic Level Converter Hookup Guide*, https://learn.sparkfun.com/tutorials/bi-directional-logic-level-converter-hookup-guide
+7. Espressif Systems, *Arduino-ESP32 Core Documentation — Analog (ADC)*, https://docs.espressif.com/projects/arduino-esp32/

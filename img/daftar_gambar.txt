@@ -41,13 +41,13 @@ No | Nama File                       | Deskripsi
 02 | pinout_esp32_devkit.png         | Pinout board ESP32 DevKit v1 (nomor GPIO, pin power, LED onboard)
 03 | skematik_pullup_pulldown.png    | Diagram skematik rangkaian pull-up resistor vs pull-down resistor
 04 | grafik_bouncing_debounce.png    | Grafik sinyal tombol (bouncing) pada osiloskop, sebelum vs sesudah debouncing
-05 | modul_level_shifter.png         | Modul level shifter bidirectional 4-channel (label sisi LV dan HV)
+05 | modul_ldr_pembagi_tegangan.png  | Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard
 
 -----------------------------------------------------------------------------
 Modul_2_Sensor_dan_Aktuator.md
 -----------------------------------------------------------------------------
 No | Nama File                       | Deskripsi
-01 | modul_ldr_pembagi_tegangan.png  | Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard
+01 | modul_joystick_ky023.png        | Foto modul joystick 2-axis KY-023 (label pin VRx/VRy/SW/VCC/GND)
 02 | modul_touch_ttp223.png          | Foto modul touch sensor TTP223 (label pin VCC/GND/OUT)
 03 | modul_hall_effect.png           | Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji
 04 | sensor_ultrasonik_ir.png        | Foto modul sensor ultrasonik HC-SR04 (Trig/Echo) berdampingan dengan sensor IR obstacle
@@ -60,8 +60,10 @@ No | Nama File                       | Deskripsi
 Modul_3_Komunikasi_Serial.md
 -----------------------------------------------------------------------------
 No | Nama File                       | Deskripsi
-01 | diagram_bus_i2c.png             | Diagram bus I2C dengan satu master dan beberapa slave berbagi SDA/SCL
-02 | diagram_blocking_vs_dma.png     | Diagram blok perbandingan transfer data blocking vs DMA
+01 | wiring_uart_silang.png          | Diagram wiring UART silang antar dua board (TX-RX silang, GND bersama)
+02 | diagram_bus_i2c.png             | Diagram bus I2C dengan satu master dan beberapa slave berbagi SDA/SCL
+03 | wiring_w5500_esp32.png          | Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal
+04 | diagram_blocking_vs_dma.png     | Diagram blok perbandingan transfer data blocking vs DMA
 
 -----------------------------------------------------------------------------
 Modul_4_Interrupt_Timer_Watchdog_Multitasking.md

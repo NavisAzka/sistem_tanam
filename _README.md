@@ -31,11 +31,11 @@ Dalam modul-modul praktikum ini, kamu akan mempelajari dan mengimplementasikan b
 - Pengenalan STM32 Blackpill (framework Arduino) dan ESP32 (framework ESP-IDF & Arduino)
 - Pull-up dan pull-down resistor (eksternal maupun internal) pada input tombol
 - Debouncing input tombol berbasis GPIO
-- Level shifter sebagai konverter level tegangan logika (3.3V ↔ 5V)
+- ADC sebagai mode akses GPIO ketiga: pembacaan sensor resistif sederhana (LDR)
 
 ### 2. **Sensor Berdasarkan Basis Pengukuran & Aktuator Motor**
 
-- Sensor resistif (LDR), kapasitif (touch sensor TTP223), dan induktif (hall effect)
+- Sensor kapasitif (touch sensor TTP223) dan induktif (hall effect)
 - Sensor basis lain: akustik (ultrasonik HC-SR04) dan optik (IR obstacle)
 - Kontrol kecepatan motor DC menggunakan PWM
 - Kontrol motor stepper dan motor servo

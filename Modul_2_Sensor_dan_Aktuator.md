@@ -14,23 +14,22 @@
 - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
 - [B. Alat dan Bahan](#b-alat-dan-bahan)
 - [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 ADC pada ESP32](#c1-adc-pada-esp32)
-  - [C.2 Sensor Resistif — Prinsip Pembagi Tegangan](#c2-sensor-resistif--prinsip-pembagi-tegangan)
-  - [C.3 Sensor Kapasitif](#c3-sensor-kapasitif)
-  - [C.4 Sensor Induktif](#c4-sensor-induktif)
-  - [C.5 Sensor Basis Lain (Akustik & Optik)](#c5-sensor-basis-lain-akustik--optik)
-  - [C.6 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC](#c6-pwm-pulse-width-modulation--kontrol-kecepatan-motor-dc)
-  - [C.7 Kontrol Posisi Motor Servo](#c7-kontrol-posisi-motor-servo)
-  - [C.8 Motor Stepper](#c8-motor-stepper)
-  - [C.9 ESC (Electronic Speed Controller) dan Motor Brushless](#c9-esc-electronic-speed-controller-dan-motor-brushless)
+  - [C.1 Sensor Resistif — Joystick 2-Axis sebagai Input Kontrol](#c1-sensor-resistif--joystick-2-axis-sebagai-input-kontrol)
+  - [C.2 Sensor Kapasitif](#c2-sensor-kapasitif)
+  - [C.3 Sensor Induktif](#c3-sensor-induktif)
+  - [C.4 Sensor Basis Lain (Akustik & Optik)](#c4-sensor-basis-lain-akustik--optik)
+  - [C.5 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC](#c5-pwm-pulse-width-modulation--kontrol-kecepatan-motor-dc)
+  - [C.6 Kontrol Posisi Motor Servo](#c6-kontrol-posisi-motor-servo)
+  - [C.7 Motor Stepper](#c7-motor-stepper)
+  - [C.8 ESC (Electronic Speed Controller) dan Motor Brushless](#c8-esc-electronic-speed-controller-dan-motor-brushless)
 - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
 - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif](#percobaan-1--sensor-resistif-kapasitif-dan-induktif)
+  - [PERCOBAAN 1 — Sensor Resistif (Joystick), Kapasitif, dan Induktif](#percobaan-1--sensor-resistif-joystick-kapasitif-dan-induktif)
   - [PERCOBAAN 2 — Sensor Basis Lain (Ultrasonik & IR Obstacle)](#percobaan-2--sensor-basis-lain-ultrasonik--ir-obstacle)
-  - [PERCOBAAN 3 — Aktuator Motor DC](#percobaan-3--aktuator-motor-dc)
-  - [PERCOBAAN 4 — Aktuator Motor Stepper](#percobaan-4--aktuator-motor-stepper)
-  - [PERCOBAAN 5 — Aktuator Motor Servo](#percobaan-5--aktuator-motor-servo)
-  - [PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC)](#percobaan-6--aktuator-esc--motor-brushless-bldc)
+  - [PERCOBAAN 3 — Aktuator Motor DC (Dikendalikan Joystick)](#percobaan-3--aktuator-motor-dc-dikendalikan-joystick)
+  - [PERCOBAAN 4 — Aktuator Motor Stepper (Dikendalikan Joystick)](#percobaan-4--aktuator-motor-stepper-dikendalikan-joystick)
+  - [PERCOBAAN 5 — Aktuator Motor Servo (Dikendalikan Joystick)](#percobaan-5--aktuator-motor-servo-dikendalikan-joystick)
+  - [PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC) (Dikendalikan Joystick)](#percobaan-6--aktuator-esc--motor-brushless-bldc-dikendalikan-joystick)
 - [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
@@ -39,14 +38,14 @@
 ## A. Capaian Pembelajaran
 
 Setelah menyelesaikan Modul 2, praktikan mampu:
-1. Menjelaskan prinsip kerja sensor berdasarkan basis transduksi (resistif, kapasitif, induktif, dan basis lain)
-2. Mengimplementasikan pembacaan sensor resistif melalui ADC serta melakukan kalibrasi nilai
+1. Menjelaskan prinsip kerja sensor berdasarkan basis transduksi (resistif — sebagai aplikasi kontrol interaktif melalui joystick 2-axis, kapasitif, induktif, dan basis lain) — melanjutkan basis resistif yang sudah diperkenalkan di Modul 1
+2. Mengimplementasikan joystick 2-axis (KY-023) sebagai input kontrol interaktif untuk mengendalikan aktuator motor
 3. Mengimplementasikan pembacaan sensor kapasitif dan induktif
 4. Mengimplementasikan pembacaan sensor berbasis akustik (ultrasonik) dan optik (inframerah)
-5. Mengimplementasikan kontrol kecepatan dan arah motor DC menggunakan sinyal PWM
-6. Mengimplementasikan kontrol motor stepper menggunakan sinyal step/direction
-7. Mengimplementasikan kontrol posisi motor servo menggunakan sinyal PWM
-8. Menjelaskan prinsip kerja ESC (Electronic Speed Controller) serta mengimplementasikan proses arming dan kontrol kecepatan motor brushless (BLDC) menggunakan sinyal PWM
+5. Mengimplementasikan kontrol kecepatan dan arah motor DC menggunakan sinyal PWM, dikendalikan secara interaktif melalui joystick
+6. Mengimplementasikan kontrol motor stepper menggunakan sinyal step/direction, dikendalikan secara interaktif melalui joystick
+7. Mengimplementasikan kontrol posisi motor servo menggunakan sinyal PWM, dikendalikan secara interaktif melalui joystick
+8. Menjelaskan prinsip kerja ESC (Electronic Speed Controller) serta mengimplementasikan proses arming dan kontrol kecepatan motor brushless (BLDC) menggunakan sinyal PWM, dikendalikan secara interaktif melalui joystick
 
 ---
 
@@ -58,70 +57,64 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 | 2 | Kabel USB Micro/USB-C | untuk ESP32 ke PC | 1 |
 | 3 | Breadboard | 830 titik | 1 |
 | 4 | Kabel jumper male-male | — | secukupnya |
-| 5 | LDR (Light Dependent Resistor) | — | 1 |
-| 6 | Resistor | 10kΩ (pembagi tegangan LDR), 220Ω (LED) | secukupnya |
-| 7 | Modul touch sensor TTP223 | Capacitive touch sensor, output digital | 1 |
-| 8 | Hall effect sensor module | mis. A3144/KY-003 | 1 |
-| 9 | Magnet kecil | untuk uji hall effect | 1 |
-| 10 | Sensor ultrasonik | HC-SR04 | 1 |
-| 11 | Sensor IR obstacle | — | 1 |
-| 12 | Motor DC + driver | mis. L298N/L293D | 1 |
-| 13 | Motor stepper | mis. NEMA17 atau sejenis | 1 |
-| 14 | Driver motor stepper | mis. A4988/DRV8825 | 1 |
-| 15 | Servo motor | SG90 | 1 |
-| 16 | Catu daya eksternal | sesuai kebutuhan motor DC/stepper (jangan gunakan 5V dari USB langsung) | 1 |
-| 17 | ESC (Electronic Speed Controller) | mis. ESC brushless 20-30A (RC hobby) | 1 |
-| 18 | Motor brushless (BLDC) | mis. motor brushless RC 2200KV, **tanpa propeller/baling-baling terpasang** | 1 |
-| 19 | Baterai LiPo | 2S–3S (7.4V–11.1V), sesuai spesifikasi ESC dan motor | 1 |
-| 20 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
+| 5 | Modul joystick 2-axis KY-023 | Dual potensiometer (VRx/VRy) + tombol tekan (SW) | 1 |
+| 6 | Modul touch sensor TTP223 | Capacitive touch sensor, output digital | 1 |
+| 7 | Hall effect sensor module | mis. A3144/KY-003 | 1 |
+| 8 | Magnet kecil | untuk uji hall effect | 1 |
+| 9 | Sensor ultrasonik | HC-SR04 | 1 |
+| 10 | Sensor IR obstacle | — | 1 |
+| 11 | Motor DC + driver | mis. L298N/L293D | 1 |
+| 12 | Motor stepper | mis. NEMA17 atau sejenis | 1 |
+| 13 | Driver motor stepper | mis. A4988/DRV8825 | 1 |
+| 14 | Servo motor | SG90 | 1 |
+| 15 | Catu daya eksternal | sesuai kebutuhan motor DC/stepper (jangan gunakan 5V dari USB langsung) | 1 |
+| 16 | ESC (Electronic Speed Controller) | mis. ESC brushless 20-30A (RC hobby) | 1 |
+| 17 | Motor brushless (BLDC) | mis. motor brushless RC 2200KV, **tanpa propeller/baling-baling terpasang** | 1 |
+| 18 | Baterai LiPo | 2S–3S (7.4V–11.1V), sesuai spesifikasi ESC dan motor | 1 |
+| 19 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
 
 ---
 
 ## C. Dasar Teori
 
-### C.1 ADC pada ESP32
-ESP32 memiliki ADC (Analog-to-Digital Converter) internal dengan resolusi default **12-bit** (nilai 0–4095) dan referensi tegangan sekitar **0–3.3V**. Fungsi `analogRead(pin)` pada framework Arduino mengembalikan nilai digital yang merepresentasikan tegangan analog pada pin tersebut. Perlu diperhatikan bahwa ADC ESP32 memiliki karakteristik non-linear pada tegangan rendah dan tinggi, sehingga kalibrasi/pemetaan nilai (mapping) seringkali diperlukan agar hasil pembacaan sesuai dengan besaran fisik yang diukur.
+### C.1 Sensor Resistif — Joystick 2-Axis sebagai Input Kontrol
+**Modul 1 Percobaan 5** telah memperkenalkan sensor resistif melalui LDR — sebuah resistor variabel yang dibaca lewat rangkaian pembagi tegangan ke ADC. **Joystick 2-axis (mis. modul KY-023)** bekerja dengan basis transduksi yang **sama persis (resistif)**, namun memperluas penerapannya: di dalam modul terdapat **dua potensiometer** (masing-masing untuk sumbu X dan sumbu Y) yang porosnya digerakkan secara mekanis oleh gerakan stick, ditambah satu **tombol tekan (push button, SW)** yang aktif saat stick ditekan ke bawah.
 
-### C.2 Sensor Resistif — Prinsip Pembagi Tegangan
-Sensor resistif (LDR, thermistor, potensiometer) bekerja dengan mengubah nilai resistansinya terhadap besaran fisik (cahaya, suhu, posisi). Karena mikrokontroler hanya dapat membaca tegangan (bukan resistansi secara langsung), sensor resistif dirangkai sebagai **pembagi tegangan (voltage divider)** bersama resistor tetap, sehingga perubahan resistansi menghasilkan perubahan tegangan yang dapat dibaca oleh ADC.
+Perbedaan mendasar dengan LDR terletak pada **peran** sensor tersebut dalam sistem: LDR di Modul 1 murni berfungsi sebagai sensor pasif (membaca besaran lingkungan berupa intensitas cahaya), sedangkan joystick di sini berfungsi sebagai **input kontrol interaktif (Human-Machine Interface/HMI)** — nilai ADC yang dihasilkan tidak merepresentasikan besaran fisik lingkungan, melainkan **perintah** yang diberikan pengguna secara langsung untuk mengendalikan aktuator (motor DC, stepper, servo, dan BLDC pada Percobaan 3–6 modul ini).
 
-```
-3.3V ---[Sensor Resistif]---+---[Resistor Tetap]--- GND
-                             |
-                          ke ADC
-```
+Setiap sumbu joystick menghasilkan nilai ADC 12-bit (0–4095) dengan **titik tengah (netral)** di sekitar nilai 2048 saat stick tidak disentuh — nilai ini umumnya tidak presisi tepat 2048 karena toleransi komponen, sehingga diperlukan **dead zone** (rentang toleransi di sekitar titik tengah yang dianggap "netral") agar motor tidak bergerak sendiri akibat noise pembacaan ADC saat stick dalam posisi diam.
 
-![Gambar 1: Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard](img/modul_ldr_pembagi_tegangan.png)
+![Gambar 1: Foto modul joystick 2-axis KY-023 (label pin VRx/VRy/SW/VCC/GND)](img/modul_joystick_ky023.png)
 
-### C.3 Sensor Kapasitif
+### C.2 Sensor Kapasitif
 Sensor kapasitif mendeteksi besaran fisik (sentuhan, kelembapan, jarak dekat) melalui **perubahan nilai kapasitansi**. Pada praktikum ini digunakan modul **touch sensor TTP223** — modul berbasis IC TTP223 yang sudah mengintegrasikan rangkaian deteksi kapasitansi dan pembanding ambang batas (threshold) secara internal, sehingga cukup menghasilkan **output digital HIGH/LOW** siap pakai (umumnya aktif HIGH saat pad disentuh) tanpa perlu kalibrasi nilai analog secara manual — berbeda dengan fitur *touch* bawaan ESP32 (`touchRead()`) yang mengembalikan nilai mentah dan memerlukan penentuan threshold sendiri. Sensor kapasitif lain (mis. capacitive soil moisture, capacitive proximity) bekerja dengan prinsip serupa — mengukur perubahan kapasitansi pada elektroda sensor — namun umumnya berbentuk modul terpisah dengan output analog.
 
 ![Gambar 2: Foto modul touch sensor TTP223 beserta label pin VCC/GND/OUT](img/modul_touch_ttp223.png)
 
-### C.4 Sensor Induktif
+### C.3 Sensor Induktif
 Sensor induktif mendeteksi objek logam atau perubahan medan magnet melalui **perubahan induktansi/medan magnet**. Pada praktikum ini digunakan **hall effect sensor**, yang mendeteksi keberadaan/kekuatan medan magnet secara langsung — umum digunakan untuk mendeteksi posisi magnet atau kecepatan putar (bersama magnet pada objek berputar). Contoh sensor induktif lain adalah *inductive proximity sensor*, yang menghasilkan medan elektromagnetik osilasi dan mendeteksi benda logam melalui redaman (eddy current) pada medan tersebut.
 
 ![Gambar 3: Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji](img/modul_hall_effect.png)
 
-### C.5 Sensor Basis Lain (Akustik & Optik)
+### C.4 Sensor Basis Lain (Akustik & Optik)
 - **Ultrasonik (akustik):** mengukur jarak berdasarkan waktu tempuh gelombang suara (pulsa dipancarkan, dipantulkan objek, lalu diterima kembali); jarak dihitung dari selisih waktu dan kecepatan suara di udara
 - **Inframerah/optik:** mendeteksi objek berdasarkan pantulan cahaya inframerah; umum digunakan sebagai sensor jarak dekat/obstacle dengan output digital
 
 ![Gambar 4: Foto modul sensor ultrasonik HC-SR04 (label pin Trig/Echo) berdampingan dengan modul sensor IR obstacle](img/sensor_ultrasonik_ir.png)
 
-### C.6 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC
+### C.5 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC
 PWM adalah teknik menghasilkan sinyal digital yang menyerupai sinyal analog dengan mengatur **duty cycle** (persentase waktu sinyal HIGH dalam satu periode). Semakin besar duty cycle, semakin besar "rata-rata" tegangan yang dirasakan oleh beban (mis. motor DC), sehingga kecepatan putarnya meningkat. Pada ESP32 framework Arduino, PWM diakses melalui API **LEDC** berbasis **channel**: `ledcSetup(channel, freq, resolution)` untuk mengonfigurasi sebuah channel PWM (frekuensi & resolusi), `ledcAttachPin(pin, channel)` untuk menghubungkan channel tersebut ke pin fisik, dan `ledcWrite(channel, duty)` untuk mengatur duty cycle-nya berdasarkan nomor channel (bukan nomor pin). Arah putar motor DC diatur secara terpisah melalui driver motor (mis. L298N) menggunakan dua pin digital (IN1/IN2).
 
 > **Catatan versi:** Seluruh contoh kode pada modul ini (dan modul-modul lain dalam rangkaian praktikum) menggunakan **platform PlatformIO resmi `espressif32`** tanpa mengunci versi khusus, yang secara default membawa **Arduino-ESP32 core versi 2.0.x**. API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`) adalah API yang tersedia pada core versi ini. Core versi 3.x (dengan API LEDC berbasis pin seperti `ledcAttach()`) memerlukan platform komunitas terpisah (mis. fork *pioarduino*) dan **tidak dibahas** pada praktikum ini agar tetap konsisten dan kompatibel dengan library lain (mis. ESP32Servo) yang digunakan di modul-modul ini.
 
 ![Gambar 5: Grafik sinyal PWM dengan beberapa nilai duty cycle berbeda (mis. 25%, 50%, 75%), menunjukkan hubungan duty cycle dengan tegangan rata-rata](img/grafik_pwm_duty_cycle.png)
 
-### C.7 Kontrol Posisi Motor Servo
+### C.6 Kontrol Posisi Motor Servo
 Motor servo juga dikendalikan menggunakan sinyal PWM, namun dengan prinsip yang berbeda dari kontrol kecepatan motor DC — pada servo, **lebar pulsa (pulse width)** itu sendiri yang menentukan posisi sudut, bukan rata-rata duty cycle. Umumnya sinyal kontrol servo memiliki periode 20ms (frekuensi 50Hz), dengan lebar pulsa sekitar 1ms merepresentasikan sudut 0° dan 2ms merepresentasikan sudut 180°. Pada framework Arduino, detail ini diabstraksi oleh library seperti **ESP32Servo**, sehingga cukup memanggil fungsi `.write(angle)` untuk menggerakkan servo ke sudut tertentu.
 
 ![Gambar 6: Diagram lebar pulsa sinyal servo (1ms–2ms dalam periode 20ms) beserta sudut yang dihasilkan (0°–180°)](img/diagram_pulsa_servo.png)
 
-### C.8 Motor Stepper
+### C.7 Motor Stepper
 Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **langkah-langkah diskret (step)** sesuai jumlah pulsa yang diberikan — misalnya 1.8° per step pada motor stepper standar (200 step per putaran penuh). Motor stepper dikendalikan melalui **driver motor stepper** (mis. A4988, DRV8825), yang menerima sinyal:
 - **STEP:** setiap pulsa (transisi LOW→HIGH) menyebabkan motor berputar satu step
 - **DIR:** menentukan arah putaran motor
@@ -130,7 +123,7 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 
 ![Gambar 7: Diagram wiring motor stepper NEMA17 ke driver A4988/DRV8825, beserta pin STEP/DIR/EN/RESET ke ESP32](img/wiring_motor_stepper.png)
 
-### C.9 ESC (Electronic Speed Controller) dan Motor Brushless
+### C.8 ESC (Electronic Speed Controller) dan Motor Brushless
 Motor **brushless (BLDC — Brushless DC Motor)** tidak dapat dikendalikan langsung oleh driver H-bridge sederhana seperti motor DC biasa, karena memerlukan **komutasi elektronik** — pengaturan urutan pemberian arus ke tiga lilitan stator secara presisi agar rotor berputar. Tugas ini dilakukan oleh **ESC (Electronic Speed Controller)**, rangkaian elektronik yang menerima sinyal kontrol sederhana dari mikrokontroler dan menerjemahkannya menjadi pola komutasi 3-fasa untuk motor.
 
 Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz (periode 20ms), dengan lebar pulsa menentukan besar throttle — umumnya **1000µs merepresentasikan throttle minimum** (motor berhenti/idle) dan **2000µs merepresentasikan throttle maksimum**. Karena kesamaan format sinyal ini, ESC dapat dikendalikan menggunakan library yang sama dengan motor servo (mis. **ESP32Servo**), cukup menggunakan fungsi `writeMicroseconds()` untuk mengatur lebar pulsa secara langsung (dalam mikrodetik), alih-alih `write(angle)` yang bekerja dalam satuan derajat.
@@ -159,7 +152,7 @@ Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz 
    board = esp32dev
    framework = arduino
    ```
-4. Untuk Percobaan 5 (Motor Servo) dan Percobaan 6 (ESC & Motor Brushless), tambahkan library **ESP32Servo** melalui PlatformIO Library Manager atau tambahkan pada `platformio.ini`:
+4. Untuk Percobaan 5 (Motor Servo), tambahkan library **ESP32Servo** melalui PlatformIO Library Manager atau tambahkan pada `platformio.ini` (Percobaan 6/ESC tidak memerlukan library ini — lihat catatan pada Percobaan 6):
    ```ini
    lib_deps = madhephaestus/ESP32Servo@^3.0.0
    ```
@@ -168,19 +161,24 @@ Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz 
 
 ## E. Kegiatan Praktikum
 
-### PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif
+### PERCOBAAN 1 — Sensor Resistif (Joystick), Kapasitif, dan Induktif
 
 **Tujuan:**
-Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif (LDR melalui ADC), kapasitif (touch sensor TTP223), dan induktif (hall effect sensor).
+Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif melalui joystick 2-axis KY-023 (VRx, VRy, dan tombol SW), kapasitif (touch sensor TTP223), dan induktif (hall effect sensor).
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| LDR (pembagi tegangan dengan resistor 10kΩ) | GPIO 34 | Titik tengah pembagi tegangan ke ADC |
+| Joystick KY-023 — VRx | GPIO 34 | Output analog sumbu X (ADC1) |
+| Joystick KY-023 — VRy | GPIO 35 | Output analog sumbu Y (ADC1) |
+| Joystick KY-023 — SW | GPIO 27 | Tombol tekan, aktif LOW (gunakan `INPUT_PULLUP`) |
+| Joystick KY-023 — VCC/GND | 3.3V, GND | Sesuai datasheet modul |
 | Modul TTP223 — OUT | GPIO 4 | Output digital, umumnya aktif HIGH saat pad disentuh |
 | Modul TTP223 — VCC/GND | 3.3V, GND | Sesuai datasheet modul |
 | Hall effect sensor module | GPIO 26 | Output digital |
+
+> **Catatan:** Pin **GPIO 34, 35, 27** yang digunakan joystick pada Percobaan ini sengaja dipertahankan **konsisten** di seluruh Percobaan 3–6 modul ini, karena joystick akan dipakai berulang sebagai input kontrol aktuator pada Percobaan-Percobaan tersebut.
 
 **`platformio.ini`:**
 ```ini
@@ -191,33 +189,38 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai LDR sebagai pembagi tegangan sesuai skema, hubungkan titik tengah ke GPIO 34
+1. Rangkai joystick KY-023 (VCC, GND, VRx ke GPIO 34, VRy ke GPIO 35, SW ke GPIO 27)
 2. Rangkai modul TTP223 (VCC, GND, dan OUT ke GPIO 4)
 3. Rangkai hall effect sensor module pada GPIO 26
-4. Upload program gabungan di bawah, amati ketiga pembacaan sekaligus pada Serial Monitor
-5. Uji LDR dengan menutup/menyinari sensor, uji TTP223 dengan menyentuh pad sensor, dan uji hall effect dengan mendekatkan magnet — catat rentang/status hasil masing-masing
+4. Upload program gabungan di bawah, amati keempat pembacaan (VRx, VRy, SW, TTP223, hall effect) sekaligus pada Serial Monitor
+5. Uji joystick dengan menggerakkan stick ke berbagai arah serta menekannya, uji TTP223 dengan menyentuh pad sensor, dan uji hall effect dengan mendekatkan magnet — catat rentang/status hasil masing-masing
 
-**Kode Program (LDR, TTP223, & Hall Effect):**
+**Kode Program (Joystick KY-023, TTP223, & Hall Effect):**
 ```cpp
-#define LDR_PIN 34
+#define JOY_VRX 34
+#define JOY_VRY 35
+#define JOY_SW  27
 #define TOUCH_PIN 4  // OUT modul TTP223
 #define HALL_PIN 26
 
 void setup() {
   Serial.begin(115200);
+  pinMode(JOY_SW, INPUT_PULLUP); // SW terhubung ke GND saat ditekan
   pinMode(TOUCH_PIN, INPUT);
   pinMode(HALL_PIN, INPUT);
 }
 
 void loop() {
-  int ldrRaw = analogRead(LDR_PIN);
-  float ldrVoltage = ldrRaw * (3.3 / 4095.0);
+  int vrx = analogRead(JOY_VRX);
+  int vry = analogRead(JOY_VRY);
+  bool pressed = (digitalRead(JOY_SW) == LOW); // aktif LOW (internal pull-up)
 
   bool touched = (digitalRead(TOUCH_PIN) == HIGH); // TTP223 umumnya aktif HIGH
   bool magnetDetected = (digitalRead(HALL_PIN) == LOW); // umumnya aktif LOW, cek datasheet modul
 
-  Serial.printf("LDR: %d (%.2fV) | Touch (TTP223): %s | Hall Effect: %s\n",
-                ldrRaw, ldrVoltage,
+  Serial.printf("Joystick VRx: %d | VRy: %d | SW: %s | Touch (TTP223): %s | Hall Effect: %s\n",
+                vrx, vry,
+                pressed ? "DITEKAN" : "idle",
                 touched ? "TERSENTUH" : "idle",
                 magnetDetected ? "MAGNET TERDETEKSI" : "idle");
   delay(300);
@@ -227,8 +230,8 @@ void loop() {
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `analogRead(LDR_PIN)` | Membaca nilai ADC 12-bit (0–4095) pada pin yang terhubung ke titik tengah pembagi tegangan LDR |
-| `ldrVoltage = ldrRaw * (3.3 / 4095.0)` | Mengonversi nilai ADC menjadi tegangan (volt) berdasarkan referensi ADC 3.3V dan resolusi 12-bit |
+| `analogRead(JOY_VRX)` / `analogRead(JOY_VRY)` | Membaca nilai ADC 12-bit (0–4095) dari masing-masing potensiometer sumbu X dan Y joystick — sama prinsipnya dengan pembacaan LDR di Modul 1, namun di sini nilainya diinterpretasikan sebagai **perintah kontrol**, bukan besaran lingkungan |
+| `pinMode(JOY_SW, INPUT_PULLUP)` | Tombol SW pada joystick umumnya bertipe *active-low* (menghubungkan pin ke GND saat ditekan), sehingga memerlukan pull-up (internal atau eksternal) agar terbaca HIGH saat tidak ditekan |
 | `digitalRead(TOUCH_PIN) == HIGH` | Modul TTP223 sudah mengeluarkan output digital siap pakai — tidak perlu `touchRead()` maupun threshold manual seperti fitur touch bawaan ESP32 |
 | `digitalRead(HALL_PIN) == LOW` | Sebagian besar modul hall effect bersifat aktif LOW — perlu diverifikasi pada datasheet modul yang digunakan |
 
@@ -317,18 +320,22 @@ void loop() {
 
 ---
 
-### PERCOBAAN 3 — Aktuator Motor DC
+### PERCOBAAN 3 — Aktuator Motor DC (Dikendalikan Joystick)
 
 **Tujuan:**
-Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC menggunakan sinyal PWM.
+Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC menggunakan sinyal PWM, dikendalikan secara interaktif melalui sumbu X joystick KY-023.
+
+**Prinsip Kontrol:** Posisi joystick VRx (0–4095) dipetakan sebagai berikut — nilai di sekitar titik tengah (**dead zone**) berarti motor berhenti; deviasi ke satu sisi menggerakkan motor maju dengan kecepatan proporsional terhadap besar deviasi tersebut; deviasi ke sisi berlawanan menggerakkan motor mundur. Tombol **SW** berfungsi sebagai **stop darurat** — selama ditekan, motor dipaksa berhenti apa pun posisi joystick.
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
+| Joystick KY-023 — VRx | GPIO 34 | Kecepatan & arah (sama seperti Percobaan 1) |
+| Joystick KY-023 — SW | GPIO 27 | Stop darurat, aktif LOW |
 | Driver motor (ENA) | GPIO 25 | Sinyal PWM kecepatan |
 | Driver motor (IN1) | GPIO 26 | Arah putar motor |
-| Driver motor (IN2) | GPIO 27 | Arah putar motor |
+| Driver motor (IN2) | GPIO 33 | Arah putar motor |
 
 **`platformio.ini`:**
 ```ini
@@ -340,24 +347,30 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Rangkai motor DC melalui driver L298N sesuai skema, gunakan catu daya eksternal untuk motor (bukan 5V dari USB langsung)
-2. Implementasikan kontrol PWM pada pin ENA untuk mengatur kecepatan, serta IN1/IN2 untuk mengatur arah (maju/mundur/berhenti)
-3. Uji kendali motor melalui perintah teks pada Serial Monitor (`F` = maju, `B` = mundur, `S` = berhenti, angka 0–255 = atur PWM)
-4. Amati perubahan kecepatan putar motor saat nilai PWM diubah
+2. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
+3. Implementasikan kontrol PWM pada pin ENA untuk mengatur kecepatan, serta IN1/IN2 untuk mengatur arah (maju/mundur/berhenti), semuanya berdasarkan posisi joystick
+4. Uji kendali motor dengan menggerakkan joystick ke kedua sisi, amati perubahan kecepatan dan arah putar sesuai besar dan arah deviasi joystick dari titik tengah
+5. Uji tombol SW sebagai stop darurat — pastikan motor langsung berhenti selama tombol ditekan, terlepas dari posisi VRx
 
-**Kode Program (Kontrol Motor DC via Serial):**
+**Kode Program (Kontrol Motor DC via Joystick):**
 ```cpp
 #include <Arduino.h>
+
+//==================== JOYSTICK ====================
+#define JOY_VRX 34
+#define JOY_SW  27
+
+const int JOY_CENTER = 2048;
+const int JOY_DEADZONE = 300; // toleransi di sekitar titik tengah
 
 //==================== MOTOR ====================
 #define ENA 25
 #define IN1 26
-#define IN2 27
+#define IN2 33
 
 const int pwmChannel = 0;
 const int pwmFreq = 1000;
 const int pwmResolution = 8;
-
-int motorSpeed = 150;
 
 //================================================
 
@@ -386,70 +399,80 @@ void setup() {
 
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
+  pinMode(JOY_SW, INPUT_PULLUP);
 
   ledcSetup(pwmChannel, pwmFreq, pwmResolution); // konfigurasi channel PWM (core 2.x)
   ledcAttachPin(ENA, pwmChannel);                // hubungkan channel ke pin ENA
 
   Serial.println("--------------------------------");
-  Serial.println("ESP32 Motor DC Test");
-  Serial.println("Perintah: F=Forward, B=Backward, S=Stop, 0-255=PWM");
+  Serial.println("ESP32 Motor DC via Joystick");
+  Serial.println("Geser VRx untuk maju/mundur, tekan SW untuk stop darurat");
   Serial.println("--------------------------------");
 
-  motorForward(motorSpeed);
+  motorStop();
 }
 
 //================================================
 
 void loop() {
-  if (Serial.available()) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
+  bool emergencyStop = (digitalRead(JOY_SW) == LOW);
 
-    if (cmd == "F") {
-      motorForward(motorSpeed);
-      Serial.println("Forward");
-    } else if (cmd == "B") {
-      motorBackward(motorSpeed);
-      Serial.println("Backward");
-    } else if (cmd == "S") {
-      motorStop();
-      Serial.println("Stop");
-    } else {
-      int pwm = cmd.toInt();
-      if (pwm >= 0 && pwm <= 255) {
-        motorSpeed = pwm;
-        motorForward(motorSpeed);
-        Serial.print("PWM = ");
-        Serial.println(motorSpeed);
-      }
-    }
+  if (emergencyStop) {
+    motorStop();
+    Serial.println("STOP DARURAT (SW ditekan)");
+    delay(50);
+    return;
   }
+
+  int vrx = analogRead(JOY_VRX);
+  int deviation = vrx - JOY_CENTER;
+
+  if (abs(deviation) < JOY_DEADZONE) {
+    motorStop();
+    Serial.println("Motor: idle (joystick netral)");
+  } else if (deviation > 0) {
+    uint8_t speed = map(deviation, JOY_DEADZONE, JOY_CENTER, 0, 255);
+    motorForward(speed);
+    Serial.printf("Motor: MAJU, PWM = %d\n", speed);
+  } else {
+    uint8_t speed = map(-deviation, JOY_DEADZONE, JOY_CENTER, 0, 255);
+    motorBackward(speed);
+    Serial.printf("Motor: MUNDUR, PWM = %d\n", speed);
+  }
+
+  delay(100);
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `ledcSetup(pwmChannel, pwmFreq, pwmResolution)` | Mengonfigurasi channel PWM 0 dengan frekuensi 1kHz dan resolusi 8-bit (nilai duty 0–255) |
-| `ledcAttachPin(ENA, pwmChannel)` | Menghubungkan channel PWM yang telah dikonfigurasi ke pin fisik ENA |
-| `ledcWrite(pwmChannel, speed)` | Mengatur nilai duty cycle PWM berdasarkan nomor **channel** (bukan nomor pin) — karakteristik API LEDC berbasis channel pada core 2.x |
-| `motorForward()` / `motorBackward()` / `motorStop()` | Mengatur kombinasi IN1/IN2 untuk menentukan arah putar, sekaligus nilai PWM untuk kecepatan |
-| `Serial.readStringUntil('\n')` | Membaca perintah teks dari Serial Monitor untuk mengendalikan motor secara interaktif |
+| `JOY_CENTER`, `JOY_DEADZONE` | Titik tengah nominal ADC (2048) dan rentang toleransi di sekitarnya — deviasi di bawah nilai ini dianggap joystick dalam posisi netral (motor berhenti) |
+| `deviation = vrx - JOY_CENTER` | Selisih posisi VRx terhadap titik tengah — nilai positif berarti stick digeser ke satu sisi (maju), negatif ke sisi berlawanan (mundur) |
+| `map(deviation, JOY_DEADZONE, JOY_CENTER, 0, 255)` | Memetakan besar deviasi (setelah dikurangi dead zone) menjadi nilai PWM 0–255, sehingga kecepatan motor proporsional terhadap seberapa jauh joystick digeser dari titik tengah |
+| `digitalRead(JOY_SW) == LOW` diperiksa di awal `loop()` | Tombol SW berfungsi sebagai **stop darurat** dengan prioritas tertinggi — diperiksa sebelum logika kecepatan/arah, dan langsung `return` agar motor pasti berhenti selama tombol ditekan |
 
 ---
 
-### PERCOBAAN 4 — Aktuator Motor Stepper
+### PERCOBAAN 4 — Aktuator Motor Stepper (Dikendalikan Joystick)
 
 **Tujuan:**
-Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal step melalui driver motor stepper.
+Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal step melalui driver motor stepper, termasuk profil akselerasi/deselerasi, dikendalikan secara interaktif melalui sumbu X joystick KY-023.
+
+**Prinsip Kontrol:** Selama joystick digeser melewati dead zone, motor berputar dalam **burst step** (sejumlah step berturut-turut) ke arah sesuai sisi deviasi, dengan jumlah step per burst proporsional terhadap besar deviasi (deviasi besar → burst lebih panjang, terasa seperti kecepatan lebih tinggi). Setiap burst tetap menerapkan profil akselerasi–kecepatan maksimum–deselerasi seperti pada kode aslinya, agar motor tidak kehilangan step akibat perubahan kecepatan mendadak. Tombol **SW** menonaktifkan driver (EN) sebagai stop darurat.
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Driver stepper — STEP | GPIO 18 | Setiap pulsa menggerakkan motor satu step |
-| Driver stepper — EN | GPIO 19 | Enable driver (aktif LOW pada sebagian besar driver) |
-| Driver stepper — RESET | GPIO 21 | Ditarik HIGH agar driver aktif normal |
+| Joystick KY-023 — VRx | GPIO 34 | Arah & besar burst step |
+| Joystick KY-023 — SW | GPIO 27 | Stop darurat (nonaktifkan driver), aktif LOW |
+| Driver stepper — IN1 | GPIO 16 | Fasa koil 1 |
+| Driver stepper — IN2 | GPIO 17 | Fasa koil 1 |
+| Driver stepper — IN3 | GPIO 18 | Fasa koil 2 |
+| Driver stepper — IN4 | GPIO 19 | Fasa koil 2 |
+
+> **Catatan:** Skema ini menggunakan driver stepper 4-fasa (mis. ULN2003 untuk motor stepper 28BYJ-48), sesuai kode program yang mengatur `stepSequence` 4-bit secara langsung — berbeda dari driver STEP/DIR (A4988/DRV8825) yang dibahas pada **C.7 Motor Stepper**. Jika menggunakan driver STEP/DIR, sesuaikan fungsi `setStep()`/`stopMotor()` menjadi pulsa pada pin STEP dan level pada pin DIR.
 
 **`platformio.ini`:**
 ```ini
@@ -460,63 +483,160 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor stepper melalui driver A4988 sesuai skema, gunakan catu daya eksternal sesuai spesifikasi motor
-2. Implementasikan fungsi untuk menggerakkan motor sejumlah step yang setara dengan 90° (lihat kode program di bawah)
-3. Uji program dan amati pergerakan motor stepper, hitung apakah jumlah step yang diberikan sesuai dengan sudut putar yang diharapkan
-4. Sebagai latihan tambahan, ukur waktu antar pulsa (`delayMicroseconds`) minimum yang masih membuat motor berputar dengan lancar (tanpa "kehilangan step")
+1. Rangkai motor stepper melalui driver sesuai skema, gunakan catu daya eksternal sesuai spesifikasi motor
+2. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
+3. Upload kode program di bawah, amati bahwa motor **diam** saat joystick di posisi tengah
+4. Geser joystick ke satu sisi, amati motor berputar searah jarum jam (CW); geser ke sisi berlawanan, amati motor berputar berlawanan arah jarum jam (CCW) — perhatikan bagaimana besar deviasi memengaruhi "rasa" kecepatan (jumlah step per burst)
+5. Uji tombol SW sebagai stop darurat — pastikan motor berhenti bergerak selama tombol ditekan
+6. Sebagai latihan tambahan, ukur waktu antar pulsa (`MIN_DELAY_US`) minimum yang masih membuat motor berputar dengan lancar (tanpa "kehilangan step")
 
-**Kode Program (Kontrol Motor Stepper):**
+**Kode Program (Kontrol Motor Stepper via Joystick, dengan Profil Akselerasi):**
 ```cpp
-#define STEP_PIN 18
-#define EN_PIN   19
-#define RESET_PIN 21
+#include <Arduino.h>
 
-void move90() {
-  for (int i = 0; i < 50; i++) {
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(1000);
+//==================== JOYSTICK ====================
+#define JOY_VRX 34
+#define JOY_SW  27
 
-    digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(1000);
+const int JOY_CENTER = 2048;
+const int JOY_DEADZONE = 300;
+
+//==================== MOTOR STEPPER ====================
+#define IN1 16
+#define IN2 17
+#define IN3 18
+#define IN4 19
+
+const int motorPins[4] = {IN1, IN2, IN3, IN4};
+
+const int stepSequence[8][4] = {
+    {1, 0, 0, 0},
+    {1, 1, 0, 0},
+    {0, 1, 0, 0},
+    {0, 1, 1, 0},
+    {0, 0, 1, 0},
+    {0, 0, 1, 1},
+    {0, 0, 0, 1},
+    {1, 0, 0, 1}
+};
+
+// ==================== SPEED ====================
+const int START_DELAY_US = 2000; // delay saat mulai (akselerasi)
+const int MIN_DELAY_US = 600;    // delay pada kecepatan maksimum
+const int ACCEL_STEPS = 30;      // jumlah step untuk akselerasi/deselerasi per burst
+
+// ==================== MOTOR ====================
+void setStep(int step) {
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(motorPins[i], stepSequence[step][i]);
   }
 }
 
-void setup() {
-  pinMode(STEP_PIN, OUTPUT);
-  pinMode(EN_PIN, OUTPUT);
-  pinMode(RESET_PIN, OUTPUT);
-
-  digitalWrite(EN_PIN, HIGH);
-  digitalWrite(RESET_PIN, HIGH);
+void stopMotor() {
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(motorPins[i], LOW);
+  }
 }
 
+int calculateDelay(int currentStep, int totalSteps) {
+  if (currentStep < ACCEL_STEPS) {
+    return map(currentStep, 0, ACCEL_STEPS, START_DELAY_US, MIN_DELAY_US);
+  }
+  if (currentStep > totalSteps - ACCEL_STEPS) {
+    return map(currentStep, totalSteps - ACCEL_STEPS, totalSteps, MIN_DELAY_US, START_DELAY_US);
+  }
+  return MIN_DELAY_US;
+}
+
+void rotateCW(int steps) {
+  for (int i = 0; i < steps; i++) {
+    setStep(i % 8);
+    delayMicroseconds(calculateDelay(i, steps));
+  }
+  stopMotor();
+}
+
+void rotateCCW(int steps) {
+  for (int i = 0; i < steps; i++) {
+    setStep(7 - (i % 8));
+    delayMicroseconds(calculateDelay(i, steps));
+  }
+  stopMotor();
+}
+
+// ==================== SETUP ====================
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(JOY_SW, INPUT_PULLUP);
+
+  stopMotor();
+
+  Serial.println("==========================");
+  Serial.println("STEPPER VIA JOYSTICK");
+  Serial.println("==========================");
+}
+
+// ==================== LOOP ====================
 void loop() {
-  move90();
-  delay(2000);
+  if (digitalRead(JOY_SW) == LOW) { // stop darurat
+    stopMotor();
+    Serial.println("STOP DARURAT (SW ditekan)");
+    delay(50);
+    return;
+  }
+
+  int vrx = analogRead(JOY_VRX);
+  int deviation = vrx - JOY_CENTER;
+
+  if (abs(deviation) < JOY_DEADZONE) {
+    stopMotor();
+    return;
+  }
+
+  // Besar deviasi menentukan panjang burst step (kesan "kecepatan")
+  int burstSteps = map(abs(deviation), JOY_DEADZONE, JOY_CENTER, 50, 800);
+
+  if (deviation > 0) {
+    Serial.printf("CW, burst = %d step\n", burstSteps);
+    rotateCW(burstSteps);
+  } else {
+    Serial.printf("CCW, burst = %d step\n", burstSteps);
+    rotateCCW(burstSteps);
+  }
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `move90()` | Mengirim 50 pulsa STEP berturut-turut — jumlah step untuk mencapai sudut tertentu tergantung spesifikasi motor (step/putaran) dan mode microstepping driver |
-| `delayMicroseconds(1000)` | Jeda antar pulsa STEP; semakin kecil nilainya, semakin cepat motor berputar, namun terlalu kecil dapat menyebabkan motor kehilangan step |
-| `digitalWrite(EN_PIN, HIGH)` | Perlu diverifikasi pada datasheet driver — sebagian driver justru aktif LOW pada pin EN, sehingga logikanya perlu disesuaikan |
-| `digitalWrite(RESET_PIN, HIGH)` | Menonaktifkan mode reset agar driver beroperasi normal |
+| `stepSequence[8][4]` | Urutan pengaktifan 4 koil driver (mis. ULN2003) untuk metode *half-step*, menghasilkan resolusi step lebih halus dibanding *full-step* |
+| `calculateDelay()` | Menghitung delay antar pulsa berdasarkan posisi step saat ini dalam satu burst — delay besar (lambat) di awal/akhir burst (akselerasi/deselerasi), delay minimum (cepat) di tengah burst |
+| `burstSteps = map(abs(deviation), JOY_DEADZONE, JOY_CENTER, 50, 800)` | Memetakan besar deviasi joystick (setelah dikurangi dead zone) menjadi jumlah step per burst — semakin jauh joystick digeser dari titik tengah, semakin panjang burst (kesan motor "lebih cepat" karena berputar lebih jauh sebelum `loop()` mengevaluasi ulang posisi joystick) |
+| `rotateCW()` / `rotateCCW()` | Menjalankan satu burst step lengkap (dengan profil akselerasi) searah/berlawanan arah jarum jam, lalu memanggil `stopMotor()` di akhir burst |
+| `digitalRead(JOY_SW) == LOW` diperiksa di awal `loop()` | Tombol SW sebagai stop darurat prioritas tertinggi, sama seperti pada Percobaan 3 |
 
-> **Catatan:** Kode dasar ini hanya menggerakkan motor pada satu arah. Sebagai pengembangan, tambahkan pin **DIR** pada driver untuk mengatur arah putaran (bandingkan dengan pendekatan IN1/IN2 pada motor DC di Percobaan 3).
+> **Catatan:** Kode dasar ini hanya diuji dengan driver 4-fasa (ULN2003). Sebagai pengembangan, adaptasikan `setStep()`/`stopMotor()` menjadi pulsa STEP + level DIR bila menggunakan driver A4988/DRV8825 (lihat **C.7 Motor Stepper**), dan bandingkan dengan pendekatan IN1/IN2 pada motor DC di Percobaan 3.
 
 ---
 
-### PERCOBAAN 5 — Aktuator Motor Servo
+### PERCOBAAN 5 — Aktuator Motor Servo (Dikendalikan Joystick)
 
 **Tujuan:**
-Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan sinyal PWM melalui library ESP32Servo.
+Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan sinyal PWM melalui library ESP32Servo, dikendalikan secara langsung melalui sumbu X joystick KY-023.
+
+**Prinsip Kontrol:** Posisi joystick VRx (0–4095) dipetakan langsung secara linear menjadi sudut servo (0°–180°) — posisi joystick paling kiri menghasilkan sudut 0°, paling kanan menghasilkan 180°, dan posisi tengah menghasilkan sekitar 90°. Tombol **SW** digunakan untuk **melepas (detach)** servo — saat ditekan, servo kehilangan torsi (dapat diputar bebas dengan tangan); saat dilepas, servo kembali mengunci pada posisi sesuai joystick.
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
+| Joystick KY-023 — VRx | GPIO 34 | Posisi sudut servo (dipetakan langsung 0–180°) |
+| Joystick KY-023 — SW | GPIO 27 | Toggle detach/attach servo, aktif LOW |
 | Servo motor (sinyal) | GPIO 13 | Sinyal PWM servo (50Hz) |
 
 **`platformio.ini`:**
@@ -530,64 +650,79 @@ lib_deps = madhephaestus/ESP32Servo@^3.0.0
 
 **Langkah Kerja:**
 1. Rangkai servo motor sesuai skema (sinyal ke GPIO 13, VCC dan GND ke catu daya yang sesuai)
-2. Implementasikan program untuk menggerakkan servo secara bertahap dari 0° hingga 180°
-3. Amati kehalusan gerakan servo, bandingkan pergerakan bertahap (step kecil) dengan perpindahan langsung (mis. `myServo.write(180)` langsung dari posisi 0°)
+2. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
+3. Upload program, geser joystick dari ujung ke ujung dan amati servo mengikuti posisi secara langsung (0°–180°)
+4. Tekan dan tahan SW, coba putar poros servo dengan tangan (harus terasa bebas/tanpa torsi); lepas SW dan amati servo kembali mengunci pada posisi sesuai joystick saat itu
 
-**Kode Program (Kontrol Motor Servo):**
+**Kode Program (Kontrol Motor Servo via Joystick):**
 ```cpp
 #include <ESP32Servo.h>
 
+#define JOY_VRX 34
+#define JOY_SW  27
 #define SERVO_PIN 13
+
 Servo myServo;
+bool attached = true;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(JOY_SW, INPUT_PULLUP);
   myServo.attach(SERVO_PIN);
 }
 
 void loop() {
-  // Kontrol posisi servo 0 - 180 derajat secara bertahap
-  for (int angle = 0; angle <= 180; angle += 10) {
-    myServo.write(angle);
-    Serial.printf("Sudut: %d\n", angle);
-    delay(150);
+  bool releasePressed = (digitalRead(JOY_SW) == LOW);
+
+  if (releasePressed && attached) {
+    myServo.detach(); // lepas torsi, servo bebas diputar tangan
+    attached = false;
+    Serial.println("Servo DETACH (bebas)");
+  } else if (!releasePressed && !attached) {
+    myServo.attach(SERVO_PIN);
+    attached = true;
+    Serial.println("Servo ATTACH (terkunci)");
   }
 
-  delay(1000);
-
-  for (int angle = 180; angle >= 0; angle -= 10) {
+  if (attached) {
+    int vrx = analogRead(JOY_VRX);
+    int angle = map(vrx, 0, 4095, 0, 180);
     myServo.write(angle);
     Serial.printf("Sudut: %d\n", angle);
-    delay(150);
   }
 
-  delay(1000);
+  delay(50);
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `myServo.attach(SERVO_PIN)` | Menghubungkan objek `Servo` ke pin PWM yang digunakan, library akan mengatur frekuensi 50Hz secara otomatis |
-| `myServo.write(angle)` | Mengatur posisi sudut servo (0–180 derajat) — library mengonversi nilai sudut menjadi lebar pulsa yang sesuai |
+| `map(vrx, 0, 4095, 0, 180)` | Memetakan langsung rentang ADC penuh (0–4095) joystick menjadi rentang sudut servo (0–180°) — berbeda dari Percobaan 3/4 yang menggunakan dead zone di tengah, karena di sini posisi joystick merepresentasikan **posisi**, bukan kecepatan |
+| `myServo.detach()` / `myServo.attach(SERVO_PIN)` | Melepas dan menghubungkan kembali kendali PWM pada servo — saat *detach*, motor internal servo tidak menerima sinyal sehingga tidak melawan gaya luar (bebas diputar tangan) |
+| `attached` (flag) | Mencegah pemanggilan `attach()`/`detach()` berulang kali setiap iterasi `loop()` selagi status tombol tidak berubah |
 
 ---
 
-### PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC)
+### PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC) (Dikendalikan Joystick)
 
 **Tujuan:**
-Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, serta mengimplementasikan proses arming dan kontrol kecepatan motor menggunakan sinyal PWM (mikrodetik) melalui library ESP32Servo.
+Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, serta mengimplementasikan proses arming dan kontrol kecepatan motor secara langsung melalui **LEDC** (tanpa library ESP32Servo), dikendalikan secara interaktif melalui sumbu X joystick KY-023.
+
+**Prinsip Kontrol:** Setelah proses arming selesai, posisi joystick VRx dipetakan langsung menjadi throttle (1000–2000µs) — posisi paling kiri menghasilkan throttle minimum (motor idle/berhenti), semakin ke kanan semakin besar throttle. Tombol **SW** berfungsi sebagai **kill switch**: selama ditekan, throttle dipaksa ke nilai minimum (1000µs) terlepas dari posisi joystick — penting sebagai mekanisme keselamatan untuk motor bertenaga besar seperti BLDC.
+
+> ⚠️ **Sebelum melanjutkan:** pastikan **propeller/baling-baling sudah dilepas** dari motor brushless, dan motor terpasang aman pada tempatnya.
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 / Sumber | Keterangan |
 |---|---|---|
-| ESC — Sinyal (PWM) | GPIO 18 | Sinyal kontrol dari ESP32 ke ESC |
+| Joystick KY-023 — VRx | GPIO 34 | Besar throttle (setelah arming) |
+| Joystick KY-023 — SW | GPIO 27 | Kill switch (paksa throttle minimum), aktif LOW |
+| ESC — Sinyal (PWM) | GPIO 25 | Sinyal kontrol dari ESP32 ke ESC, via channel LEDC |
 | ESC — GND (sinyal) | GND | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
 | ESC — Power (input daya) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
 | Motor brushless (BLDC) | 3 kabel fasa (A/B/C) ke output ESC | Urutan kabel menentukan arah putar — tukar posisi 2 dari 3 kabel untuk membalik arah |
-
-> ⚠️ **Sebelum melanjutkan:** pastikan **propeller/baling-baling sudah dilepas** dari motor, dan motor terpasang aman pada tempatnya.
 
 **`platformio.ini`:**
 ```ini
@@ -595,73 +730,106 @@ Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, s
 platform = espressif32
 board = esp32dev
 framework = arduino
-lib_deps = madhephaestus/ESP32Servo@^3.0.0
 ```
+
+> **Catatan:** Percobaan ini **tidak memerlukan** library ESP32Servo — sinyal PWM 50Hz untuk ESC dibangkitkan langsung melalui API **LEDC** (`ledcSetup`/`ledcAttachPin`/`ledcWrite`), sebagai kontras dengan pendekatan Percobaan 5 (Servo) yang menggunakan abstraksi library. Keduanya menghasilkan sinyal yang identik (pulsa 1000–2000µs pada periode 20ms) — hanya berbeda pada tingkat abstraksi API yang dipakai.
 
 **Langkah Kerja:**
 1. Pastikan propeller/baling-baling **sudah dilepas** dari motor brushless (keselamatan) sebelum melanjutkan
-2. Rangkai ESC sesuai skema: sinyal ke GPIO 18, GND sinyal disatukan dengan GND ESP32, dan jalur daya (power) ESC ke baterai LiPo — **terpisah** dari power ESP32
-3. Upload kode program di bawah — program akan otomatis melakukan **arming** (mengirim throttle minimum 1000µs selama 5 detik) sebelum menjalankan motor pada kecepatan tetap 1700µs
-4. Amati Serial Monitor: pesan "Arming ESC..." muncul terlebih dahulu, diikuti bunyi *beep* dari ESC (jika ada) sebagai indikasi arming berhasil, baru kemudian motor mulai berputar setelah pesan "ESC armed." tercetak
-5. Jika motor tidak berputar sama sekali, periksa kembali: kabel sinyal terhubung ke pin yang benar, GND sinyal dan GND baterai satu jalur (common ground), dan tegangan baterai sesuai spesifikasi ESC
+2. Rangkai ESC sesuai skema: sinyal ke GPIO 25, GND sinyal disatukan dengan GND ESP32, dan jalur daya (power) ESC ke baterai LiPo — **terpisah** dari power ESP32
+3. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
+4. Pastikan joystick berada pada posisi paling kiri (throttle minimum) **sebelum** menyalakan baterai ESC, lalu upload kode program di bawah
+5. Amati Serial Monitor: proses **arming** (throttle minimum 1000µs selama 5 detik) berjalan otomatis di `setup()`, ditandai bunyi *beep* dari ESC (jika ada)
+6. Setelah arming selesai, geser joystick secara perlahan dari kiri ke kanan, amati kecepatan motor meningkat sesuai posisi joystick
+7. Uji tombol SW sebagai kill switch — tekan SW saat motor berputar, pastikan motor langsung kembali ke throttle minimum
 
-**Kode Program (Arming ESC & Kontrol Kecepatan Motor Brushless):**
+**Kode Program (Arming ESC & Kontrol Kecepatan Motor Brushless via Joystick, berbasis LEDC):**
 ```cpp
 #include <Arduino.h>
-#include <ESP32Servo.h>
 
-#define ESC_PIN 18
+//==================== JOYSTICK ====================
+#define JOY_VRX 34
+#define JOY_SW  27
 
-Servo esc;
+//==================== ESC ====================
+#define ESC_PIN 25
+#define ESC_CHANNEL 0
 
-const int ESC_MIN = 1000;
-const int ESC_SPEED = 1700;
+const uint32_t PWM_FREQ = 50;
+const uint8_t PWM_RESOLUTION = 16;
 
-void setup()
-{
-    Serial.begin(115200);
+const uint16_t THROTTLE_MIN = 1000; // us
+const uint16_t THROTTLE_MAX = 2000; // us
 
-    esc.setPeriodHertz(50);
-    esc.attach(ESC_PIN, 1000, 2000);
-
-    // Arming ESC pada throttle minimum
-    Serial.println("Arming ESC...");
-    esc.writeMicroseconds(ESC_MIN);
-
-    delay(5000);
-
-    // Jalankan motor pada 1700 us
-    Serial.println("ESC armed.");
-    Serial.println("Motor berjalan pada 1700 us");
-
-    esc.writeMicroseconds(ESC_SPEED);
+uint32_t pulseToDuty(uint16_t pulseUs) {
+  return ((uint32_t)pulseUs * 65535UL) / 20000UL;
 }
 
-void loop()
-{
-    // Motor tetap berjalan pada 1700 us
+void setThrottle(uint16_t pulseUs) {
+  uint32_t duty = pulseToDuty(pulseUs);
+  ledcWrite(ESC_CHANNEL, duty);
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(JOY_SW, INPUT_PULLUP);
+
+  ledcSetup(ESC_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
+  ledcAttachPin(ESC_PIN, ESC_CHANNEL);
+
+  Serial.println("=======================");
+  Serial.println("BLDC VIA JOYSTICK");
+  Serial.println("=======================");
+
+  // Harus sudah aktif SEBELUM ESC dinyalakan
+  setThrottle(THROTTLE_MIN);
+
+  Serial.println("PWM minimum aktif.");
+  Serial.println("Sekarang nyalakan PSU ESC.");
+
+  // Beri ESC waktu untuk arming
+  delay(5000);
+
+  Serial.println("Arming selesai. Kontrol joystick aktif.");
+}
+
+void loop() {
+  bool killSwitch = (digitalRead(JOY_SW) == LOW);
+
+  uint16_t throttle;
+  if (killSwitch) {
+    throttle = THROTTLE_MIN;
+  } else {
+    int vrx = analogRead(JOY_VRX);
+    throttle = map(vrx, 0, 4095, THROTTLE_MIN, THROTTLE_MAX);
+  }
+
+  setThrottle(throttle);
+  Serial.printf("Throttle = %d us %s\n", throttle, killSwitch ? "(KILL SWITCH)" : "");
+
+  delay(100);
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `esc.setPeriodHertz(50)` | Menetapkan frekuensi sinyal PWM ke 50Hz (periode 20ms), sesuai standar sinyal kontrol ESC/servo |
-| `esc.attach(ESC_PIN, 1000, 2000)` | Menghubungkan objek `Servo` ke `ESC_PIN`, dengan rentang lebar pulsa 1000–2000 mikrodetik (throttle minimum–maksimum) |
-| `esc.writeMicroseconds(ESC_MIN)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum selama 5 detik agar ESC mengenali sinyal sebagai valid dan siap menerima perintah throttle berikutnya |
-| `esc.writeMicroseconds(ESC_SPEED)` | Mengatur kecepatan motor langsung dalam satuan mikrodetik (bukan derajat seperti servo biasa) — 1700µs berada di antara throttle minimum (1000µs) dan maksimum (2000µs), sehingga motor berputar pada kecepatan menengah |
-| `loop()` kosong | Kecepatan motor sudah diatur sekali di `setup()` dan tidak diubah lagi — sinyal PWM tetap dipertahankan oleh library di latar belakang tanpa perlu kode tambahan pada `loop()` |
+| `pulseToDuty(pulseUs)` | Mengonversi lebar pulsa (mikrodetik) menjadi nilai duty cycle LEDC 16-bit (0–65535) relatif terhadap periode 20ms (`20000` mikrodetik) — rumus manual yang digantikan abstraksinya oleh `writeMicroseconds()` pada library ESP32Servo |
+| `ledcSetup(ESC_CHANNEL, PWM_FREQ, PWM_RESOLUTION)` | Mengonfigurasi channel LEDC 0 dengan frekuensi 50Hz dan resolusi 16-bit — resolusi tinggi diperlukan agar pemetaan mikrodetik ke duty cycle cukup presisi |
+| `setThrottle(THROTTLE_MIN)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum selama 5 detik sebelum ESC menerima perintah throttle lain, sama seperti prinsip arming pada Percobaan sebelumnya |
+| `map(vrx, 0, 4095, THROTTLE_MIN, THROTTLE_MAX)` | Memetakan posisi joystick langsung menjadi nilai throttle dalam mikrodetik, tanpa dead zone (seluruh rentang joystick digunakan sebagai skala throttle 0–100%) |
+| `killSwitch` diperiksa sebelum `setThrottle()` | Tombol SW pada joystick berfungsi sebagai kill switch — memaksa throttle minimum kapan pun ditekan, mekanisme keselamatan penting untuk motor bertenaga besar |
 
 **Analisis Setelah Program Berjalan:**
 1. Amati durasi proses arming (5 detik) — jelaskan mengapa proses ini penting dilakukan sebelum ESC menerima perintah throttle lain
-2. Ubah nilai `ESC_SPEED` ke beberapa nilai berbeda (mis. 1300, kemudian 1900), upload ulang untuk tiap nilai, dan amati perubahan kecepatan putar motor — pastikan nilainya tetap berada pada rentang 1000–2000
-3. Diskusikan mengapa ESC dapat dikendalikan menggunakan library `ESP32Servo` yang sama dengan motor servo, meskipun keduanya menggerakkan jenis aktuator yang sangat berbeda (motor brushless 3-fasa vs servo)
+2. Bandingkan pendekatan LEDC manual (`pulseToDuty()`) pada Percobaan ini dengan pendekatan `writeMicroseconds()` menggunakan library ESP32Servo pada versi sebelumnya — diskusikan kelebihan/kekurangan masing-masing dari sisi keterbacaan kode vs pemahaman mekanisme PWM yang mendasarinya
+3. Uji kill switch (SW) saat motor berputar pada throttle sedang, amati apakah transisi ke throttle minimum berjalan mulus atau menyebabkan hentakan pada motor — diskusikan penyebabnya
 
 ---
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta LDR, potensiometer, HC-SR04, servo motor, dan motor DC — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+[Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta potensiometer, HC-SR04, servo motor, dan motor DC — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
 > **Catatan:** Modul touch sensor TTP223 dan hall effect sensor kemungkinan belum tersedia sebagai part bawaan Wokwi. Sebagai gantinya, gunakan **slide switch virtual** untuk mensimulasikan sinyal digital HIGH/LOW pengganti kedua sensor tersebut pada bagian yang membutuhkannya.
 
@@ -669,7 +837,7 @@ void loop()
 1. Buat project Wokwi baru dengan board **ESP32**, rangkai sensor **HC-SR04** dan **servo motor**
 2. Implementasikan program yang membaca jarak dari HC-SR04 (Percobaan 2), lalu memetakan (`map()`) nilai jarak tersebut menjadi sudut servo (0°–180°) — semakin dekat objek, semakin besar sudut servo (meniru jarum penunjuk pada meter analog)
 3. Uji dengan menggeser posisi objek virtual di depan sensor HC-SR04 pada simulator, amati apakah pergerakan servo responsif dan sesuai ekspektasi
-4. Sebagai pengembangan, tambahkan LDR yang mengatur kecepatan "kedipan" LED indikator (semakin gelap, semakin cepat berkedip) berjalan bersamaan dengan sistem indikator jarak di atas
+4. Sebagai pengembangan, tambahkan potensiometer virtual yang mengatur kecepatan "kedipan" LED indikator (semakin besar nilai potensiometer, semakin cepat berkedip) berjalan bersamaan dengan sistem indikator jarak di atas
 
 **Tugas 2 — Eksplorasi Mandiri:**
 Ganti servo pada Tugas 1 dengan motor DC (via driver, kendalikan menggunakan PWM) sehingga kecepatan putar motor merepresentasikan jarak objek, alih-alih posisi sudut. Bandingkan kelebihan/kekurangan representasi jarak melalui sudut (servo) vs kecepatan (motor DC).
@@ -690,9 +858,10 @@ Percobaan 3 (Ultrasonik HC-SR04) pada modul ini dapat diimplementasikan ulang **
 ## G. Referensi
 1. Espressif Systems, *ESP32 Technical Reference Manual*
 2. Espressif Systems, *ESP32 Arduino Core Documentation — Analog, Touch, LEDC*, https://docs.espressif.com/projects/arduino-esp32/
-3. Datasheet HC-SR04 Ultrasonic Sensor
-4. Datasheet Hall Effect Sensor Module (mis. A3144/KY-003)
-5. Datasheet Driver Motor Stepper A4988/DRV8825
-6. ESP32Servo Library Documentation, https://github.com/madhephaestus/ESP32Servo
-7. PlatformIO Documentation, https://docs.platformio.org/
-8. Oscar Liang, *How Does an ESC / BLDC Motor Work*, https://oscarliang.com/esc-firmware-protocol/ — referensi prinsip kerja ESC dan proses arming
+3. Datasheet Modul Joystick 2-Axis KY-023 (dual potensiometer + push button)
+4. Datasheet HC-SR04 Ultrasonic Sensor
+5. Datasheet Hall Effect Sensor Module (mis. A3144/KY-003)
+6. Datasheet Driver Motor Stepper A4988/DRV8825 dan ULN2003
+7. ESP32Servo Library Documentation, https://github.com/madhephaestus/ESP32Servo
+8. PlatformIO Documentation, https://docs.platformio.org/
+9. Oscar Liang, *How Does an ESC / BLDC Motor Work*, https://oscarliang.com/esc-firmware-protocol/ — referensi prinsip kerja ESC dan proses arming

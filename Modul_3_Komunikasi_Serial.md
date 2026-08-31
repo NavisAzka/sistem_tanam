@@ -6,7 +6,7 @@
 **Platform:** ESP32 (Framework Arduino)
 **IDE:** VSCode + PlatformIO
 
-> **Catatan:** Modul ini melanjutkan penggunaan ESP32 dengan framework Arduino seperti pada Modul 1–2. Langkah instalasi VSCode, PlatformIO, dan driver USB-to-Serial tidak diulang di sini — lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**. Percobaan 1 (UART), bagian board-to-board pada Percobaan 2 (I2C), dan Percobaan 3 (SPI) membutuhkan **dua board ESP32** yang saling berkomunikasi.
+> **Catatan:** Modul ini melanjutkan penggunaan ESP32 dengan framework Arduino seperti pada Modul 1–2. Langkah instalasi VSCode, PlatformIO, dan driver USB-to-Serial tidak diulang di sini — lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**. Percobaan 1 (UART) membutuhkan **dua board ESP32** yang saling berkomunikasi.
 
 ---
 
@@ -17,12 +17,13 @@
   - [C.1 UART (Universal Asynchronous Receiver-Transmitter)](#c1-uart-universal-asynchronous-receiver-transmitter)
   - [C.2 I2C (Inter-Integrated Circuit)](#c2-i2c-inter-integrated-circuit)
   - [C.3 SPI (Serial Peripheral Interface)](#c3-spi-serial-peripheral-interface)
-  - [C.4 DMA (Direct Memory Access)](#c4-dma-direct-memory-access)
+  - [C.4 SPI ke Ethernet (W5500)](#c4-spi-ke-ethernet-w5500)
+  - [C.5 DMA (Direct Memory Access)](#c5-dma-direct-memory-access)
 - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
 - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
   - [PERCOBAAN 1 — Komunikasi UART Antar ESP32](#percobaan-1--komunikasi-uart-antar-esp32)
-  - [PERCOBAAN 2 — Komunikasi I2C: Master-Slave Antar ESP32 & Interfacing OLED](#percobaan-2--komunikasi-i2c-master-slave-antar-esp32--interfacing-oled)
-  - [PERCOBAAN 3 — Komunikasi SPI Antar ESP32 (Master-Slave)](#percobaan-3--komunikasi-spi-antar-esp32-master-slave)
+  - [PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500](#percobaan-2--interfacing-multi-device-i2c-oled--mpu6500)
+  - [PERCOBAAN 3 — Komunikasi Ethernet via SPI (W5500)](#percobaan-3--komunikasi-ethernet-via-spi-w5500)
   - [PERCOBAAN 4 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-4--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
   - [PERCOBAAN 5 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-5--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
 - [F. Tugas Modul](#f-tugas-modul)
@@ -35,8 +36,8 @@
 Setelah menyelesaikan Modul 3, praktikan mampu:
 1. Menjelaskan prinsip kerja protokol komunikasi UART, I2C, dan SPI
 2. Mengimplementasikan komunikasi UART antar dua board ESP32
-3. Mengimplementasikan komunikasi I2C antar dua board ESP32 dengan skema master-slave, serta interfacing lebih dari satu modul I2C sekaligus pada satu bus (OLED display + IMU MPU6050)
-4. Mengimplementasikan komunikasi SPI antar dua board ESP32 dengan skema master-slave
+3. Mengimplementasikan interfacing lebih dari satu modul I2C sekaligus pada satu bus (OLED display + IMU MPU6500)
+4. Mengimplementasikan komunikasi Ethernet melalui SPI menggunakan modul W5500, serta memverifikasi konektivitas jaringan dengan PC
 5. Mengimplementasikan interfacing modul eksternal melalui SPI (IMU MPU6500)
 6. Menjelaskan konsep DMA dan mengimplementasikan pembacaan data IMU melalui SPI dengan DMA diaktifkan, serta membandingkannya dengan metode pembacaan blocking biasa
 
@@ -51,10 +52,11 @@ Setelah menyelesaikan Modul 3, praktikan mampu:
 | 3 | Breadboard | 830 titik | 1 |
 | 4 | Kabel jumper male-male / male-female | — | secukupnya |
 | 5 | Modul OLED display | SSD1306, 128x64, I2C | 1 |
-| 6 | Modul IMU MPU6050 | breakout dengan interface I2C | 1 |
-| 7 | Modul IMU MPU6500 | breakout dengan interface SPI | 1 |
-| 8 | Resistor pull-up | 4.7kΩ (opsional, jika bus I2C tidak stabil) | 2 |
-| 9 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
+| 6 | Modul IMU MPU6500 | breakout dual-interface I2C/SPI — **dipakai ulang**: I2C pada Percobaan 2, SPI pada Percobaan 4–5 (rewiring CS diperlukan saat berpindah) | 1 |
+| 7 | Resistor pull-up | 4.7kΩ (opsional, jika bus I2C tidak stabil) | 2 |
+| 8 | Modul Ethernet W5500 | breakout dengan interface SPI + port RJ45 | 1 |
+| 9 | Kabel RJ45 (patch cord) | untuk menghubungkan W5500 ke switch/router yang sama dengan PC | 1 |
+| 10 | Laptop/PC | VSCode + PlatformIO terinstal, terhubung ke jaringan yang sama dengan W5500 | 1 |
 
 ---
 
@@ -70,18 +72,23 @@ I2C adalah protokol komunikasi serial **sinkron** yang hanya membutuhkan dua jal
 
 Karena setiap perangkat I2C dibedakan melalui **alamat**, bukan jalur fisik terpisah seperti SPI, **lebih dari satu perangkat dapat berbagi SDA/SCL yang sama** selama alamatnya berbeda. Dua contoh perangkat I2C yang digunakan pada modul ini:
 - **OLED display (SSD1306):** alamat tetap `0x3C`, dikendalikan melalui perintah-perintah yang telah diabstraksi oleh library (mis. Adafruit SSD1306), sehingga praktikan tidak perlu menulis manual setiap byte perintah ke controller display
-- **IMU MPU6050:** alamat default `0x68` (dapat berubah menjadi `0x69` tergantung kondisi pin `AD0`), diakses melalui pembacaan/penulisan register secara langsung (mis. `PWR_MGMT_1` untuk membangunkan sensor, `ACCEL_XOUT_H` untuk data akselerometer) — mirip prinsipnya dengan MPU6500 pada Percobaan 4, hanya berbeda protokol fisik (I2C, bukan SPI)
+- **IMU MPU6500:** alamat default `0x68` (dapat berubah menjadi `0x69` tergantung kondisi pin `AD0`), diakses melalui pembacaan/penulisan register secara langsung (mis. `PWR_MGMT_1` untuk membangunkan sensor, `ACCEL_XOUT_H` untuk data akselerometer)
 
-![Gambar 2: Diagram bus I2C dengan satu master dan beberapa slave (OLED 0x3C, MPU6050 0x68) berbagi jalur SDA/SCL yang sama](img/diagram_bus_i2c.png)
+> **Catatan:** MPU6500 mendukung **dua antarmuka sekaligus** dalam satu chip — I2C maupun SPI — tergantung kondisi pin **CS/NCS**. Jika CS ditarik tetap ke VCC (3.3V), modul beroperasi dalam mode I2C (dipakai pada Percobaan ini); jika CS di-toggle oleh master, modul beralih ke mode SPI (dipakai pada Percobaan 4–5). Artinya, **modul IMU yang sama** dapat dipakai ulang di kedua Percobaan tersebut, cukup dengan mengubah wiring pin CS — mendemonstrasikan bahwa satu sensor dapat diakses melalui protokol fisik yang berbeda.
+
+![Gambar 2: Diagram bus I2C dengan satu master dan beberapa slave (OLED 0x3C, MPU6500 0x68) berbagi jalur SDA/SCL yang sama](img/diagram_bus_i2c.png)
 
 ### C.3 SPI (Serial Peripheral Interface)
 SPI adalah protokol komunikasi serial sinkron **full-duplex** (dapat mengirim dan menerima data secara bersamaan), menggunakan empat jalur: **MOSI** (Master Out Slave In), **MISO** (Master In Slave Out), **SCK** (Serial Clock), dan **CS/SS** (Chip Select). Berbeda dengan I2C yang menggunakan pengalamatan, SPI memilih perangkat tujuan melalui jalur CS terpisah untuk masing-masing slave — sehingga umumnya lebih cepat namun membutuhkan lebih banyak jalur pin dibanding I2C. Banyak sensor presisi tinggi seperti IMU (Inertial Measurement Unit) MPU6500 menyediakan antarmuka SPI, diakses melalui pembacaan/penulisan **register** — setiap register memiliki alamat 8-bit, dengan bit paling signifikan (MSB) menandai operasi baca (`1`) atau tulis (`0`).
 
-Berbeda dengan I2C yang mendukung mode master maupun slave secara native melalui library `Wire`, library `SPI` bawaan Arduino-ESP32 **hanya mendukung mode master**. Untuk menjadikan ESP32 sebagai **SPI slave** (mis. saat dua board ESP32 berkomunikasi langsung via SPI), diperlukan driver `spi_slave` dari ESP-IDF (`driver/spi_slave.h`) yang tetap dapat dipanggil langsung dari sketch Arduino, karena Arduino-ESP32 core dibangun di atas ESP-IDF.
+### C.4 SPI ke Ethernet (W5500)
+Selain untuk sensor, SPI juga umum dipakai untuk menghubungkan mikrokontroler ke peripheral **komunikasi jaringan**. **W5500** adalah chip Ethernet "hardwired" — seluruh stack TCP/IP (ARP, IP, TCP, UDP, termasuk ICMP) diimplementasikan langsung di dalam hardware chip, sehingga mikrokontroler tidak perlu menjalankan software stack TCP/IP sendiri (berbeda dengan chip seperti ENC28J60 yang hanya menyediakan lapisan MAC/PHY, sehingga memerlukan stack software seperti lwIP). Mikrokontroler berkomunikasi dengan W5500 melalui SPI menggunakan protokol register/socket milik W5500, yang pada framework Arduino sudah diabstraksi penuh oleh library `Ethernet`.
 
-![Gambar 3: Diagram wiring SPI master-slave (MOSI-MOSI, MISO-MISO, SCK-SCK, CS-CS terhubung langsung tanpa disilang)](img/wiring_spi_master_slave.png)
+Karena ARP dan **ICMP Echo (ping)** ditangani otomatis oleh hardware chip, cukup dengan `Ethernet.begin()` menggunakan IP yang valid, W5500 akan langsung dapat di-*ping* dari perangkat lain di jaringan yang sama — tanpa perlu menulis kode tambahan apa pun untuk merespons ping.
 
-### C.4 DMA (Direct Memory Access)
+![Gambar 3: Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal yang sama dengan PC](img/wiring_w5500_esp32.png)
+
+### C.5 DMA (Direct Memory Access)
 DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peripheral dan memori **tanpa melibatkan CPU secara langsung** pada setiap byte data. Tanpa DMA, pembacaan/pengiriman data mengharuskan CPU secara aktif menangani transfer tiap byte (*blocking*), yang menghabiskan waktu eksekusi CPU. Pada ESP32, DMA untuk SPI diaktifkan langsung saat inisialisasi bus SPI (parameter *DMA channel* pada `spi_bus_initialize()`), sehingga transfer data berukuran besar — misalnya membaca beberapa register sekaligus pada IMU dalam satu transaksi — dapat dilakukan hardware secara mandiri, dan CPU hanya perlu menunggu transaksi selesai alih-alih menangani tiap byte secara manual.
 
 ![Gambar 4: Diagram blok perbandingan alur transfer data blocking (CPU menangani tiap byte) vs DMA (CPU hanya memicu lalu menunggu, hardware DMA menangani transfer)](img/diagram_blocking_vs_dma.png)
@@ -91,7 +98,7 @@ DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peri
 ## D. Persiapan Sebelum Praktikum
 
 1. Pastikan PlatformIO sudah terinstal (lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**)
-2. Siapkan **dua board ESP32** — satu akan berperan sebagai pengirim/master, satu lagi sebagai penerima/slave, pada Percobaan 1, bagian board-to-board Percobaan 2, dan Percobaan 3
+2. Siapkan **dua board ESP32** untuk Percobaan 1 — satu berperan sebagai pengirim (Transmitter), satu lagi sebagai penerima (Receiver)
 3. Library `Wire` (I2C) dan `SPI` sudah termasuk dalam Arduino-ESP32 core, tidak perlu instalasi tambahan
 4. Untuk interfacing OLED pada Percobaan 2, tambahkan library **Adafruit SSD1306** dan **Adafruit GFX** melalui PlatformIO Library Manager atau pada `platformio.ini`:
    ```ini
@@ -99,19 +106,23 @@ DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peri
        adafruit/Adafruit SSD1306@^2.5.9
        adafruit/Adafruit GFX Library@^1.11.9
    ```
-5. Interfacing MPU6500 pada Percobaan 4 dan 5 dilakukan dengan pembacaan register SPI secara manual (tanpa library eksternal), agar praktikan memahami langsung protokol SPI yang mendasarinya
-6. Buat project baru untuk Modul 3:
+5. Untuk komunikasi Ethernet pada Percobaan 3, tambahkan library **Ethernet** melalui PlatformIO Library Manager atau pada `platformio.ini`:
+   ```ini
+   lib_deps = arduino-libraries/Ethernet@^2.0.2
+   ```
+6. Interfacing MPU6500 pada Percobaan 4 dan 5 dilakukan dengan pembacaan register SPI secara manual (tanpa library eksternal), agar praktikan memahami langsung protokol SPI yang mendasarinya
+7. Buat project baru untuk Modul 3:
    - Name: `modul3-komunikasi-serial`
    - Board: **"Espressif ESP32 Dev Module"**
    - Framework: **Arduino**
-7. Pastikan `platformio.ini` berisi:
+8. Pastikan `platformio.ini` berisi:
    ```ini
    [env:esp32dev]
    platform = espressif32
    board = esp32dev
    framework = arduino
    ```
-8. Karena Percobaan 1, bagian board-to-board Percobaan 2, dan Percobaan 3 membutuhkan dua sketch program berbeda (pengirim & penerima, atau master & slave) yang berjalan di board terpisah, buat **dua project PlatformIO terpisah**, atau gunakan dua folder `src` berbeda yang di-build bergantian ke masing-masing board
+9. Karena Percobaan 1 membutuhkan dua sketch program berbeda (pengirim & penerima) yang berjalan di board terpisah, buat **dua project PlatformIO terpisah**, atau gunakan dua folder `src` berbeda yang di-build bergantian ke masing-masing board
 
 ---
 
@@ -202,122 +213,24 @@ void loop() {
 
 ---
 
-### PERCOBAAN 2 — Komunikasi I2C: Master-Slave Antar ESP32 & Interfacing OLED
+### PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500
 
 **Tujuan:**
-Mahasiswa mampu mengimplementasikan komunikasi I2C antara dua board ESP32 dengan skema master-slave, serta interfacing lebih dari satu modul I2C nyata sekaligus pada satu bus (OLED display dan IMU MPU6050).
-
-#### Bagian A — Master-Slave Antar ESP32
-
-**Skema Rangkaian:**
-
-| Board | Pin | Terhubung ke |
-|---|---|---|
-| ESP32 Master — SDA | GPIO 21 | SDA (GPIO 21) pada ESP32 Slave |
-| ESP32 Master — SCL | GPIO 22 | SCL (GPIO 22) pada ESP32 Slave |
-| ESP32 Master — GND | GND | GND pada ESP32 Slave |
-
-> Jika komunikasi tidak stabil (data tidak terbaca/terputus-putus), tambahkan resistor pull-up 4.7kΩ dari SDA dan SCL masing-masing ke 3.3V.
-
-**`platformio.ini`** (sama untuk project Master maupun Slave):
-```ini
-[env:esp32dev]
-platform = espressif32
-board = esp32dev
-framework = arduino
-```
-
-**Langkah Kerja:**
-1. Siapkan dua project terpisah: satu untuk **Master**, satu untuk **Slave**
-2. Tulis dan upload kode Master ke board pertama
-3. Tulis dan upload kode Slave ke board kedua
-4. Sambungkan SDA-SDA, SCL-SCL, dan GND-GND kedua board sesuai skema
-5. Buka Serial Monitor pada board Slave, amati data string yang diterima setiap detik
-
-**Kode Program (ESP32 I2C Master — kirim string):**
-```cpp
-#include <Arduino.h>
-#include <Wire.h>
-
-#define SLAVE_ADDR 0x08
-
-void setup() {
-    Serial.begin(115200);
-
-    Wire.begin();              // SDA=21 SCL=22
-
-    Serial.println("ESP32 I2C Master");
-}
-
-void loop() {
-    Wire.beginTransmission(SLAVE_ADDR);
-    Wire.write("Hello ESP32");
-    Wire.endTransmission();
-
-    Serial.println("Data terkirim");
-
-    delay(1000);
-}
-```
-
-**Kode Program (ESP32 I2C Slave — terima string):**
-```cpp
-#include <Arduino.h>
-#include <Wire.h>
-
-#define SLAVE_ADDR 0x08
-
-void receiveEvent(int bytes)
-{
-    Serial.print("Data diterima : ");
-
-    while (Wire.available())
-    {
-        char c = Wire.read();
-        Serial.print(c);
-    }
-
-    Serial.println();
-}
-
-void setup()
-{
-    Serial.begin(115200);
-
-    Wire.begin((uint8_t)SLAVE_ADDR);
-
-    Wire.onReceive(receiveEvent);
-
-    Serial.println("ESP32 I2C Slave");
-}
-
-void loop()
-{
-}
-```
-
-**Penjelasan Kode:**
-| Bagian | Penjelasan |
-|---|---|
-| `Wire.begin()` (tanpa parameter) | Menginisialisasi I2C sebagai **master** pada pin default (SDA=21, SCL=22) |
-| `Wire.begin((uint8_t)SLAVE_ADDR)` | Menginisialisasi I2C sebagai **slave** dengan alamat tertentu (0x08) |
-| `Wire.beginTransmission()` / `Wire.write()` / `Wire.endTransmission()` | Rangkaian fungsi pada master untuk memulai, mengisi data, dan mengirimkan transmisi ke slave dengan alamat yang dituju |
-| `Wire.onReceive(receiveEvent)` | Mendaftarkan fungsi callback yang otomatis dipanggil saat slave menerima data dari master |
-
-#### Bagian B — Interfacing Multi-Device I2C: OLED + MPU6050
+Mahasiswa mampu mengimplementasikan interfacing lebih dari satu modul I2C nyata sekaligus pada satu bus (OLED display dan IMU MPU6500 dalam mode I2C).
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| OLED SSD1306 — SDA | GPIO 21 | Bus I2C default — **dibagi bersama** dengan MPU6050 |
-| OLED SSD1306 — SCL | GPIO 22 | Bus I2C default — **dibagi bersama** dengan MPU6050 |
+| OLED SSD1306 — SDA | GPIO 21 | Bus I2C default — **dibagi bersama** dengan MPU6500 |
+| OLED SSD1306 — SCL | GPIO 22 | Bus I2C default — **dibagi bersama** dengan MPU6500 |
 | OLED SSD1306 — VCC/GND | 3.3V, GND | Periksa datasheet modul (umumnya toleran 3.3–5V) |
-| MPU6050 — SDA | GPIO 21 | Bus I2C default — pin **sama persis** dengan OLED |
-| MPU6050 — SCL | GPIO 22 | Bus I2C default — pin **sama persis** dengan OLED |
-| MPU6050 — VCC/GND | 3.3V, GND | Periksa datasheet modul |
+| MPU6500 — SDA (pin SDI pada mode SPI) | GPIO 21 | Bus I2C default — pin **sama persis** dengan OLED |
+| MPU6500 — SCL (pin SCLK pada mode SPI) | GPIO 22 | Bus I2C default — pin **sama persis** dengan OLED |
+| MPU6500 — CS/NCS | **3.3V (ditarik tetap, bukan di-toggle)** | **Wajib** — inilah yang memilih mode I2C, berbeda dari Percobaan 4–5 di mana CS di-toggle sebagai chip select SPI |
+| MPU6500 — VCC/GND | 3.3V, GND | MPU6500 umumnya hanya toleran 3.3V |
 
-> Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6050 = `0x68`).
+> Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6500 = `0x68`). Perhatikan juga bahwa modul MPU6500 ini adalah **modul yang sama** yang nanti dipakai ulang pada Percobaan 4–5 melalui SPI — cukup pindahkan wiring CS dari "ditarik ke 3.3V" menjadi "terhubung ke GPIO CS ESP32" saat berpindah Percobaan.
 
 **`platformio.ini`:**
 ```ini
@@ -329,16 +242,16 @@ lib_deps =
     adafruit/Adafruit SH110X@^2.1.11
     adafruit/Adafruit GFX Library@^1.11.9
 ```
-> MPU6050 diakses melalui pembacaan/penulisan register `Wire` secara manual, sehingga tidak memerlukan library tambahan.
+> MPU6500 diakses melalui pembacaan/penulisan register `Wire` secara manual, sehingga tidak memerlukan library tambahan.
 
 **Langkah Kerja:**
-1. Rangkai OLED dan MPU6050 pada bus I2C yang sama sesuai skema (SDA dan SCL kedua modul terhubung ke pin GPIO yang sama)
+1. Rangkai OLED dan MPU6500 pada bus I2C yang sama sesuai skema (SDA dan SCL kedua modul terhubung ke pin GPIO yang sama), pastikan pin CS/NCS pada MPU6500 **ditarik ke 3.3V** agar modul beroperasi dalam mode I2C
 2. Jalankan I2C scanner sederhana (`Wire.beginTransmission(addr)` untuk tiap alamat 1–127, cek `Wire.endTransmission() == 0`) untuk memverifikasi **kedua alamat** (`0x3C` dan `0x68`) terdeteksi pada bus yang sama
-3. Inisialisasi kedua perangkat dalam satu program: OLED via library Adafruit SSD1306, MPU6050 via pembacaan/penulisan register manual
-4. Bangunkan MPU6050 dari sleep mode (tulis `0x00` ke register `PWR_MGMT_1`, alamat `0x6B`), lalu baca data akselerometer secara berkala (register `ACCEL_XOUT_H`, alamat `0x3B`)
+3. Inisialisasi kedua perangkat dalam satu program: OLED via library Adafruit SSD1306, MPU6500 via pembacaan/penulisan register manual
+4. Bangunkan MPU6500 dari sleep mode (tulis `0x00` ke register `PWR_MGMT_1`, alamat `0x6B`), lalu baca data akselerometer secara berkala (register `ACCEL_XOUT_H`, alamat `0x3B`)
 5. Tampilkan hasil pembacaan akselerometer pada layar OLED (bukan hanya Serial Monitor) — buktikan kedua perangkat dapat diakses bergantian pada bus yang sama tanpa saling mengganggu
 
-**Kode Program (OLED + MPU6050 pada Satu Bus I2C):**
+**Kode Program (OLED + MPU6500 pada Satu Bus I2C):**
 ```cpp
 #include <Arduino.h>
 #include <Wire.h>
@@ -352,14 +265,14 @@ lib_deps =
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-// ==================== MPU6050 ====================
-#define MPU6050_ADDR 0x68
+// ==================== MPU6500 (mode I2C, CS ditarik ke 3.3V) ====================
+#define MPU6500_ADDR 0x68
 #define PWR_MGMT_1   0x6B
 #define ACCEL_XOUT_H 0x3B
 
 void writeRegister(uint8_t reg, uint8_t value)
 {
-    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.beginTransmission(MPU6500_ADDR);
     Wire.write(reg);
     Wire.write(value);
     Wire.endTransmission();
@@ -367,11 +280,11 @@ void writeRegister(uint8_t reg, uint8_t value)
 
 int16_t read16(uint8_t reg)
 {
-    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.beginTransmission(MPU6500_ADDR);
     Wire.write(reg);
     Wire.endTransmission(false); // repeated start, bus tetap dikuasai
 
-    Wire.requestFrom(MPU6050_ADDR, 2);
+    Wire.requestFrom(MPU6500_ADDR, 2);
 
     uint8_t high = Wire.read();
     uint8_t low  = Wire.read();
@@ -382,7 +295,7 @@ int16_t read16(uint8_t reg)
 void setup()
 {
     Serial.begin(115200);
-    Wire.begin(21, 22); // SDA, SCL - satu bus untuk OLED dan MPU6050
+    Wire.begin(21, 22); // SDA, SCL - satu bus untuk OLED dan MPU6500
 
     // Inisialisasi OLED (alamat 0x3C)
     if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR))
@@ -394,7 +307,7 @@ void setup()
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
 
-    // Inisialisasi MPU6050 (alamat 0x68) - bangunkan dari sleep mode
+    // Inisialisasi MPU6500 (alamat 0x68) - bangunkan dari sleep mode
     writeRegister(PWR_MGMT_1, 0x00);
     delay(100);
 }
@@ -414,7 +327,7 @@ void loop()
 
     display.clearDisplay();
     display.setCursor(0, 0);
-    display.println("MPU6050 + OLED (I2C)");
+    display.println("MPU6500 + OLED (I2C)");
     display.setCursor(0, 20);
     display.printf("X: %.2f g", accX);
     display.setCursor(0, 32);
@@ -430,132 +343,108 @@ void loop()
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `Wire.begin(21, 22)` | Diinisialisasi **satu kali saja** di awal, digunakan bersama oleh OLED maupun MPU6050 — bukti bahwa satu bus I2C dapat melayani banyak perangkat |
-| `display.begin(..., OLED_ADDR)` vs `writeRegister/read16(..., MPU6050_ADDR)` | Kedua perangkat diakses melalui fungsi `Wire` yang sama, namun dengan **alamat berbeda** (`0x3C` vs `0x68`) — inilah mekanisme yang memungkinkan keduanya berbagi SDA/SCL yang sama tanpa bentrok |
-| `Wire.endTransmission(false)` pada `read16()` | Mengirim **repeated start** alih-alih melepas bus sepenuhnya, agar transaksi baca register MPU6050 tidak diselingi perangkat lain di tengah proses |
-| `writeRegister(PWR_MGMT_1, 0x00)` | MPU6050 default dalam kondisi sleep saat pertama dinyalakan; register `PWR_MGMT_1` perlu ditulis `0x00` agar sensor aktif mengukur |
-| Urutan `loop()`: baca MPU6050 → tulis ke OLED | Menunjukkan kedua perangkat diakses **bergantian** pada bus fisik yang sama dalam satu siklus program, tanpa memerlukan bus I2C terpisah |
+| `Wire.begin(21, 22)` | Diinisialisasi **satu kali saja** di awal, digunakan bersama oleh OLED maupun MPU6500 — bukti bahwa satu bus I2C dapat melayani banyak perangkat |
+| `display.begin(..., OLED_ADDR)` vs `writeRegister/read16(..., MPU6500_ADDR)` | Kedua perangkat diakses melalui fungsi `Wire` yang sama, namun dengan **alamat berbeda** (`0x3C` vs `0x68`) — inilah mekanisme yang memungkinkan keduanya berbagi SDA/SCL yang sama tanpa bentrok |
+| `Wire.endTransmission(false)` pada `read16()` | Mengirim **repeated start** alih-alih melepas bus sepenuhnya, agar transaksi baca register MPU6500 tidak diselingi perangkat lain di tengah proses |
+| `writeRegister(PWR_MGMT_1, 0x00)` | MPU6500 default dalam kondisi sleep saat pertama dinyalakan; register `PWR_MGMT_1` perlu ditulis `0x00` agar sensor aktif mengukur |
+| Urutan `loop()`: baca MPU6500 → tulis ke OLED | Menunjukkan kedua perangkat diakses **bergantian** pada bus fisik yang sama dalam satu siklus program, tanpa memerlukan bus I2C terpisah |
+| CS/NCS ditarik ke 3.3V | Inilah yang membedakan mode I2C (Percobaan ini) dari mode SPI (Percobaan 4–5) pada modul MPU6500 yang sama — bukan perbedaan alamat register atau logika pembacaan data |
 
 ---
 
-### PERCOBAAN 3 — Komunikasi SPI Antar ESP32 (Master-Slave)
+### PERCOBAAN 3 — Komunikasi Ethernet via SPI (W5500)
 
 **Tujuan:**
-Mahasiswa mampu mengimplementasikan komunikasi SPI antara dua board ESP32 dengan skema master-slave, sebagai dasar protokol SPI sebelum mempelajari interfacing modul sensor eksternal (MPU6500) pada percobaan berikutnya.
+Mahasiswa mampu mengimplementasikan komunikasi Ethernet menggunakan modul W5500 melalui antarmuka SPI, sebagai contoh protokol SPI yang digunakan untuk komunikasi jaringan (bukan hanya sensor), serta memverifikasi konektivitas dengan PC melalui *ping* (ICMP Echo).
 
 **Skema Rangkaian:**
 
-| Board | Pin | Terhubung ke |
+| W5500 | Pin ESP32 | Keterangan |
 |---|---|---|
-| ESP32 Master — MOSI | GPIO 23 | MOSI (GPIO 23) pada ESP32 Slave |
-| ESP32 Master — MISO | GPIO 19 | MISO (GPIO 19) pada ESP32 Slave |
-| ESP32 Master — SCK | GPIO 18 | SCK (GPIO 18) pada ESP32 Slave |
-| ESP32 Master — CS | GPIO 5 | CS (GPIO 5) pada ESP32 Slave |
-| ESP32 Master — GND | GND | GND pada ESP32 Slave |
+| SCK | GPIO 18 | SPI Clock |
+| MISO | GPIO 19 | SPI Master In Slave Out |
+| MOSI | GPIO 23 | SPI Master Out Slave In |
+| CS/SS | GPIO 5 | Chip Select |
+| RST | 3.3V (atau GPIO bebas untuk kontrol reset manual) | Kebanyakan modul breakout sudah memiliki pull-up onboard |
+| VCC | 3.3V | **Jangan 5V** — chip W5500 hanya toleran 3.3V |
+| GND | GND | — |
 
-> Berbeda dengan UART (silang TX-RX), jalur SPI dihubungkan **langsung sesuai nama pin yang sama** (MOSI-MOSI, MISO-MISO, SCK-SCK, CS-CS) — pemilihan master/slave ditentukan oleh program pada masing-masing board, bukan oleh pengabelan.
+> Modul W5500 juga memiliki port **RJ45** — hubungkan ke jaringan yang sama dengan PC (via switch/router yang sama).
 
-**`platformio.ini`** (sama untuk project Master maupun Slave):
+**`platformio.ini`:**
 ```ini
 [env:esp32dev]
 platform = espressif32
 board = esp32dev
 framework = arduino
+lib_deps = arduino-libraries/Ethernet@^2.0.2
 ```
 
 **Langkah Kerja:**
-1. Siapkan dua project terpisah: satu untuk **Master**, satu untuk **Slave**
-2. Tulis dan upload kode Master (menggunakan library `SPI` standar) ke board pertama
-3. Tulis dan upload kode Slave (menggunakan driver `spi_slave` ESP-IDF, karena library `SPI` Arduino tidak mendukung mode slave) ke board kedua
-4. Sambungkan MOSI-MOSI, MISO-MISO, SCK-SCK, CS-CS, dan GND-GND kedua board sesuai skema
-5. Buka Serial Monitor pada board Slave, amati data yang diterima setiap detik
+1. Rangkai modul W5500 sesuai skema, sambungkan port RJ45 ke jaringan yang sama dengan PC (switch/router yang sama)
+2. Sesuaikan alamat `ip` pada kode agar berada pada subnet yang sama dengan PC (periksa IP PC melalui `ipconfig` pada Command Prompt Windows)
+3. Upload kode program di bawah, buka Serial Monitor untuk melihat status inisialisasi dan alamat IP yang terpasang pada W5500
+4. Dari Command Prompt Windows, jalankan `ping <alamat-IP-ESP32>` — pastikan muncul balasan `Reply from ...`
+5. Jika tidak ada balasan dan Serial Monitor menampilkan `EthernetNoHardware`, periksa kembali wiring SPI; jika linknya `LinkOFF`, periksa kabel RJ45
 
-**Kode Program (ESP32 SPI Master — kirim string):**
+**Kode Program (ESP32 + W5500 — Merespons Ping dari PC):**
 ```cpp
 #include <Arduino.h>
 #include <SPI.h>
+#include <Ethernet.h>
 
-#define SLAVE_CS 5
-
-void setup() {
-  Serial.begin(115200);
-
-  pinMode(SLAVE_CS, OUTPUT);
-  digitalWrite(SLAVE_CS, HIGH);
-
-  SPI.begin(); // SCK=18, MISO=19, MOSI=23 (VSPI default)
-
-  Serial.println("ESP32 SPI Master");
-}
-
-void loop() {
-  const char msg[] = "Hello ESP32";
-
-  digitalWrite(SLAVE_CS, LOW);
-  for (size_t i = 0; i < sizeof(msg); i++) {
-    SPI.transfer(msg[i]);
-  }
-  digitalWrite(SLAVE_CS, HIGH);
-
-  Serial.println("Data terkirim");
-  delay(1000);
-}
-```
-
-**Kode Program (ESP32 SPI Slave — terima string):**
-```cpp
-#include <Arduino.h>
-#include "driver/spi_slave.h"
-
-#define PIN_MOSI 23
-#define PIN_MISO 19
+// ==================== PIN SPI (VSPI default ESP32) ====================
 #define PIN_SCK  18
+#define PIN_MISO 19
+#define PIN_MOSI 23
 #define PIN_CS   5
 
+// MAC address bebas — pastikan unik di jaringan lokal (hindari duplikat)
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
+// IP statis — SESUAIKAN dengan subnet jaringan yang sama dengan PC
+IPAddress ip(192, 168, 1, 177);
+
 void setup() {
   Serial.begin(115200);
+  delay(1000);
 
-  spi_bus_config_t busConfig = {};
-  busConfig.mosi_io_num = PIN_MOSI;
-  busConfig.miso_io_num = PIN_MISO;
-  busConfig.sclk_io_num = PIN_SCK;
-  busConfig.quadwp_io_num = -1;
-  busConfig.quadhd_io_num = -1;
+  // Inisialisasi SPI dengan pin custom ESP32, lalu beri tahu library CS pin yang dipakai
+  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS);
+  Ethernet.init(PIN_CS);
 
-  spi_slave_interface_config_t slaveConfig = {};
-  slaveConfig.mode = 0;
-  slaveConfig.spics_io_num = PIN_CS;
-  slaveConfig.queue_size = 1;
+  Ethernet.begin(mac, ip);
 
-  spi_slave_initialize(HSPI_HOST, &busConfig, &slaveConfig, SPI_DMA_CH_AUTO);
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("W5500 tidak terdeteksi -- periksa wiring SPI!");
+    while (true) { delay(1000); }
+  }
 
-  Serial.println("ESP32 SPI Slave siap");
+  if (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Peringatan: kabel Ethernet (RJ45) tidak terdeteksi terhubung.");
+  }
+
+  Serial.print("ESP32 + W5500 siap. IP: ");
+  Serial.println(Ethernet.localIP());
+  Serial.print("Coba dari Command Prompt Windows: ping ");
+  Serial.println(Ethernet.localIP());
 }
 
 void loop() {
-  char rxBuf[32] = {0};
-  char txBuf[32] = {0}; // slave tidak mengirim balik data apa pun pada percobaan ini
-
-  spi_slave_transaction_t trans = {};
-  trans.length = sizeof(rxBuf) * 8; // panjang maksimum transaksi, dalam bit
-  trans.tx_buffer = txBuf;
-  trans.rx_buffer = rxBuf;
-
-  spi_slave_transmit(HSPI_HOST, &trans, portMAX_DELAY); // menunggu hingga master memulai transaksi
-
-  Serial.print("Data diterima: ");
-  Serial.println(rxBuf);
+  // Tidak perlu kode tambahan untuk merespons PING --
+  // W5500 menangani ARP & ICMP Echo Reply secara otomatis di level hardware chip
+  delay(1000);
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `SPI.begin()` pada Master | Menginisialisasi SPI hardware ESP32 sebagai **master** pada pin default VSPI (SCK=18, MISO=19, MOSI=23); pengaturan CS dilakukan manual via `digitalWrite()` |
-| `digitalWrite(SLAVE_CS, LOW/HIGH)` | Mengawali dan mengakhiri satu transaksi SPI — slave hanya memproses data yang dikirim selama CS berada pada kondisi LOW |
-| `spi_slave_initialize(HSPI_HOST, ...)` | Menginisialisasi SPI hardware ESP32 sebagai **slave** menggunakan driver ESP-IDF, karena library `SPI` Arduino tidak menyediakan mode slave |
-| `spi_slave_transmit(HSPI_HOST, &trans, portMAX_DELAY)` | Menunggu (blocking) hingga master menginisiasi dan menyelesaikan satu transaksi SPI, lalu mengisi `rxBuf` dengan data yang diterima |
-| `trans.length` | Panjang maksimum transaksi yang disiapkan slave, dalam satuan **bit** — jumlah data yang benar-benar dikirim master bisa lebih pendek |
+| `SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS)` | Menginisialisasi SPI dengan pin custom ESP32, karena W5500 tidak selalu terhubung ke pin SPI default library |
+| `Ethernet.init(PIN_CS)` | Memberi tahu library `Ethernet` pin CS mana yang dipakai untuk mengakses W5500 |
+| `Ethernet.begin(mac, ip)` | Menginisialisasi stack TCP/IP W5500 dengan MAC address dan IP statis yang ditentukan |
+| `Ethernet.hardwareStatus()` | Memverifikasi apakah chip W5500 terdeteksi dengan benar melalui SPI |
+| Tidak ada kode di `loop()` untuk PING | W5500 adalah chip TCP/IP "hardwired" — ARP dan ICMP Echo (ping) ditangani sepenuhnya oleh hardware chip, tanpa perlu campur tangan program |
 
 ---
 
@@ -564,14 +453,16 @@ void loop() {
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan komunikasi SPI dengan membaca data akselerometer dari IMU MPU6500 melalui pembacaan register SPI secara langsung.
 
+> **Catatan:** Percobaan ini menggunakan **modul MPU6500 fisik yang sama** dengan Percobaan 2 — bedanya, pin **CS/NCS sekarang dihubungkan ke GPIO 15 (di-toggle sebagai chip select SPI)**, bukan ditarik tetap ke 3.3V seperti pada Percobaan 2. Perpindahan satu pin ini yang mengubah mode operasi modul dari I2C menjadi SPI.
+
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| MPU6500 — CS | GPIO 15 | Chip Select |
-| MPU6500 — MOSI | GPIO 23 | SPI default ESP32 |
-| MPU6500 — MISO | GPIO 19 | SPI default ESP32 |
-| MPU6500 — SCK | GPIO 18 | SPI default ESP32 |
+| MPU6500 — CS | GPIO 15 | Chip Select — **sebelumnya ditarik ke 3.3V pada Percobaan 2, sekarang dipindah ke sini** |
+| MPU6500 — MOSI (SDI pada mode I2C) | GPIO 23 | SPI default ESP32 |
+| MPU6500 — MISO (SDO/AD0 pada mode I2C) | GPIO 19 | SPI default ESP32 |
+| MPU6500 — SCK (SCL pada mode I2C) | GPIO 18 | SPI default ESP32 |
 | MPU6500 — VCC/GND | 3.3V, GND | MPU6500 umumnya hanya toleran 3.3V |
 
 **`platformio.ini`:**
@@ -774,9 +665,9 @@ void loop() {
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) mendukung **simulasi multi-board dalam satu project** — dua (atau lebih) ESP32 dapat diletakkan pada satu diagram dan saling terhubung melalui pin virtual, cocok untuk mensimulasikan Percobaan board-to-board (UART, I2C, dan SPI) tanpa hardware fisik ganda. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+[Wokwi](https://wokwi.com) mendukung **simulasi multi-board dalam satu project** — dua (atau lebih) ESP32 dapat diletakkan pada satu diagram dan saling terhubung melalui pin virtual, cocok untuk mensimulasikan Percobaan board-to-board (UART) tanpa hardware fisik ganda. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-> **Catatan:** Ketersediaan part **MPU6050/MPU6500** dan **OLED SSD1306** pada Wokwi dapat berubah dari waktu ke waktu — periksa panel "Parts" pada editor Wokwi sebelum memulai. Jika sensor IMU tidak tersedia, ganti dengan **potensiometer** sebagai sumber data pengganti (nilai analog yang dikirim menggantikan pembacaan akselerometer).
+> **Catatan:** Ketersediaan part **MPU6500**, **OLED SSD1306**, dan **W5500** pada Wokwi dapat berubah dari waktu ke waktu — periksa panel "Parts" pada editor Wokwi sebelum memulai. Jika sensor IMU tidak tersedia (mis. Wokwi hanya menyediakan part MPU6050), gunakan part tersebut sebagai pengganti sementara pada simulasi, atau ganti dengan **potensiometer** sebagai sumber data pengganti (nilai analog yang dikirim menggantikan pembacaan akselerometer).
 
 **Tugas 1 — UART Dua Board di Wokwi:**
 1. Buat satu project Wokwi dengan **dua board ESP32**, hubungkan TX2-RX2 (silang) dan GND keduanya sesuai skema Percobaan 1
@@ -784,7 +675,7 @@ void loop() {
 3. Modifikasi agar data yang dikirim berupa **pembacaan potensiometer virtual** (bukan string statis "Hello ESP32"), sehingga Receiver menampilkan nilai yang berubah-ubah sesuai posisi potensiometer
 
 **Tugas 2 — I2C Multi-Device di Wokwi:**
-Pada project Wokwi terpisah, gabungkan Percobaan 2 Bagian A (I2C master-slave dua board) dengan Bagian B (OLED pada satu bus I2C) — board master membaca potensiometer lalu mengirim nilainya ke board slave melalui I2C, dan board slave menampilkan nilai yang diterima pada OLED SSD1306.
+Simulasikan Percobaan 2 (OLED + MPU6500 pada satu bus I2C) di Wokwi — board ESP32 membaca data (potensiometer sebagai pengganti MPU6500 jika sensor IMU tidak tersedia) lalu menampilkannya pada OLED SSD1306, membuktikan kedua perangkat dapat berbagi SDA/SCL yang sama.
 
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 
@@ -797,3 +688,5 @@ Pada project Wokwi terpisah, gabungkan Percobaan 2 Bagian A (I2C master-slave du
 4. Adafruit, *SSD1306 OLED Library Documentation*, https://github.com/adafruit/Adafruit_SSD1306
 5. Register Map Datasheet MPU6500 (InvenSense/TDK)
 6. PlatformIO Documentation, https://docs.platformio.org/
+7. Arduino, *Ethernet Library Documentation* (kompatibel W5100/W5200/W5500), https://www.arduino.cc/reference/en/libraries/ethernet/
+8. WIZnet, *W5500 Datasheet*, https://www.wiznet.io/product-item/w5500/
