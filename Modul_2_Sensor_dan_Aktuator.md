@@ -829,29 +829,30 @@ void loop() {
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta potensiometer, HC-SR04, servo motor, dan motor DC — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+[Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta potensiometer, servo motor, driver stepper (A4988), dan motor stepper — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-> **Catatan:** Modul touch sensor TTP223 dan hall effect sensor kemungkinan belum tersedia sebagai part bawaan Wokwi. Sebagai gantinya, gunakan **slide switch virtual** untuk mensimulasikan sinyal digital HIGH/LOW pengganti kedua sensor tersebut pada bagian yang membutuhkannya.
+**Tugas 1 — Potensiometer Ganda Mengendalikan Servo & Stepper Terintegrasi:**
 
-**Tugas 1 — Indikator Jarak Otomatis (Wokwi):**
-1. Buat project Wokwi baru dengan board **ESP32**, rangkai sensor **HC-SR04** dan **servo motor**
-2. Implementasikan program yang membaca jarak dari HC-SR04 (Percobaan 2), lalu memetakan (`map()`) nilai jarak tersebut menjadi sudut servo (0°–180°) — semakin dekat objek, semakin besar sudut servo (meniru jarum penunjuk pada meter analog)
-3. Uji dengan menggeser posisi objek virtual di depan sensor HC-SR04 pada simulator, amati apakah pergerakan servo responsif dan sesuai ekspektasi
-4. Sebagai pengembangan, tambahkan potensiometer virtual yang mengatur kecepatan "kedipan" LED indikator (semakin besar nilai potensiometer, semakin cepat berkedip) berjalan bersamaan dengan sistem indikator jarak di atas
+Buatlah simulasi Wokwi di mana **dua potensiometer** mengendalikan servo dan motor stepper secara terintegrasi (rangkaian dan kode program bebas dirancang sendiri):
+1. Potensiometer 1 menentukan **posisi sudut servo** (0°–180°, boleh kontinu atau dibatasi ke beberapa posisi diskrit sesuai pilihan Anda)
+2. **Arah dan kecepatan** motor stepper ditentukan oleh **deviasi posisi servo dari titik tengah (90°)** — semakin jauh dari 90°, semakin cepat stepper berputar; arah putaran stepper mengikuti sisi deviasi (di atas/di bawah 90°); stepper **wajib berhenti total** (termasuk menonaktifkan driver) saat servo berada pada 90° (dalam toleransi kecil/*dead zone*)
+3. Potensiometer 2 menentukan **kecepatan dasar** (base frequency) putaran stepper, yang kemudian dikalikan sesuai besar deviasi servo dari potensiometer 1
 
-**Tugas 2 — Eksplorasi Mandiri:**
-Ganti servo pada Tugas 1 dengan motor DC (via driver, kendalikan menggunakan PWM) sehingga kecepatan putar motor merepresentasikan jarak objek, alih-alih posisi sudut. Bandingkan kelebihan/kekurangan representasi jarak melalui sudut (servo) vs kecepatan (motor DC).
+**Pertanyaan Analisis:**
+1. Jelaskan bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan pengali dari deviasi posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
+2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — jelaskan apa yang direpresentasikan oleh sinyal PWM pada servo (C.6 Kontrol Posisi Motor Servo) dibanding pada stepper (C.7 Motor Stepper)
+3. Jelaskan mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja
 
-**Tugas 3 (Bonus) — Implementasi Level Register:**
-Percobaan 3 (Ultrasonik HC-SR04) pada modul ini dapat diimplementasikan ulang **tanpa fungsi bawaan `pulseIn()`**, langsung memanipulasi register GPIO. Kerjakan (boleh dikerjakan di Wokwi maupun hardware asli):
+**Tugas 2 (Bonus) — Implementasi Level Register:**
+Percobaan 2 (Sensor Basis Lain — Ultrasonik HC-SR04) pada modul ini dapat diimplementasikan ulang **tanpa fungsi bawaan `pulseIn()`**, langsung memanipulasi register GPIO. Kerjakan (boleh dikerjakan di Wokwi maupun hardware asli):
 
 | Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
 |---|---|---|---|
-| Percobaan 3 (Ultrasonik HC-SR04) | `pulseIn()` | `GPIO.in` (baca level pin ECHO), `micros()` | Implementasikan ulang `pulseIn()` secara manual: polling `GPIO.in` dalam loop ketat sambil mencatat waktu mulai/selesai transisi LOW→HIGH→LOW pada pin ECHO |
+| Percobaan 2 (Ultrasonik HC-SR04) | `pulseIn()` | `GPIO.in` (baca level pin ECHO), `micros()` | Implementasikan ulang `pulseIn()` secara manual: polling `GPIO.in` dalam loop ketat sambil mencatat waktu mulai/selesai transisi LOW→HIGH→LOW pada pin ECHO |
 
 **Deliverable:** kode program level-register, beserta penjelasan tiap baris register yang ditulis, dan perbandingan perilaku (mis. kecepatan eksekusi, akurasi timing, kompleksitas kode) dengan versi API tingkat tinggi pada Percobaan aslinya.
 
-**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+**Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project Wokwi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
 
 ---
 

@@ -502,29 +502,16 @@ void loop() {
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) adalah simulator elektronik berbasis browser yang mendukung ESP32 secara native (termasuk Serial Monitor, virtual Logic Analyzer, dan simulasi *contact bouncing* pada pushbutton), sehingga cocok digunakan untuk eksplorasi mandiri di luar jam praktikum tanpa perlu hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+**Matrix Pushbutton 3x3 Mengendalikan Matrix LED 3x3:**
 
-> **Catatan:** Wokwi belum mendukung board STM32 Blackpill secara native, sehingga tugas ini difokuskan pada bagian ESP32 (Percobaan 3–5). Jika ingin bereksperimen dengan STM32, gunakan board Nucleo yang tersedia di Wokwi sebagai gantinya (opsional, tidak wajib).
+Buatlah simulasi di Wokwi untuk Matrix Pushbutton 3x3 yang mengendalikan Matrix LED 3x3, dimana tombol pada posisi (baris, kolom) tertentu menyalakan LED pada posisi yang sama — mis. tombol baris 1 kolom 1 menyalakan LED baris 1 kolom 1. Program **wajib menerapkan debouncing** pada setiap tombol (mengacu pada Percobaan 4), sehingga LED hanya berubah status setelah pembacaan tombol benar-benar stabil, bukan langsung mengikuti setiap perubahan sinyal mentah yang masih mungkin bouncing.
 
-**Tugas 1 — Gabungan Pull-up/Pull-down & Debouncing:**
-1. Buat project Wokwi baru dengan board **ESP32**, lalu rangkai **dua pushbutton virtual**: satu dikonfigurasi pull-up eksternal (GPIO 32) dan satu lagi pull-down eksternal (GPIO 33), sesuai skema Percobaan 3 Bagian A
-2. Gabungkan logika debouncing (Percobaan 4) pada **kedua** tombol tersebut, lalu implementasikan sistem penghitung akses masuk/keluar (tombol 1 = masuk, tombol 2 = keluar), dengan total pengunjung ditampilkan pada Serial Monitor
-3. Tambahkan komponen **Logic Analyzer** dari Wokwi pada salah satu pin tombol untuk merekam bentuk sinyal mentah (dengan bouncing) — Wokwi secara default mensimulasikan efek bouncing kontak mekanik pada pushbutton virtual
-4. Ambil screenshot rangkaian dan hasil rekaman Logic Analyzer, lalu jelaskan pada laporan bagaimana pola bouncing yang teramati dibandingkan dengan hasil pengamatan pada Percobaan 4 (hardware asli)
+**Pertanyaan Analisis:**
+1. Jelaskan mengapa debouncing tetap diperlukan pada rangkaian matrix pushbutton ini, walaupun pada satu waktu hanya satu tombol yang biasanya ditekan — kaitkan dengan penyebab bouncing pada C.5 Debouncing
+2. Jelaskan konfigurasi pull-up atau pull-down (sesuai rancangan Anda) yang digunakan pada pembacaan kolom tombol — apa kondisi (HIGH/LOW) pin tersebut saat tombol **tidak** ditekan, dan mengapa kondisi tersebut tidak boleh dibiarkan *floating*?
+3. Andaikan salah satu LED pada matrix ini digantikan dengan LDR yang dibaca melalui ADC (seperti Percobaan 5), jelaskan perbedaan mendasar antara membaca GPIO sebagai **digital input** (tombol, hanya HIGH/LOW) dan sebagai **analog input** (ADC) — mengapa ADC dapat merepresentasikan lebih dari dua kondisi?
 
-**Tugas 2 — Eksplorasi Mandiri:**
-Modifikasi Tugas 1 agar total pengunjung tidak dapat bernilai negatif — tombol "keluar" ditolak (diabaikan) jika total sudah 0 — dan tambahkan LED indikator yang menyala saat total pengunjung mencapai 5 atau lebih.
-
-**Tugas 3 (Bonus) — Implementasi Level Register:**
-Percobaan 2 (Blink ESP32 ESP-IDF) pada modul ini dapat diimplementasikan ulang **tanpa API framework** (tanpa `gpio_set_level()`), langsung memanipulasi register GPIO sesuai Technical Reference Manual — nilai tambah untuk memahami apa yang sebenarnya dikerjakan fungsi tersebut di baliknya. Kerjakan (boleh di Wokwi maupun hardware asli):
-
-| Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
-|---|---|---|---|
-| Percobaan 2 (Blink ESP32 ESP-IDF) | `gpio_set_level()` | `GPIO.out_w1ts` (set), `GPIO.out_w1tc` (clear) | Kedua register ini *write-1-to-set*/*write-1-to-clear* — tulis bitmask `(1 << pin)`, bukan menulis nilai langsung ke `GPIO.out` |
-
-**Deliverable:** kode program level-register, beserta penjelasan tiap baris register yang ditulis (rujuk ke datasheet/reference manual terkait), dan perbandingan perilaku (mis. kecepatan eksekusi, kompleksitas kode) dengan versi API tingkat tinggi pada Percobaan aslinya.
-
-**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+**Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project Wokwi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
 
 ---
 
