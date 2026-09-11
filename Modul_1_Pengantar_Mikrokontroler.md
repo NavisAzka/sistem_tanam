@@ -9,24 +9,27 @@
 ---
 
 ## Daftar Isi
-- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
-- [B. Alat dan Bahan](#b-alat-dan-bahan)
-- [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 PlatformIO dan VSCode sebagai Lingkungan Pengembangan](#c1-platformio-dan-vscode-sebagai-lingkungan-pengembangan)
-  - [C.2 STM32 Blackpill dan Framework Arduino](#c2-stm32-blackpill-dan-framework-arduino)
-  - [C.3 ESP32 dan Framework ESP-IDF](#c3-esp32-dan-framework-esp-idf)
-  - [C.4 Konfigurasi Pull-up dan Pull-down Resistor pada Tombol](#c4-konfigurasi-pull-up-dan-pull-down-resistor-pada-tombol)
-  - [C.5 Debouncing](#c5-debouncing)
-  - [C.6 ADC sebagai Mode Akses GPIO Ketiga](#c6-adc-sebagai-mode-akses-gpio-ketiga)
-- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
-- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — Instalasi PlatformIO & Pengenalan STM32 Blackpill (Blink)](#percobaan-1--instalasi-platformio--pengenalan-stm32-blackpill-blink)
-  - [PERCOBAAN 2 — Pengenalan ESP32 dengan Framework ESP-IDF (Blink)](#percobaan-2--pengenalan-esp32-dengan-framework-esp-idf-blink)
-  - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-esp32--framework-arduino)
-  - [PERCOBAAN 4 — Debouncing pada Input Tombol GPIO (ESP32 + Framework Arduino)](#percobaan-4--debouncing-pada-input-tombol-gpio-esp32--framework-arduino)
-  - [PERCOBAAN 5 — Akses GPIO Analog: Pembacaan ADC dengan LDR (ESP32 + Framework Arduino)](#percobaan-5--akses-gpio-analog-pembacaan-adc-dengan-ldr-esp32--framework-arduino)
-- [F. Tugas Modul](#f-tugas-modul)
-- [G. Referensi](#g-referensi)
+- [MODUL 1](#modul-1)
+- [PENGANTAR MIKROKONTROLER \& DASAR PEMROGRAMAN](#pengantar-mikrokontroler--dasar-pemrograman)
+  - [Daftar Isi](#daftar-isi)
+  - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+  - [B. Alat dan Bahan](#b-alat-dan-bahan)
+  - [C. Dasar Teori](#c-dasar-teori)
+    - [C.1 PlatformIO dan VSCode sebagai Lingkungan Pengembangan](#c1-platformio-dan-vscode-sebagai-lingkungan-pengembangan)
+    - [C.2 STM32 Blackpill dan Framework Arduino](#c2-stm32-blackpill-dan-framework-arduino)
+    - [C.3 ESP32 dan Framework ESP-IDF](#c3-esp32-dan-framework-esp-idf)
+    - [C.4 Konfigurasi Pull-up dan Pull-down Resistor pada Tombol](#c4-konfigurasi-pull-up-dan-pull-down-resistor-pada-tombol)
+    - [C.5 Debouncing](#c5-debouncing)
+    - [C.6 ADC sebagai Mode Akses GPIO Ketiga](#c6-adc-sebagai-mode-akses-gpio-ketiga)
+  - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+  - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+    - [PERCOBAAN 1 — Pengenalan STM32 Blackpill (Blink)](#percobaan-1--pengenalan-stm32-blackpill-blink)
+    - [PERCOBAAN 2 — Pengenalan ESP32 dengan Framework ESP-IDF (Blink)](#percobaan-2--pengenalan-esp32-dengan-framework-esp-idf-blink)
+    - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-esp32--framework-arduino)
+    - [PERCOBAAN 4 — Debouncing pada Input Tombol GPIO (ESP32 + Framework Arduino)](#percobaan-4--debouncing-pada-input-tombol-gpio-esp32--framework-arduino)
+    - [PERCOBAAN 5 — Akses GPIO Analog: Pembacaan ADC dengan LDR (ESP32 + Framework Arduino)](#percobaan-5--akses-gpio-analog-pembacaan-adc-dengan-ldr-esp32--framework-arduino)
+  - [F. Tugas Modul](#f-tugas-modul)
+  - [G. Referensi](#g-referensi)
 
 ---
 
@@ -137,14 +140,14 @@ Sebelum memulai kegiatan praktikum:
 
 ## E. Kegiatan Praktikum
 
-### PERCOBAAN 1 — Instalasi PlatformIO & Pengenalan STM32 Blackpill (Blink)
+### PERCOBAAN 1 — Pengenalan STM32 Blackpill (Blink)
 
 **Tujuan:**
-Mahasiswa mampu melakukan instalasi PlatformIO, memahami arsitektur board Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework Arduino).
+Mahasiswa mampu memahami arsitektur board STM Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework Arduino).
 
 **Langkah Kerja:**
-1. Pastikan PlatformIO IDE sudah terinstal di VSCode (lihat bagian D)
-2. Buat project baru: **PlatformIO Home → New Project**
+1. Pastikan PlatformIO IDE sudah terinstal di VSCode 
+2. Buat project baru: **PlatformIO Home → New Project** 
    - Name: `modul1-blink-blackpill`
    - Board: **"Blackpill F411CE"** (atau **"Blackpill F401CC"** sesuai chip pada board)
    - Framework: **Arduino**
@@ -194,7 +197,7 @@ void loop()
 
 **Analisis Setelah Program Berjalan:**
 1. Amati kecepatan kedip LED onboard — pastikan sesuai ekspektasi (nyala 500ms, mati 500ms, sehingga berkedip 1 kali per detik)
-2. Ubah nilai `delay(500)` menjadi `delay(100)`, **Build & Upload** ulang, lalu amati apakah kecepatan kedip LED berubah sesuai ekspektasi
+2. Ubah nilai `delay(500)` menjadi `delay(100)`, **Build & Upload** ulang, lalu amati apakah kecepatan kedip LED 
 
 ---
 
@@ -287,13 +290,6 @@ Mahasiswa mampu memahami, mengimplementasikan, dan membandingkan pembacaan tombo
 | Pushbutton 1 (pull-up eksternal) | GPIO 32 | Satu kaki ke GPIO **dan** ke 3.3V melalui resistor 10kΩ (pull-up), kaki lain ke GND |
 | Pushbutton 2 (pull-down eksternal) | GPIO 33 | Satu kaki ke GPIO **dan** ke GND melalui resistor 10kΩ (pull-down), kaki lain ke 3.3V |
 
-**Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
-
-| Komponen | Pin ESP32 | Keterangan |
-|---|---|---|
-| Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
-| Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
-
 **Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
 #define BUTTON_PULLUP_PIN 32   // pull-up eksternal
@@ -315,6 +311,14 @@ void loop() {
   delay(200);
 }
 ```
+
+
+**Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
+| Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
+
 
 **Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
@@ -435,7 +439,7 @@ void loop() {
 | Blok "Tampilkan kedua nilai" | Mencetak kedua counter ke Serial Monitor hanya saat salah satu nilainya berubah, agar keduanya mudah dibandingkan secara langsung |
 
 **Analisis Setelah Program Berjalan:**
-1. Tekan tombol satu kali secara normal, catat nilai `counterNoDebounce` dan `counterWithDebounce` — hitung selisihnya sebagai indikasi jumlah bouncing yang terjadi
+1. Tekan tombol satu kali secara normal, catat nilai `counterNoDebounce` dan `counterWithDebounce` — hitung selisihnya 
 2. Ulangi pengujian dengan gaya penekanan berbeda (cepat/tegas vs pelan/ragu-ragu), amati apakah pola bouncing pada `counterNoDebounce` berbeda
 3. Ubah nilai `DEBOUNCE_DELAY` menjadi 10ms, **Build & Upload** ulang dan amati apakah bouncing mulai lolos tidak tersaring, lalu ubah menjadi 200ms dan amati apakah respons tombol mulai terasa lambat
 

@@ -17,15 +17,15 @@
   - [C.1 UART (Universal Asynchronous Receiver-Transmitter)](#c1-uart-universal-asynchronous-receiver-transmitter)
   - [C.2 I2C (Inter-Integrated Circuit)](#c2-i2c-inter-integrated-circuit)
   - [C.3 SPI (Serial Peripheral Interface)](#c3-spi-serial-peripheral-interface)
-  - [C.4 SPI ke Ethernet (W5500)](#c4-spi-ke-ethernet-w5500)
-  - [C.5 DMA (Direct Memory Access)](#c5-dma-direct-memory-access)
+  - [C.4 DMA (Direct Memory Access)](#c4-dma-direct-memory-access)
+  - [C.5 SPI ke Ethernet (W5500)](#c5-spi-ke-ethernet-w5500)
 - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
 - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
   - [PERCOBAAN 1 — Komunikasi UART Antar ESP32](#percobaan-1--komunikasi-uart-antar-esp32)
   - [PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500](#percobaan-2--interfacing-multi-device-i2c-oled--mpu6500)
-  - [PERCOBAAN 3 — Komunikasi Ethernet via SPI (W5500)](#percobaan-3--komunikasi-ethernet-via-spi-w5500)
-  - [PERCOBAAN 4 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-4--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
-  - [PERCOBAAN 5 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-5--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
+  - [PERCOBAAN 3 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-3--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
+  - [PERCOBAAN 4 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-4--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
+  - [PERCOBAAN 5 — Komunikasi Ethernet via SPI (W5500)](#percobaan-5--komunikasi-ethernet-via-spi-w5500)
 - [F. Tugas Modul](#f-tugas-modul)
 - [G. Referensi](#g-referensi)
 
@@ -37,9 +37,9 @@ Setelah menyelesaikan Modul 3, praktikan mampu:
 1. Menjelaskan prinsip kerja protokol komunikasi UART, I2C, dan SPI
 2. Mengimplementasikan komunikasi UART antar dua board ESP32
 3. Mengimplementasikan interfacing lebih dari satu modul I2C sekaligus pada satu bus (OLED display + IMU MPU6500)
-4. Mengimplementasikan komunikasi Ethernet melalui SPI menggunakan modul W5500, serta memverifikasi konektivitas jaringan dengan PC
-5. Mengimplementasikan interfacing modul eksternal melalui SPI (IMU MPU6500)
-6. Menjelaskan konsep DMA dan mengimplementasikan pembacaan data IMU melalui SPI dengan DMA diaktifkan, serta membandingkannya dengan metode pembacaan blocking biasa
+4. Mengimplementasikan interfacing modul eksternal melalui SPI (IMU MPU6500)
+5. Menjelaskan konsep DMA dan mengimplementasikan pembacaan data IMU melalui SPI dengan DMA diaktifkan, serta membandingkannya dengan metode pembacaan blocking biasa
+6. Mengimplementasikan komunikasi Ethernet melalui SPI menggunakan modul W5500, serta memverifikasi konektivitas jaringan dengan PC
 
 ---
 
@@ -52,7 +52,7 @@ Setelah menyelesaikan Modul 3, praktikan mampu:
 | 3 | Breadboard | 830 titik | 1 |
 | 4 | Kabel jumper male-male / male-female | — | secukupnya |
 | 5 | Modul OLED display | SSD1306, 128x64, I2C | 1 |
-| 6 | Modul IMU MPU6500 | breakout dual-interface I2C/SPI — **dipakai ulang**: I2C pada Percobaan 2, SPI pada Percobaan 4–5 (rewiring CS diperlukan saat berpindah) | 1 |
+| 6 | Modul IMU MPU6500 | breakout dual-interface I2C/SPI — **dipakai ulang**: I2C pada Percobaan 2, SPI pada Percobaan 3–4 (rewiring CS diperlukan saat berpindah) | 1 |
 | 7 | Resistor pull-up | 4.7kΩ (opsional, jika bus I2C tidak stabil) | 2 |
 | 8 | Modul Ethernet W5500 | breakout dengan interface SPI + port RJ45 | 1 |
 | 9 | Kabel RJ45 (patch cord) | untuk menghubungkan W5500 ke switch/router yang sama dengan PC | 1 |
@@ -74,24 +74,24 @@ Karena setiap perangkat I2C dibedakan melalui **alamat**, bukan jalur fisik terp
 - **OLED display (SSD1306):** alamat tetap `0x3C`, dikendalikan melalui perintah-perintah yang telah diabstraksi oleh library (mis. Adafruit SSD1306), sehingga praktikan tidak perlu menulis manual setiap byte perintah ke controller display
 - **IMU MPU6500:** alamat default `0x68` (dapat berubah menjadi `0x69` tergantung kondisi pin `AD0`), diakses melalui pembacaan/penulisan register secara langsung (mis. `PWR_MGMT_1` untuk membangunkan sensor, `ACCEL_XOUT_H` untuk data akselerometer)
 
-> **Catatan:** MPU6500 mendukung **dua antarmuka sekaligus** dalam satu chip — I2C maupun SPI — tergantung kondisi pin **CS/NCS**. Jika CS ditarik tetap ke VCC (3.3V), modul beroperasi dalam mode I2C (dipakai pada Percobaan ini); jika CS di-toggle oleh master, modul beralih ke mode SPI (dipakai pada Percobaan 4–5). Artinya, **modul IMU yang sama** dapat dipakai ulang di kedua Percobaan tersebut, cukup dengan mengubah wiring pin CS — mendemonstrasikan bahwa satu sensor dapat diakses melalui protokol fisik yang berbeda.
+> **Catatan:** MPU6500 mendukung **dua antarmuka sekaligus** dalam satu chip — I2C maupun SPI — tergantung kondisi pin **CS/NCS**. Jika CS ditarik tetap ke VCC (3.3V), modul beroperasi dalam mode I2C (dipakai pada Percobaan ini); jika CS di-toggle oleh master, modul beralih ke mode SPI (dipakai pada Percobaan 3–4). Artinya, **modul IMU yang sama** dapat dipakai ulang di kedua Percobaan tersebut, cukup dengan mengubah wiring pin CS — mendemonstrasikan bahwa satu sensor dapat diakses melalui protokol fisik yang berbeda.
 
 ![Gambar 2: Diagram bus I2C dengan satu master dan beberapa slave (OLED 0x3C, MPU6500 0x68) berbagi jalur SDA/SCL yang sama](img/diagram_bus_i2c.png)
 
 ### C.3 SPI (Serial Peripheral Interface)
 SPI adalah protokol komunikasi serial sinkron **full-duplex** (dapat mengirim dan menerima data secara bersamaan), menggunakan empat jalur: **MOSI** (Master Out Slave In), **MISO** (Master In Slave Out), **SCK** (Serial Clock), dan **CS/SS** (Chip Select). Berbeda dengan I2C yang menggunakan pengalamatan, SPI memilih perangkat tujuan melalui jalur CS terpisah untuk masing-masing slave — sehingga umumnya lebih cepat namun membutuhkan lebih banyak jalur pin dibanding I2C. Banyak sensor presisi tinggi seperti IMU (Inertial Measurement Unit) MPU6500 menyediakan antarmuka SPI, diakses melalui pembacaan/penulisan **register** — setiap register memiliki alamat 8-bit, dengan bit paling signifikan (MSB) menandai operasi baca (`1`) atau tulis (`0`).
 
-### C.4 SPI ke Ethernet (W5500)
+### C.4 DMA (Direct Memory Access)
+DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peripheral dan memori **tanpa melibatkan CPU secara langsung** pada setiap byte data. Tanpa DMA, pembacaan/pengiriman data mengharuskan CPU secara aktif menangani transfer tiap byte (*blocking*), yang menghabiskan waktu eksekusi CPU. Pada ESP32, DMA untuk SPI diaktifkan langsung saat inisialisasi bus SPI (parameter *DMA channel* pada `spi_bus_initialize()`), sehingga transfer data berukuran besar — misalnya membaca beberapa register sekaligus pada IMU dalam satu transaksi — dapat dilakukan hardware secara mandiri, dan CPU hanya perlu menunggu transaksi selesai alih-alih menangani tiap byte secara manual.
+
+![Gambar 3: Diagram blok perbandingan alur transfer data blocking (CPU menangani tiap byte) vs DMA (CPU hanya memicu lalu menunggu, hardware DMA menangani transfer)](img/diagram_blocking_vs_dma.png)
+
+### C.5 SPI ke Ethernet (W5500)
 Selain untuk sensor, SPI juga umum dipakai untuk menghubungkan mikrokontroler ke peripheral **komunikasi jaringan**. **W5500** adalah chip Ethernet "hardwired" — seluruh stack TCP/IP (ARP, IP, TCP, UDP, termasuk ICMP) diimplementasikan langsung di dalam hardware chip, sehingga mikrokontroler tidak perlu menjalankan software stack TCP/IP sendiri (berbeda dengan chip seperti ENC28J60 yang hanya menyediakan lapisan MAC/PHY, sehingga memerlukan stack software seperti lwIP). Mikrokontroler berkomunikasi dengan W5500 melalui SPI menggunakan protokol register/socket milik W5500, yang pada framework Arduino sudah diabstraksi penuh oleh library `Ethernet`.
 
 Karena ARP dan **ICMP Echo (ping)** ditangani otomatis oleh hardware chip, cukup dengan `Ethernet.begin()` menggunakan IP yang valid, W5500 akan langsung dapat di-*ping* dari perangkat lain di jaringan yang sama — tanpa perlu menulis kode tambahan apa pun untuk merespons ping.
 
-![Gambar 3: Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal yang sama dengan PC](img/wiring_w5500_esp32.png)
-
-### C.5 DMA (Direct Memory Access)
-DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peripheral dan memori **tanpa melibatkan CPU secara langsung** pada setiap byte data. Tanpa DMA, pembacaan/pengiriman data mengharuskan CPU secara aktif menangani transfer tiap byte (*blocking*), yang menghabiskan waktu eksekusi CPU. Pada ESP32, DMA untuk SPI diaktifkan langsung saat inisialisasi bus SPI (parameter *DMA channel* pada `spi_bus_initialize()`), sehingga transfer data berukuran besar — misalnya membaca beberapa register sekaligus pada IMU dalam satu transaksi — dapat dilakukan hardware secara mandiri, dan CPU hanya perlu menunggu transaksi selesai alih-alih menangani tiap byte secara manual.
-
-![Gambar 4: Diagram blok perbandingan alur transfer data blocking (CPU menangani tiap byte) vs DMA (CPU hanya memicu lalu menunggu, hardware DMA menangani transfer)](img/diagram_blocking_vs_dma.png)
+![Gambar 4: Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal yang sama dengan PC](img/wiring_w5500_esp32.png)
 
 ---
 
@@ -106,11 +106,11 @@ DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peri
        adafruit/Adafruit SSD1306@^2.5.9
        adafruit/Adafruit GFX Library@^1.11.9
    ```
-5. Untuk komunikasi Ethernet pada Percobaan 3, tambahkan library **Ethernet** melalui PlatformIO Library Manager atau pada `platformio.ini`:
+5. Interfacing MPU6500 pada Percobaan 3 dan 4 dilakukan dengan pembacaan register SPI secara manual (tanpa library eksternal), agar praktikan memahami langsung protokol SPI yang mendasarinya
+6. Untuk komunikasi Ethernet pada Percobaan 5, tambahkan library **Ethernet** melalui PlatformIO Library Manager atau pada `platformio.ini`:
    ```ini
    lib_deps = arduino-libraries/Ethernet@^2.0.2
    ```
-6. Interfacing MPU6500 pada Percobaan 4 dan 5 dilakukan dengan pembacaan register SPI secara manual (tanpa library eksternal), agar praktikan memahami langsung protokol SPI yang mendasarinya
 7. Buat project baru untuk Modul 3:
    - Name: `modul3-komunikasi-serial`
    - Board: **"Espressif ESP32 Dev Module"**
@@ -227,10 +227,10 @@ Mahasiswa mampu mengimplementasikan interfacing lebih dari satu modul I2C nyata 
 | OLED SSD1306 — VCC/GND | 3.3V, GND | Periksa datasheet modul (umumnya toleran 3.3–5V) |
 | MPU6500 — SDA (pin SDI pada mode SPI) | GPIO 21 | Bus I2C default — pin **sama persis** dengan OLED |
 | MPU6500 — SCL (pin SCLK pada mode SPI) | GPIO 22 | Bus I2C default — pin **sama persis** dengan OLED |
-| MPU6500 — CS/NCS | **3.3V (ditarik tetap, bukan di-toggle)** | **Wajib** — inilah yang memilih mode I2C, berbeda dari Percobaan 4–5 di mana CS di-toggle sebagai chip select SPI |
+| MPU6500 — CS/NCS | **3.3V (ditarik tetap, bukan di-toggle)** | **Wajib** — inilah yang memilih mode I2C, berbeda dari Percobaan 3–4 di mana CS di-toggle sebagai chip select SPI |
 | MPU6500 — VCC/GND | 3.3V, GND | MPU6500 umumnya hanya toleran 3.3V |
 
-> Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6500 = `0x68`). Perhatikan juga bahwa modul MPU6500 ini adalah **modul yang sama** yang nanti dipakai ulang pada Percobaan 4–5 melalui SPI — cukup pindahkan wiring CS dari "ditarik ke 3.3V" menjadi "terhubung ke GPIO CS ESP32" saat berpindah Percobaan.
+> Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6500 = `0x68`). Perhatikan juga bahwa modul MPU6500 ini adalah **modul yang sama** yang nanti dipakai ulang pada Percobaan 3–4 melalui SPI — cukup pindahkan wiring CS dari "ditarik ke 3.3V" menjadi "terhubung ke GPIO CS ESP32" saat berpindah Percobaan.
 
 **`platformio.ini`:**
 ```ini
@@ -348,107 +348,11 @@ void loop()
 | `Wire.endTransmission(false)` pada `read16()` | Mengirim **repeated start** alih-alih melepas bus sepenuhnya, agar transaksi baca register MPU6500 tidak diselingi perangkat lain di tengah proses |
 | `writeRegister(PWR_MGMT_1, 0x00)` | MPU6500 default dalam kondisi sleep saat pertama dinyalakan; register `PWR_MGMT_1` perlu ditulis `0x00` agar sensor aktif mengukur |
 | Urutan `loop()`: baca MPU6500 → tulis ke OLED | Menunjukkan kedua perangkat diakses **bergantian** pada bus fisik yang sama dalam satu siklus program, tanpa memerlukan bus I2C terpisah |
-| CS/NCS ditarik ke 3.3V | Inilah yang membedakan mode I2C (Percobaan ini) dari mode SPI (Percobaan 4–5) pada modul MPU6500 yang sama — bukan perbedaan alamat register atau logika pembacaan data |
+| CS/NCS ditarik ke 3.3V | Inilah yang membedakan mode I2C (Percobaan ini) dari mode SPI (Percobaan 3–4) pada modul MPU6500 yang sama — bukan perbedaan alamat register atau logika pembacaan data |
 
 ---
 
-### PERCOBAAN 3 — Komunikasi Ethernet via SPI (W5500)
-
-**Tujuan:**
-Mahasiswa mampu mengimplementasikan komunikasi Ethernet menggunakan modul W5500 melalui antarmuka SPI, sebagai contoh protokol SPI yang digunakan untuk komunikasi jaringan (bukan hanya sensor), serta memverifikasi konektivitas dengan PC melalui *ping* (ICMP Echo).
-
-**Skema Rangkaian:**
-
-| W5500 | Pin ESP32 | Keterangan |
-|---|---|---|
-| SCK | GPIO 18 | SPI Clock |
-| MISO | GPIO 19 | SPI Master In Slave Out |
-| MOSI | GPIO 23 | SPI Master Out Slave In |
-| CS/SS | GPIO 5 | Chip Select |
-| RST | 3.3V (atau GPIO bebas untuk kontrol reset manual) | Kebanyakan modul breakout sudah memiliki pull-up onboard |
-| VCC | 3.3V | **Jangan 5V** — chip W5500 hanya toleran 3.3V |
-| GND | GND | — |
-
-> Modul W5500 juga memiliki port **RJ45** — hubungkan ke jaringan yang sama dengan PC (via switch/router yang sama).
-
-**`platformio.ini`:**
-```ini
-[env:esp32dev]
-platform = espressif32
-board = esp32dev
-framework = arduino
-lib_deps = arduino-libraries/Ethernet@^2.0.2
-```
-
-**Langkah Kerja:**
-1. Rangkai modul W5500 sesuai skema, sambungkan port RJ45 ke jaringan yang sama dengan PC (switch/router yang sama)
-2. Sesuaikan alamat `ip` pada kode agar berada pada subnet yang sama dengan PC (periksa IP PC melalui `ipconfig` pada Command Prompt Windows)
-3. Upload kode program di bawah, buka Serial Monitor untuk melihat status inisialisasi dan alamat IP yang terpasang pada W5500
-4. Dari Command Prompt Windows, jalankan `ping <alamat-IP-ESP32>` — pastikan muncul balasan `Reply from ...`
-5. Jika tidak ada balasan dan Serial Monitor menampilkan `EthernetNoHardware`, periksa kembali wiring SPI; jika linknya `LinkOFF`, periksa kabel RJ45
-
-**Kode Program (ESP32 + W5500 — Merespons Ping dari PC):**
-```cpp
-#include <Arduino.h>
-#include <SPI.h>
-#include <Ethernet.h>
-
-// ==================== PIN SPI (VSPI default ESP32) ====================
-#define PIN_SCK  18
-#define PIN_MISO 19
-#define PIN_MOSI 23
-#define PIN_CS   5
-
-// MAC address bebas — pastikan unik di jaringan lokal (hindari duplikat)
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-
-// IP statis — SESUAIKAN dengan subnet jaringan yang sama dengan PC
-IPAddress ip(192, 168, 1, 177);
-
-void setup() {
-  Serial.begin(115200);
-  delay(1000);
-
-  // Inisialisasi SPI dengan pin custom ESP32, lalu beri tahu library CS pin yang dipakai
-  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS);
-  Ethernet.init(PIN_CS);
-
-  Ethernet.begin(mac, ip);
-
-  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("W5500 tidak terdeteksi -- periksa wiring SPI!");
-    while (true) { delay(1000); }
-  }
-
-  if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Peringatan: kabel Ethernet (RJ45) tidak terdeteksi terhubung.");
-  }
-
-  Serial.print("ESP32 + W5500 siap. IP: ");
-  Serial.println(Ethernet.localIP());
-  Serial.print("Coba dari Command Prompt Windows: ping ");
-  Serial.println(Ethernet.localIP());
-}
-
-void loop() {
-  // Tidak perlu kode tambahan untuk merespons PING --
-  // W5500 menangani ARP & ICMP Echo Reply secara otomatis di level hardware chip
-  delay(1000);
-}
-```
-
-**Penjelasan Kode:**
-| Bagian | Penjelasan |
-|---|---|
-| `SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS)` | Menginisialisasi SPI dengan pin custom ESP32, karena W5500 tidak selalu terhubung ke pin SPI default library |
-| `Ethernet.init(PIN_CS)` | Memberi tahu library `Ethernet` pin CS mana yang dipakai untuk mengakses W5500 |
-| `Ethernet.begin(mac, ip)` | Menginisialisasi stack TCP/IP W5500 dengan MAC address dan IP statis yang ditentukan |
-| `Ethernet.hardwareStatus()` | Memverifikasi apakah chip W5500 terdeteksi dengan benar melalui SPI |
-| Tidak ada kode di `loop()` untuk PING | W5500 adalah chip TCP/IP "hardwired" — ARP dan ICMP Echo (ping) ditangani sepenuhnya oleh hardware chip, tanpa perlu campur tangan program |
-
----
-
-### PERCOBAAN 4 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)
+### PERCOBAAN 3 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan komunikasi SPI dengan membaca data akselerometer dari IMU MPU6500 melalui pembacaan register SPI secara langsung.
@@ -557,15 +461,15 @@ void loop() {
 
 ---
 
-### PERCOBAAN 5 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA
+### PERCOBAAN 4 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA
 
 **Tujuan:**
-Mahasiswa mampu menjelaskan konsep DMA pada SPI dan mengimplementasikan pembacaan data IMU MPU6500 secara *burst* (satu transaksi sekaligus) menggunakan driver SPI master ESP-IDF dengan DMA diaktifkan, dibandingkan dengan pembacaan byte-per-byte (blocking) pada Percobaan 4.
+Mahasiswa mampu menjelaskan konsep DMA pada SPI dan mengimplementasikan pembacaan data IMU MPU6500 secara *burst* (satu transaksi sekaligus) menggunakan driver SPI master ESP-IDF dengan DMA diaktifkan, dibandingkan dengan pembacaan byte-per-byte (blocking) pada Percobaan 3.
 
 > **Catatan:** Percobaan ini menggunakan driver SPI master dari ESP-IDF (`driver/spi_master.h`) yang tetap dapat dipanggil langsung dari sketch Arduino karena Arduino-ESP32 core dibangun di atas ESP-IDF. API ini (termasuk `SPI_DMA_CH_AUTO`) sudah tersedia sejak ESP-IDF 4.x yang dibawa oleh **Arduino-ESP32 core 2.0.x** (platform `espressif32` resmi tanpa versi khusus), sehingga tidak memerlukan platform komunitas tambahan seperti pada Modul 2.
 
 **Skema Rangkaian:**
-Gunakan rangkaian MPU6500 yang sama dengan **Percobaan 4** (CS=GPIO 15, MOSI=GPIO 23, MISO=GPIO 19, SCK=GPIO 18).
+Gunakan rangkaian MPU6500 yang sama dengan **Percobaan 3** (CS=GPIO 15, MOSI=GPIO 23, MISO=GPIO 19, SCK=GPIO 18).
 
 **`platformio.ini`:**
 ```ini
@@ -577,8 +481,8 @@ framework = arduino
 > Tidak ada library tambahan — driver `spi_master` diakses langsung dari header ESP-IDF (`driver/spi_master.h`) yang sudah termasuk dalam Arduino-ESP32 core.
 
 **Langkah Kerja:**
-1. Gunakan kembali rangkaian MPU6500 dari Percobaan 4
-2. Jalankan kembali kode Percobaan 4 sebagai pembanding, catat estimasi waktu pembacaan 6 byte data akselerometer secara byte-per-byte
+1. Gunakan kembali rangkaian MPU6500 dari Percobaan 3
+2. Jalankan kembali kode Percobaan 3 sebagai pembanding, catat estimasi waktu pembacaan 6 byte data akselerometer secara byte-per-byte
 3. Implementasikan pembacaan register akselerometer secara *burst* (satu transaksi sekaligus) menggunakan driver `spi_master` dengan DMA diaktifkan pada inisialisasi bus
 4. Ukur waktu satu transaksi burst menggunakan `micros()`, bandingkan dengan hasil pengamatan pada langkah 2
 
@@ -659,7 +563,139 @@ void loop() {
 | `spi_bus_add_device()` | Mendaftarkan MPU6500 sebagai device pada bus SPI, termasuk pin CS dan kecepatan clock yang digunakan |
 | `spi_device_transmit(mpuHandle, &trans)` | Melakukan **satu transaksi** SPI (kirim alamat register + terima 6 byte data sekaligus) — untuk transfer seukuran ini, driver menangani proses melalui DMA tanpa CPU perlu memanggil fungsi transfer berulang per byte |
 | `trans.length` | Panjang transaksi dinyatakan dalam satuan **bit**, bukan byte |
-| Perbandingan waktu (`micros()`) | Satu transaksi 7-byte via DMA umumnya lebih efisien dibanding 7 kali pemanggilan `SPI.transfer()` satu-per-satu seperti pada Percobaan 4, karena overhead per-panggilan fungsi pada CPU berkurang |
+| Perbandingan waktu (`micros()`) | Satu transaksi 7-byte via DMA umumnya lebih efisien dibanding 7 kali pemanggilan `SPI.transfer()` satu-per-satu seperti pada Percobaan 3, karena overhead per-panggilan fungsi pada CPU berkurang |
+
+---
+
+### PERCOBAAN 5 — Komunikasi Ethernet via SPI (W5500)
+
+**Tujuan:**
+Mahasiswa mampu mengimplementasikan komunikasi Ethernet menggunakan modul W5500 melalui antarmuka SPI, sebagai contoh protokol SPI yang digunakan untuk komunikasi jaringan (bukan hanya sensor), serta memverifikasi konektivitas dengan PC melalui *ping* (ICMP Echo).
+
+**Skema Rangkaian:**
+
+| W5500 | Pin ESP32 | Keterangan |
+|---|---|---|
+| SCK | GPIO 18 | SPI Clock |
+| MISO | GPIO 19 | SPI Master In Slave Out |
+| MOSI | GPIO 23 | SPI Master Out Slave In |
+| CS/SS | GPIO 5 | Chip Select |
+| RST | 3.3V (atau GPIO bebas untuk kontrol reset manual) | Kebanyakan modul breakout sudah memiliki pull-up onboard |
+| VCC | 3.3V | **Jangan 5V** — chip W5500 hanya toleran 3.3V |
+| GND | GND | — |
+
+> Modul W5500 memiliki port **RJ45**. Ada dua cara menghubungkannya ke PC:
+> - **Via switch/router (DHCP aktif):** colokkan W5500 dan PC ke switch/router yang sama. PC tetap dapat internet, cukup pilih `ip(...)` pada kode yang satu subnet dengan router dan belum dipakai perangkat lain.
+> - **Koneksi langsung (kabel RJ45 W5500 → port Ethernet laptop):** tidak ada DHCP, sehingga **IP statis wajib diatur manual di kedua sisi** (ESP32 lewat kode, PC lewat setelan Windows di bawah). Cara ini paling sederhana untuk praktikum karena tidak bergantung pada jaringan lab.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+lib_deps = arduino-libraries/Ethernet@^2.0.2
+```
+
+**Menyiapkan IP Statis pada PC Windows (untuk koneksi langsung):**
+
+Kode contoh memberi ESP32 alamat `192.168.1.177`. Atur PC pada subnet yang sama tetapi alamat berbeda, mis. `192.168.1.10`.
+
+*Cara 1 — Settings (Windows 11):*
+1. **Settings → Network & internet → Ethernet** (adapter tempat kabel W5500 tercolok)
+2. Pada baris **IP assignment**, klik **Edit**
+3. Ubah **Automatic (DHCP)** → **Manual**, lalu aktifkan toggle **IPv4**
+4. Isi:
+   - **IP address:** `192.168.1.10`
+   - **Subnet mask:** `255.255.255.0`
+   - **Gateway:** kosongkan
+   - **DNS:** kosongkan
+5. Klik **Save**
+
+![Gambar 5: Tangkapan layar Settings Windows 11 — Network & internet → Ethernet → IP assignment diatur ke Manual, IPv4 aktif dengan IP address 192.168.1.10 dan subnet mask 255.255.255.0](img/win_static_ip_settings.png)
+
+*Cara 2 — Control Panel (semua versi Windows):*
+1. Tekan `Win + R`, ketik `ncpa.cpl`, tekan Enter
+2. Klik kanan adapter **Ethernet** → **Properties**
+3. Pilih **Internet Protocol Version 4 (TCP/IPv4)** → **Properties**
+4. Pilih **Use the following IP address**, isi:
+   - **IP address:** `192.168.1.10`
+   - **Subnet mask:** `255.255.255.0`
+   - **Default gateway:** kosong
+5. Biarkan DNS kosong → **OK** → **Close**
+
+![Gambar 6: Tangkapan layar dialog "Internet Protocol Version 4 (TCP/IPv4) Properties" pada Control Panel Windows, dengan opsi "Use the following IP address" dipilih dan diisi IP 192.168.1.10 / subnet 255.255.255.0](img/win_static_ip_ncpa.png)
+
+*Verifikasi & pengembalian setelan:*
+- Buka **Command Prompt**, jalankan `ipconfig` — pastikan adapter Ethernet menampilkan `IPv4 Address` = `192.168.1.10`
+- Jalankan `ping 192.168.1.177` — harus muncul `Reply from 192.168.1.177`
+- **Setelah selesai praktikum, kembalikan setelan ke "Obtain an IP address automatically" / "Automatic (DHCP)"** agar laptop dapat kembali terhubung ke jaringan biasa
+
+**Langkah Kerja:**
+1. Rangkai modul W5500 sesuai skema, lalu sambungkan port RJ45 — ke switch/router yang sama dengan PC, **atau** langsung ke port Ethernet laptop
+2. Jika koneksi langsung: atur IP statis pada PC sesuai bagian **Menyiapkan IP Statis pada PC Windows** di atas. Jika via router: cek IP PC dengan `ipconfig`, lalu sesuaikan alamat `ip` pada kode agar satu subnet dengan PC dan belum terpakai
+3. Upload kode program di bawah, buka Serial Monitor untuk melihat status inisialisasi dan alamat IP yang terpasang pada W5500
+4. Dari Command Prompt Windows, jalankan `ping <alamat-IP-ESP32>` — pastikan muncul balasan `Reply from ...`
+5. Jika tidak ada balasan: bila Serial Monitor menampilkan `EthernetNoHardware` periksa wiring SPI; bila `LinkOFF` periksa kabel RJ45; bila keduanya normal tetapi ping `Request timed out`, pastikan IP PC dan ESP32 berada pada subnet yang sama (`ipconfig` vs nilai `ip(...)` pada kode)
+
+**Kode Program (ESP32 + W5500 — Merespons Ping dari PC):**
+```cpp
+#include <Arduino.h>
+#include <SPI.h>
+#include <Ethernet.h>
+
+// ==================== PIN SPI (VSPI default ESP32) ====================
+#define PIN_SCK  18
+#define PIN_MISO 19
+#define PIN_MOSI 23
+#define PIN_CS   5
+
+// MAC address bebas — pastikan unik di jaringan lokal (hindari duplikat)
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
+// IP statis — SESUAIKAN dengan subnet jaringan yang sama dengan PC
+IPAddress ip(192, 168, 1, 177);
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  // Inisialisasi SPI dengan pin custom ESP32, lalu beri tahu library CS pin yang dipakai
+  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS);
+  Ethernet.init(PIN_CS);
+
+  Ethernet.begin(mac, ip);
+
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("W5500 tidak terdeteksi -- periksa wiring SPI!");
+    while (true) { delay(1000); }
+  }
+
+  if (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Peringatan: kabel Ethernet (RJ45) tidak terdeteksi terhubung.");
+  }
+
+  Serial.print("ESP32 + W5500 siap. IP: ");
+  Serial.println(Ethernet.localIP());
+  Serial.print("Coba dari Command Prompt Windows: ping ");
+  Serial.println(Ethernet.localIP());
+}
+
+void loop() {
+  // Tidak perlu kode tambahan untuk merespons PING --
+  // W5500 menangani ARP & ICMP Echo Reply secara otomatis di level hardware chip
+  delay(1000);
+}
+```
+
+**Penjelasan Kode:**
+| Bagian | Penjelasan |
+|---|---|
+| `SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CS)` | Menginisialisasi SPI dengan pin custom ESP32, karena W5500 tidak selalu terhubung ke pin SPI default library |
+| `Ethernet.init(PIN_CS)` | Memberi tahu library `Ethernet` pin CS mana yang dipakai untuk mengakses W5500 |
+| `Ethernet.begin(mac, ip)` | Menginisialisasi stack TCP/IP W5500 dengan MAC address dan IP statis yang ditentukan |
+| `Ethernet.hardwareStatus()` | Memverifikasi apakah chip W5500 terdeteksi dengan benar melalui SPI |
+| Tidak ada kode di `loop()` untuk PING | W5500 adalah chip TCP/IP "hardwired" — ARP dan ICMP Echo (ping) ditangani sepenuhnya oleh hardware chip, tanpa perlu campur tangan program |
 
 ---
 

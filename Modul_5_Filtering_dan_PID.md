@@ -11,23 +11,26 @@
 ---
 
 ## Daftar Isi
-- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
-- [B. Alat dan Bahan](#b-alat-dan-bahan)
-- [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 Dari Pulsa Encoder ke RPM](#c1-dari-pulsa-encoder-ke-rpm)
-  - [C.2 Filtering Sederhana — Low-Pass Filter Alpha](#c2-filtering-sederhana--low-pass-filter-alpha)
-  - [C.3 Filtering Lanjut — Kalman Filter](#c3-filtering-lanjut--kalman-filter)
-  - [C.4 Sistem Kontrol Closed-Loop](#c4-sistem-kontrol-closed-loop)
-  - [C.5 Kontrol PID](#c5-kontrol-pid)
-- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
-- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — Dari Pulsa ke RPM (Konversi & Kalibrasi)](#percobaan-1--dari-pulsa-ke-rpm-konversi--kalibrasi)
-  - [PERCOBAAN 2 — Filtering Sederhana dengan Alpha (Low-Pass Filter)](#percobaan-2--filtering-sederhana-dengan-alpha-low-pass-filter)
-  - [PERCOBAAN 3 — Filtering dengan Kalman Filter](#percobaan-3--filtering-dengan-kalman-filter)
-  - [PERCOBAAN 4 — Kontrol Closed-Loop: On-Off vs Proportional (P)](#percobaan-4--kontrol-closed-loop-on-off-vs-proportional-p)
-  - [PERCOBAAN 5 — Kontrol PID Lengkap & Tuning](#percobaan-5--kontrol-pid-lengkap--tuning)
-- [F. Tugas Modul](#f-tugas-modul)
-- [G. Referensi](#g-referensi)
+- [MODUL 5](#modul-5)
+- [PEMROSESAN DATA SENSOR \& DASAR SISTEM KONTROL (FILTERING \& PID)](#pemrosesan-data-sensor--dasar-sistem-kontrol-filtering--pid)
+  - [Daftar Isi](#daftar-isi)
+  - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+  - [B. Alat dan Bahan](#b-alat-dan-bahan)
+  - [C. Dasar Teori](#c-dasar-teori)
+    - [C.1 Dari Pulsa Encoder ke RPM](#c1-dari-pulsa-encoder-ke-rpm)
+    - [C.2 Filtering Sederhana — Low-Pass Filter Alpha](#c2-filtering-sederhana--low-pass-filter-alpha)
+    - [C.3 Filtering Lanjut — Kalman Filter](#c3-filtering-lanjut--kalman-filter)
+    - [C.4 Sistem Kontrol Closed-Loop](#c4-sistem-kontrol-closed-loop)
+    - [C.5 Kontrol PID](#c5-kontrol-pid)
+  - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+  - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+    - [PERCOBAAN 1 — Dari Pulsa ke RPM (Konversi \& Kalibrasi)](#percobaan-1--dari-pulsa-ke-rpm-konversi--kalibrasi)
+    - [PERCOBAAN 2 — Filtering Sederhana dengan Alpha (Low-Pass Filter)](#percobaan-2--filtering-sederhana-dengan-alpha-low-pass-filter)
+    - [PERCOBAAN 3 — Filtering dengan Kalman Filter](#percobaan-3--filtering-dengan-kalman-filter)
+    - [PERCOBAAN 4 — Kontrol Closed-Loop: On-Off vs Proportional (P)](#percobaan-4--kontrol-closed-loop-on-off-vs-proportional-p)
+    - [PERCOBAAN 5 — Kontrol PID Lengkap \& Tuning](#percobaan-5--kontrol-pid-lengkap--tuning)
+  - [F. Tugas Modul](#f-tugas-modul)
+  - [G. Referensi](#g-referensi)
 
 ---
 
@@ -175,7 +178,14 @@ Beberapa pertimbangan praktis dalam implementasi PID pada sistem nyata:
 Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2) menjadi nilai RPM, serta melakukan kalibrasi `CPR_TOTAL` secara langsung pada motor yang digunakan.
 
 **Skema Rangkaian:**
-Gunakan rangkaian encoder yang sama dengan **Modul 4 Percobaan 2** (Channel A = GPIO 32, Channel B = GPIO 33).
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Encoder — Channel A | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) — sama seperti Modul 4 Percobaan 2 |
+| Encoder — Channel B | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah |
+| Encoder — VCC / GND | 3.3V–5V (sesuai modul) / GND | Kabel VCC/GND encoder pada modul motor+encoder |
+
+> Kabel daya motor **tidak digunakan** pada Percobaan 1–3 — motor diputar dengan tangan.
 
 ![Gambar 6: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
 
@@ -281,6 +291,14 @@ Mahasiswa mampu mengidentifikasi noise pada sinyal RPM mentah dan menerapkan low
 > **Catatan:** Percobaan ini tidak mengubah cara Anda memutar motor — motor tetap diputar tangan/sumber daya terpisah seperti Percobaan 1. Fokusnya murni pada **membandingkan bentuk grafik** RPM mentah vs RPM terfilter di Serial Plotter, bukan mengejar nilai RPM tertentu.
 
 ![Gambar 7: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
+
+**Skema Rangkaian:**
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Encoder — Channel A | GPIO 32 | Sama seperti Percobaan 1 |
+| Encoder — Channel B | GPIO 33 | Sama seperti Percobaan 1 |
+| Encoder — VCC / GND | 3.3V–5V / GND | Sama seperti Percobaan 1 |
 
 **`platformio.ini`:**
 ```ini
@@ -395,6 +413,14 @@ Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif 
 > **Catatan:** Sama seperti Percobaan 2, fokusnya adalah **membandingkan bentuk tiga garis** pada grafik, bukan mengubah kecepatan motor.
 
 ![Gambar 8: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual](img/plot_filter_kalman_contoh.png)
+
+**Skema Rangkaian:**
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Encoder — Channel A | GPIO 32 | Sama seperti Percobaan 1 |
+| Encoder — Channel B | GPIO 33 | Sama seperti Percobaan 1 |
+| Encoder — VCC / GND | 3.3V–5V / GND | Sama seperti Percobaan 1 |
 
 **`platformio.ini`:**
 ```ini
@@ -550,7 +576,16 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 ![Gambar 10: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)](img/plot_onoff_vs_p_contoh.png)
 
 **Skema Rangkaian:**
-Gunakan rangkaian motor DC + driver dari **Modul 2** (ENA = GPIO 25, IN1 = GPIO 26, IN2 = GPIO 27), digabung dengan encoder dari Percobaan 1–3 modul ini (Channel A = GPIO 32, Channel B = GPIO 33) — lihat Gambar 9 untuk wiring gabungan keduanya dalam satu rangkaian. Gunakan filter alpha (Percobaan 2) sebagai sumber RPM terfilter.
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Encoder — Channel A / B | GPIO 32 / GPIO 33 | Sama seperti Percobaan 1–3 |
+| Driver motor — ENA | GPIO 25 | Sinyal PWM kecepatan (channel LEDC) |
+| Driver motor — IN1 | GPIO 26 | Arah putar motor |
+| Driver motor — IN2 | GPIO 27 | Arah putar motor |
+| Motor DC — daya | Catu daya eksternal via driver (L298N/L293D) | **Jangan** ambil dari 5V USB langsung |
+
+> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 9 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha (Percobaan 2) sebagai sumber RPM terfilter.
 
 **`platformio.ini`:**
 ```ini
@@ -722,7 +757,7 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
 | Encoder — Channel A / B | GPIO 32 / GPIO 33 | Sama seperti Percobaan 1–3 |
-| Driver motor — ENA / IN1 / IN2 | GPIO 25 / GPIO 26 / GPIO 27 | Sama seperti Percobaan 4 (Modul 2) |
+| Driver motor — ENA / IN1 / IN2 | GPIO 25 / GPIO 26 / GPIO 27 | Sama seperti Percobaan 4 |
 | Tombol Naik Target RPM | GPIO 14 | `INPUT_PULLUP` |
 | Tombol Turun Target RPM | GPIO 16 | `INPUT_PULLUP` |
 

@@ -11,22 +11,25 @@
 ---
 
 ## Daftar Isi
-- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
-- [B. Alat dan Bahan](#b-alat-dan-bahan)
-- [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 External Interrupt](#c1-external-interrupt)
-  - [C.2 Timer Interrupt](#c2-timer-interrupt)
-  - [C.3 Watchdog Timer (WDT)](#c3-watchdog-timer-wdt)
-  - [C.4 Multitasking dengan FreeRTOS](#c4-multitasking-dengan-freertos)
-- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
-- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — External Interrupt pada Kondisi Sistem Hang (Manual Recovery)](#percobaan-1--external-interrupt-pada-kondisi-sistem-hang-manual-recovery)
-  - [PERCOBAAN 2 — External Interrupt: Decoding Quadrature Encoder (Pulsa & Arah)](#percobaan-2--external-interrupt-decoding-quadrature-encoder-pulsa--arah)
-  - [PERCOBAAN 3 — Timer Interrupt](#percobaan-3--timer-interrupt)
-  - [PERCOBAAN 4 — Watchdog Timer](#percobaan-4--watchdog-timer)
-  - [PERCOBAAN 5 — Multitasking dengan FreeRTOS](#percobaan-5--multitasking-dengan-freertos)
-- [F. Tugas Modul](#f-tugas-modul)
-- [G. Referensi](#g-referensi)
+- [MODUL 4](#modul-4)
+- [INTERRUPT, TIMER, WATCHDOG, \& MULTITASKING](#interrupt-timer-watchdog--multitasking)
+  - [Daftar Isi](#daftar-isi)
+  - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+  - [B. Alat dan Bahan](#b-alat-dan-bahan)
+  - [C. Dasar Teori](#c-dasar-teori)
+    - [C.1 External Interrupt](#c1-external-interrupt)
+    - [C.2 Timer Interrupt](#c2-timer-interrupt)
+    - [C.3 Watchdog Timer (WDT)](#c3-watchdog-timer-wdt)
+    - [C.4 Multitasking dengan FreeRTOS](#c4-multitasking-dengan-freertos)
+  - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+  - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+    - [PERCOBAAN 1 — External Interrupt pada Kondisi Sistem Hang (Manual Recovery)](#percobaan-1--external-interrupt-pada-kondisi-sistem-hang-manual-recovery)
+    - [PERCOBAAN 2 — External Interrupt: Decoding Quadrature Encoder (Pulsa \& Arah)](#percobaan-2--external-interrupt-decoding-quadrature-encoder-pulsa--arah)
+    - [PERCOBAAN 3 — Timer Interrupt](#percobaan-3--timer-interrupt)
+    - [PERCOBAAN 4 — Watchdog Timer](#percobaan-4--watchdog-timer)
+    - [PERCOBAAN 5 — Multitasking dengan FreeRTOS](#percobaan-5--multitasking-dengan-freertos)
+  - [F. Tugas Modul](#f-tugas-modul)
+  - [G. Referensi](#g-referensi)
 
 ---
 
@@ -48,7 +51,7 @@ Setelah menyelesaikan Modul 4, praktikan mampu:
 | 1 | Board ESP32 DevKit | ESP32 DevKit v1 | 1 |
 | 2 | Motor DC + encoder magnetik quadrature | modul dengan konektor JST 6-pin, mis. tipe JGB37-520: Merah/Putih = daya motor (+/−), Kuning/Hijau = Channel A/Channel B encoder, Biru/Hitam = VCC/GND encoder (dapat memakai motor dari Modul 2 — **verifikasi ulang pemetaan warna pada modul fisik Anda**, karena dapat berbeda antar produsen) | 1 |
 | 3 | LED + resistor 220Ω | untuk uji timer interrupt & indikator tombol darurat | 1 |
-| 4 | Pushbutton (tactile) | dipakai ulang pada tombol darurat (Percobaan 1) dan latihan tambahan queue (Percobaan 5) | 1 |
+| 4 | Pushbutton (tactile) | dipakai ulang pada tombol darurat (Percobaan 1) dan multitasking + queue (Percobaan 5) | 1 |
 | 5 | Breadboard | 830 titik | 1 |
 | 6 | Kabel jumper male-male | — | secukupnya |
 | 7 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
@@ -134,7 +137,7 @@ framework = arduino
 2. Implementasikan program normal: LED berkedip + pesan status dicetak ke Serial secara berkala
 3. Pasang ISR pada pushbutton yang **langsung memanggil `esp_restart()`** (bukan sekadar mengatur flag), dengan tombol berfungsi sebagai "tombol darurat"
 4. Jalankan program, uji tombol darurat dalam kondisi normal — pastikan board berhasil restart
-5. Aktifkan simulasi hang dengan meng-uncomment blok `while (true) {}` pada `loop()`, amati bahwa LED berhenti berkedip dan Serial berhenti mencetak pesan (sistem tampak benar-benar macet)
+5. Aktifkan simulasi hang dengan meng-uncomment baris `// simulateHang();` pada `loop()`, amati bahwa LED berhenti berkedip dan Serial berhenti mencetak pesan (sistem tampak benar-benar macet)
 6. **Saat sistem dalam kondisi hang tersebut**, tekan tombol darurat — amati bahwa board tetap berhasil restart meskipun `loop()` sedang terjebak total
 7. Diskusikan: bandingkan mekanisme ini dengan Watchdog Timer (Percobaan 4) — kapan sebaiknya masing-masing digunakan?
 
@@ -152,6 +155,16 @@ void IRAM_ATTR emergencyISR()
     // mungkin sedang hang, restart HARUS dilakukan langsung di dalam ISR
     // agar benar-benar dapat memulihkan sistem kapan pun dibutuhkan
     esp_restart();
+}
+
+void simulateHang()
+{
+    // Simulasi sistem hang: program terjebak di sini tanpa henti.
+    // LED berhenti berkedip & Serial berhenti mencetak — coba tekan tombol darurat sekarang.
+    Serial.println("Mensimulasikan hang! LED & Serial akan berhenti...");
+    while (true)
+    {
+    }
 }
 
 void setup()
@@ -173,11 +186,7 @@ void loop()
     delay(300);
     Serial.println("loop() berjalan normal...");
 
-    // Uncomment blok berikut untuk mensimulasikan sistem hang:
-    // Serial.println("Mensimulasikan hang! LED & Serial akan berhenti...");
-    // while (true) {
-    //     // program terjebak di sini tanpa henti — coba tekan tombol darurat sekarang
-    // }
+    // simulateHang(); // Uncomment baris berikut untuk mensimulasikan sistem hang:
 }
 ```
 
@@ -185,7 +194,7 @@ void loop()
 | Bagian | Penjelasan |
 |---|---|
 | `esp_restart()` dipanggil langsung di `emergencyISR()` | Berbeda dari praktik umum (ISR hanya set flag, aksi berat dilakukan di `loop()`), di sini aksi pemulihan **harus** terjadi di dalam ISR — karena jika `loop()` sedang hang, ia tidak akan pernah sempat memeriksa flag apa pun |
-| `while (true) {}` (disimulasikan) | Mewakili kondisi hang nyata (mis. akibat bug, sensor yang tidak merespons, atau kondisi tak terduga lainnya) — program benar-benar berhenti merespons pada `loop()` |
+| `simulateHang()` (dipanggil saat di-uncomment) | Fungsi berisi `while (true) {}` yang mewakili kondisi hang nyata (mis. akibat bug, sensor yang tidak merespons, atau kondisi tak terduga lainnya) — program benar-benar berhenti merespons pada `loop()`. Dibungkus sebagai fungsi agar cukup satu baris `// simulateHang();` yang perlu di-uncomment |
 | Tombol darurat tetap berfungsi saat hang | Membuktikan bahwa ISR berjalan independen dari status `loop()`, selama interrupt global tidak dinonaktifkan |
 | Perbandingan dengan Watchdog (Percobaan 4) | Watchdog mendeteksi hang secara **otomatis** berdasarkan timeout tanpa perlu campur tangan manusia; tombol darurat bersifat **manual** (perlu ditekan pengguna) namun dapat merespons **lebih cepat dan kapan saja**, tanpa menunggu periode timeout — keduanya saling melengkapi, bukan saling menggantikan |
 
@@ -196,18 +205,14 @@ void loop()
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan external interrupt untuk melakukan decoding sinyal quadrature encoder (2 channel), menghitung jumlah pulsa sekaligus arah putaran secara periodik.
 
-> **Catatan:** Konversi jumlah pulsa menjadi kecepatan putar (RPM) — termasuk kalibrasi pulsa per putaran dan filtering — akan dibahas pada **Modul 5**. Percobaan ini berfokus murni pada penerapan external interrupt untuk decoding quadrature.
-
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder — Channel A (C1) | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) — pada modul referensi: kabel **Kuning** |
-| Encoder — Channel B (C2) | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah — pada modul referensi: kabel **Hijau** |
-| Encoder — VCC | 3.3V–5V (sesuai modul) | Pada modul referensi: kabel **Biru** |
-| Encoder — GND | GND | Pada modul referensi: kabel **Hitam** |
-
-> Modul motor+encoder dengan konektor JST 6-pin umumnya memiliki pasangan kabel: **Merah/Putih** untuk daya motor (+/−, tidak digunakan pada percobaan ini), **Kuning/Hijau** untuk Channel A/Channel B encoder, dan **Biru/Hitam** untuk VCC/GND encoder — mengacu pada motor referensi JGB37-520 ([Instructables: Closed-Loop Speed Control of a DC Motor With Encoder](https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/)). **Pemetaan warna kabel dapat berbeda antar produsen** — selalu verifikasi ulang pada modul fisik Anda (mis. dengan multimeter untuk memastikan pasangan motor, dan uji langsung tiap kabel sinyal sambil memutar poros untuk memastikan mana Channel A/B) sebelum menyambungkan ke ESP32.
+| Encoder : Channel A (C1) | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) : kabel **Kuning** |
+| Encoder : Channel B (C2) | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah : kabel **Hijau** |
+| Encoder : VCC | 3.3V–5V (sesuai modul) | kabel **Biru** |
+| Encoder : GND | GND | kabel **Hitam** |
 
 **`platformio.ini`:**
 ```ini
@@ -324,10 +329,10 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Rangkai LED sesuai skema
-2. Implementasikan hardware timer yang memicu interrupt setiap 500ms
-3. Di dalam ISR, cukup set sebuah flag (`volatile bool`) — jangan langsung memanggil `digitalWrite()` di dalam ISR
-4. Pada `loop()`, periksa flag tersebut dan lakukan toggle LED jika flag aktif
-5. Tambahkan `Serial.println("test")` di dalam `loop()` (di luar blok pengecekan flag), lalu amati bahwa LED tetap berkedip konsisten setiap 500ms meskipun ada baris tambahan tersebut
+2. Upload kode program di bawah — timer hardware sudah diatur memicu interrupt setiap 500 ms
+3. Perhatikan pola pada kode: ISR hanya mengubah flag `volatile bool`, sedangkan toggle LED dikerjakan di `loop()` (aksi seperti `digitalWrite()` sebaiknya tidak dijalankan langsung di dalam ISR)
+4. Amati LED berkedip setiap 500 ms dan Serial Monitor mencetak pesan setiap kali interrupt terpicu
+5. Uncomment baris `// Serial.println("loop jalan terus");` pada `loop()`, upload ulang, lalu amati kedip LED tetap stabil 500 ms — ritme kedip dijaga oleh timer hardware, bukan oleh kecepatan `loop()`
 
 **Kode Program (Timer Interrupt — Toggle LED):**
 ```cpp
@@ -364,6 +369,9 @@ void loop()
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
         Serial.println("Timer interrupt terpicu");
     }
+
+    // Langkah 5: uncomment baris berikut, lalu amati kedip LED tetap stabil 500 ms
+    // Serial.println("loop jalan terus");
 }
 ```
 
@@ -394,11 +402,10 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Implementasikan inisialisasi Task Watchdog Timer dengan timeout 3 detik
+1. Implementasikan inisialisasi Task Watchdog Timer dengan timeout 3 detik sesuai dengan kode di bawah
 2. Jalankan program normal — di dalam `loop()`, "beri makan" watchdog secara berkala (`esp_task_wdt_reset()`)
 3. Amati Serial Monitor, program berjalan normal tanpa reset
-4. Simulasikan kondisi hang dengan menambahkan `while(true) {}` pada satu titik di `loop()` (tanpa memanggil reset watchdog), amati bahwa board akan **restart otomatis** setelah timeout tercapai
-5. Hapus kembali baris simulasi hang setelah pengamatan selesai
+4. Kemudian ubah program dengan menyimulasikan kondisi hang dengan meng-uncomment baris `// while (true) {}` pada `loop()` (watchdog tidak lagi "diberi makan"), upload ulang, lalu amati board **restart otomatis** setelah timeout 3 detik tercapai
 
 **Kode Program (Watchdog Timer):**
 ```cpp
@@ -444,7 +451,11 @@ void loop()
 Mahasiswa mampu mengimplementasikan beberapa task yang berjalan "paralel" menggunakan FreeRTOS, serta komunikasi antar task melalui queue.
 
 **Skema Rangkaian:**
-Gunakan rangkaian LED dari Percobaan 3 (GPIO 2), tambahkan pushbutton pada GPIO 27 (`INPUT_PULLUP`) untuk latihan tambahan.
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| LED (+resistor 220Ω) | GPIO 2 | Anoda ke GPIO, katoda ke GND melalui resistor (dikendalikan `taskBlink`) |
+| Pushbutton (tactile) | GPIO 27 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` (dibaca `taskButton`) |
 
 **`platformio.ini`:**
 ```ini
@@ -455,18 +466,22 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Implementasikan dua task terpisah: satu untuk toggle LED (setiap 500ms), satu untuk mencetak pesan ke Serial (setiap 1 detik)
-2. Jalankan kedua task menggunakan `xTaskCreatePinnedToCore()`, masing-masing pada core yang berbeda (core 0 dan core 1)
-3. Amati bahwa kedua task berjalan bersamaan secara independen — tidak saling menunggu
-4. **Latihan tambahan:** tambahkan task ketiga yang membaca status pushbutton dan mengirim jumlah penekanan melalui **queue** ke task lain yang bertugas menampilkannya di Serial Monitor
+1. Rangkai LED (GPIO 2) dan pushbutton (GPIO 27) sesuai skema
+2. Upload kode program di bawah — tiga task dibuat di `setup()` dengan `xTaskCreatePinnedToCore()`, `loop()` dibiarkan kosong
+3. Amati LED berkedip 500 ms tanpa henti; pada saat bersamaan tekan tombol beberapa kali dan amati Serial Monitor mencetak "Total: n" — kedua aktivitas berjalan bersamaan tanpa saling menunggu
+4. Perhatikan alur queue: `taskButton` mengirim jumlah penekanan lewat `xQueueSend()`, `taskDisplay` menerimanya lewat `xQueueReceive()` lalu mencetak — komunikasi antar task tanpa variabel global yang rawan *race condition*
 
-**Kode Program (Dua Task Paralel — LED & Serial):**
+**Kode Program (Multitasking FreeRTOS — 3 Task + Queue):**
 ```cpp
 #include <Arduino.h>
 
 #define LED_PIN 2
+#define BUTTON_PIN 27
 
-void taskBlink(void *pvParameters)
+QueueHandle_t pressQueue;
+
+// Task 1: kedipkan LED setiap 500 ms
+void taskBlink(void *pv)
 {
     pinMode(LED_PIN, OUTPUT);
     while (true)
@@ -476,64 +491,34 @@ void taskBlink(void *pvParameters)
     }
 }
 
-void taskSerial(void *pvParameters)
-{
-    while (true)
-    {
-        Serial.println("Task Serial berjalan...");
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-}
-
-void setup()
-{
-    Serial.begin(115200);
-
-    xTaskCreatePinnedToCore(taskBlink, "TaskBlink", 2048, NULL, 1, NULL, 1);
-    xTaskCreatePinnedToCore(taskSerial, "TaskSerial", 2048, NULL, 1, NULL, 0);
-}
-
-void loop()
-{
-    // Kosong — seluruh pekerjaan dilakukan oleh task FreeRTOS
-}
-```
-
-**Kode Program — Latihan Tambahan (Komunikasi Antar Task via Queue):**
-```cpp
-#include <Arduino.h>
-
-#define BUTTON_PIN 27
-
-QueueHandle_t pressQueue;
-
-void taskReadButton(void *pvParameters)
+// Task 2: baca tombol, kirim jumlah penekanan ke queue
+void taskButton(void *pv)
 {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     int lastState = HIGH;
-    int pressCount = 0;
-
+    int count = 0;
     while (true)
     {
         int reading = digitalRead(BUTTON_PIN);
         if (reading == LOW && lastState == HIGH)
         {
-            pressCount++;
-            xQueueSend(pressQueue, &pressCount, portMAX_DELAY);
+            count++;
+            xQueueSend(pressQueue, &count, portMAX_DELAY);
         }
         lastState = reading;
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(20)); // beri jalan task lain + debounce sederhana
     }
 }
 
-void taskDisplayCount(void *pvParameters)
+// Task 3: terima data dari queue, tampilkan ke Serial
+void taskDisplay(void *pv)
 {
-    int receivedCount;
+    int received;
     while (true)
     {
-        if (xQueueReceive(pressQueue, &receivedCount, portMAX_DELAY) == pdTRUE)
+        if (xQueueReceive(pressQueue, &received, portMAX_DELAY) == pdTRUE)
         {
-            Serial.printf("Tombol ditekan! Total: %d\n", receivedCount);
+            Serial.printf("Tombol ditekan! Total: %d\n", received);
         }
     }
 }
@@ -544,31 +529,29 @@ void setup()
 
     pressQueue = xQueueCreate(10, sizeof(int));
 
-    xTaskCreatePinnedToCore(taskReadButton, "TaskReadButton", 2048, NULL, 1, NULL, 1);
-    xTaskCreatePinnedToCore(taskDisplayCount, "TaskDisplayCount", 2048, NULL, 1, NULL, 0);
+    xTaskCreatePinnedToCore(taskBlink,   "Blink",   2048, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(taskButton,  "Button",  2048, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(taskDisplay, "Display", 2048, NULL, 1, NULL, 0);
 }
 
 void loop()
 {
+    // Kosong — seluruh pekerjaan dilakukan oleh task FreeRTOS
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `xTaskCreatePinnedToCore(fn, name, stackSize, param, priority, handle, coreID)` | Membuat task baru, `coreID` menentukan task dijalankan pada core 0 atau core 1 secara spesifik |
-| `vTaskDelay(pdMS_TO_TICKS(ms))` | Delay berbasis FreeRTOS tick — memberi kesempatan task lain untuk berjalan selama periode tunggu, tidak memblokir seperti `delay()` |
-| `QueueHandle_t` / `xQueueCreate()` | Membuat queue sebagai sarana komunikasi antar task, menyimpan data (di sini bertipe `int`) secara thread-safe |
-| `xQueueSend(pressQueue, &pressCount, portMAX_DELAY)` | Mengirim data ke queue dari task pembaca tombol; `portMAX_DELAY` berarti menunggu tanpa batas waktu jika queue penuh |
-| `xQueueReceive(pressQueue, &receivedCount, portMAX_DELAY)` | Menerima data dari queue pada task penampil — task ini "tidur" (tidak memakan CPU) selama menunggu data baru masuk |
+| `xTaskCreatePinnedToCore(fn, name, stackSize, param, priority, handle, coreID)` | Membuat task baru; `coreID` menentukan task berjalan pada core 0 atau core 1 |
+| `vTaskDelay(pdMS_TO_TICKS(ms))` | Delay berbasis FreeRTOS tick — memberi kesempatan task lain berjalan selama menunggu, tidak memblokir seperti `delay()` |
+| `loop()` kosong | Seluruh pekerjaan dipindah ke task buatan; scheduler FreeRTOS yang mengatur pergantian task |
+| `xQueueCreate(10, sizeof(int))` | Membuat queue berkapasitas 10 data bertipe `int` sebagai jalur komunikasi antar task yang aman (*thread-safe*) |
+| `xQueueSend(...)` / `xQueueReceive(..., portMAX_DELAY)` | Kirim/terima data via queue; penerima "tidur" (tidak memakai CPU) selama menunggu data baru masuk |
 
 ---
 
 ## F. Tugas Modul
-
-[Wokwi](https://wokwi.com) menjalankan firmware ESP32 sungguhan di atas simulator berbasis QEMU, sehingga interrupt, timer hardware, watchdog, dan FreeRTOS **benar-benar berjalan** (bukan disimulasikan secara logis saja) — cocok untuk menguji ulang skenario-skenario modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
-
-> **Catatan:** Part **motor DC + encoder quadrature** kemungkinan tidak tersedia di Wokwi sebagai satu kesatuan modul JGB37-520. Sebagai gantinya, gunakan **dua pushbutton virtual** untuk mensimulasikan sinyal Channel A dan Channel B secara manual (ditekan bergantian).
 
 **Tugas 1 — Reproduksi Manual Recovery (Wokwi):**
 1. Buat project Wokwi baru dengan board **ESP32**, rangkai pushbutton darurat (Percobaan 1) dan LED indikator

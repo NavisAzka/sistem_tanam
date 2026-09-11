@@ -11,27 +11,30 @@
 ---
 
 ## Daftar Isi
-- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
-- [B. Alat dan Bahan](#b-alat-dan-bahan)
-- [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 Sensor Resistif — Joystick 2-Axis sebagai Input Kontrol](#c1-sensor-resistif--joystick-2-axis-sebagai-input-kontrol)
-  - [C.2 Sensor Kapasitif](#c2-sensor-kapasitif)
-  - [C.3 Sensor Induktif](#c3-sensor-induktif)
-  - [C.4 Sensor Basis Lain (Akustik & Optik)](#c4-sensor-basis-lain-akustik--optik)
-  - [C.5 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC](#c5-pwm-pulse-width-modulation--kontrol-kecepatan-motor-dc)
-  - [C.6 Kontrol Posisi Motor Servo](#c6-kontrol-posisi-motor-servo)
-  - [C.7 Motor Stepper](#c7-motor-stepper)
-  - [C.8 ESC (Electronic Speed Controller) dan Motor Brushless](#c8-esc-electronic-speed-controller-dan-motor-brushless)
-- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
-- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — Sensor Resistif (Joystick), Kapasitif, dan Induktif](#percobaan-1--sensor-resistif-joystick-kapasitif-dan-induktif)
-  - [PERCOBAAN 2 — Sensor Basis Lain (Ultrasonik & IR Obstacle)](#percobaan-2--sensor-basis-lain-ultrasonik--ir-obstacle)
-  - [PERCOBAAN 3 — Aktuator Motor DC (Dikendalikan Joystick)](#percobaan-3--aktuator-motor-dc-dikendalikan-joystick)
-  - [PERCOBAAN 4 — Aktuator Motor Stepper (Dikendalikan Joystick)](#percobaan-4--aktuator-motor-stepper-dikendalikan-joystick)
-  - [PERCOBAAN 5 — Aktuator Motor Servo (Dikendalikan Joystick)](#percobaan-5--aktuator-motor-servo-dikendalikan-joystick)
-  - [PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC) (Dikendalikan Joystick)](#percobaan-6--aktuator-esc--motor-brushless-bldc-dikendalikan-joystick)
-- [F. Tugas Modul](#f-tugas-modul)
-- [G. Referensi](#g-referensi)
+- [MODUL 2](#modul-2)
+- [SENSOR BERDASARKAN BASIS PENGUKURAN \& AKTUATOR MOTOR](#sensor-berdasarkan-basis-pengukuran--aktuator-motor)
+  - [Daftar Isi](#daftar-isi)
+  - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+  - [B. Alat dan Bahan](#b-alat-dan-bahan)
+  - [C. Dasar Teori](#c-dasar-teori)
+    - [C.1 Sensor Resistif — Joystick 2-Axis sebagai Input Kontrol](#c1-sensor-resistif--joystick-2-axis-sebagai-input-kontrol)
+    - [C.2 Sensor Kapasitif](#c2-sensor-kapasitif)
+    - [C.3 Sensor Induktif](#c3-sensor-induktif)
+    - [C.4 Sensor Basis Lain (Akustik \& Optik)](#c4-sensor-basis-lain-akustik--optik)
+    - [C.5 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC](#c5-pwm-pulse-width-modulation--kontrol-kecepatan-motor-dc)
+    - [C.6 Kontrol Posisi Motor Servo](#c6-kontrol-posisi-motor-servo)
+    - [C.7 Motor Stepper](#c7-motor-stepper)
+    - [C.8 ESC (Electronic Speed Controller) dan Motor Brushless](#c8-esc-electronic-speed-controller-dan-motor-brushless)
+  - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+  - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+    - [PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif](#percobaan-1--sensor-resistif-kapasitif-dan-induktif)
+    - [PERCOBAAN 2 — Sensor Basis Lain (Ultrasonik \& IR Obstacle)](#percobaan-2--sensor-basis-lain-ultrasonik--ir-obstacle)
+    - [PERCOBAAN 3 — Aktuator Motor DC](#percobaan-3--aktuator-motor-dc)
+    - [PERCOBAAN 4 — Aktuator Motor Stepper](#percobaan-4--aktuator-motor-stepper)
+    - [PERCOBAAN 5 — Aktuator Motor Servo (Dikendalikan Joystick)](#percobaan-5--aktuator-motor-servo-dikendalikan-joystick)
+    - [PERCOBAAN 6 — Aktuator ESC \& Motor Brushless (BLDC) (Dikendalikan Joystick)](#percobaan-6--aktuator-esc--motor-brushless-bldc-dikendalikan-joystick)
+  - [F. Tugas Modul](#f-tugas-modul)
+  - [G. Referensi](#g-referensi)
 
 ---
 
@@ -161,7 +164,7 @@ Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz 
 
 ## E. Kegiatan Praktikum
 
-### PERCOBAAN 1 — Sensor Resistif (Joystick), Kapasitif, dan Induktif
+### PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif
 
 **Tujuan:**
 Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif melalui joystick 2-axis KY-023 (VRx, VRy, dan tombol SW), kapasitif (touch sensor TTP223), dan induktif (hall effect sensor).
@@ -320,7 +323,7 @@ void loop() {
 
 ---
 
-### PERCOBAAN 3 — Aktuator Motor DC (Dikendalikan Joystick)
+### PERCOBAAN 3 — Aktuator Motor DC 
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC menggunakan sinyal PWM, dikendalikan secara interaktif melalui sumbu X joystick KY-023.
@@ -454,7 +457,7 @@ void loop() {
 
 ---
 
-### PERCOBAAN 4 — Aktuator Motor Stepper (Dikendalikan Joystick)
+### PERCOBAAN 4 — Aktuator Motor Stepper 
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal step melalui driver motor stepper, termasuk profil akselerasi/deselerasi, dikendalikan secara interaktif melalui sumbu X joystick KY-023.
@@ -620,7 +623,6 @@ void loop() {
 | `rotateCW()` / `rotateCCW()` | Menjalankan satu burst step lengkap (dengan profil akselerasi) searah/berlawanan arah jarum jam, lalu memanggil `stopMotor()` di akhir burst |
 | `digitalRead(JOY_SW) == LOW` diperiksa di awal `loop()` | Tombol SW sebagai stop darurat prioritas tertinggi, sama seperti pada Percobaan 3 |
 
-> **Catatan:** Kode dasar ini hanya diuji dengan driver 4-fasa (ULN2003). Sebagai pengembangan, adaptasikan `setStep()`/`stopMotor()` menjadi pulsa STEP + level DIR bila menggunakan driver A4988/DRV8825 (lihat **C.7 Motor Stepper**), dan bandingkan dengan pendekatan IN1/IN2 pada motor DC di Percobaan 3.
 
 ---
 
@@ -711,7 +713,6 @@ Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, s
 
 **Prinsip Kontrol:** Setelah proses arming selesai, posisi joystick VRx dipetakan langsung menjadi throttle (1000–2000µs) — posisi paling kiri menghasilkan throttle minimum (motor idle/berhenti), semakin ke kanan semakin besar throttle. Tombol **SW** berfungsi sebagai **kill switch**: selama ditekan, throttle dipaksa ke nilai minimum (1000µs) terlepas dari posisi joystick — penting sebagai mekanisme keselamatan untuk motor bertenaga besar seperti BLDC.
 
-> ⚠️ **Sebelum melanjutkan:** pastikan **propeller/baling-baling sudah dilepas** dari motor brushless, dan motor terpasang aman pada tempatnya.
 
 **Skema Rangkaian:**
 
@@ -722,7 +723,6 @@ Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, s
 | ESC — Sinyal (PWM) | GPIO 25 | Sinyal kontrol dari ESP32 ke ESC, via channel LEDC |
 | ESC — GND (sinyal) | GND | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
 | ESC — Power (input daya) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
-| Motor brushless (BLDC) | 3 kabel fasa (A/B/C) ke output ESC | Urutan kabel menentukan arah putar — tukar posisi 2 dari 3 kabel untuk membalik arah |
 
 **`platformio.ini`:**
 ```ini
@@ -820,10 +820,6 @@ void loop() {
 | `map(vrx, 0, 4095, THROTTLE_MIN, THROTTLE_MAX)` | Memetakan posisi joystick langsung menjadi nilai throttle dalam mikrodetik, tanpa dead zone (seluruh rentang joystick digunakan sebagai skala throttle 0–100%) |
 | `killSwitch` diperiksa sebelum `setThrottle()` | Tombol SW pada joystick berfungsi sebagai kill switch — memaksa throttle minimum kapan pun ditekan, mekanisme keselamatan penting untuk motor bertenaga besar |
 
-**Analisis Setelah Program Berjalan:**
-1. Amati durasi proses arming (5 detik) — jelaskan mengapa proses ini penting dilakukan sebelum ESC menerima perintah throttle lain
-2. Bandingkan pendekatan LEDC manual (`pulseToDuty()`) pada Percobaan ini dengan pendekatan `writeMicroseconds()` menggunakan library ESP32Servo pada versi sebelumnya — diskusikan kelebihan/kekurangan masing-masing dari sisi keterbacaan kode vs pemahaman mekanisme PWM yang mendasarinya
-3. Uji kill switch (SW) saat motor berputar pada throttle sedang, amati apakah transisi ke throttle minimum berjalan mulus atau menyebabkan hentakan pada motor — diskusikan penyebabnya
 
 ---
 
@@ -835,22 +831,13 @@ void loop() {
 
 Buatlah simulasi Wokwi di mana **dua potensiometer** mengendalikan servo dan motor stepper secara terintegrasi (rangkaian dan kode program bebas dirancang sendiri):
 1. Potensiometer 1 menentukan **posisi sudut servo** (0°–180°, boleh kontinu atau dibatasi ke beberapa posisi diskrit sesuai pilihan Anda)
-2. **Arah dan kecepatan** motor stepper ditentukan oleh **deviasi posisi servo dari titik tengah (90°)** — semakin jauh dari 90°, semakin cepat stepper berputar; arah putaran stepper mengikuti sisi deviasi (di atas/di bawah 90°); stepper **wajib berhenti total** (termasuk menonaktifkan driver) saat servo berada pada 90° (dalam toleransi kecil/*dead zone*)
-3. Potensiometer 2 menentukan **kecepatan dasar** (base frequency) putaran stepper, yang kemudian dikalikan sesuai besar deviasi servo dari potensiometer 1
+2. **Arah** motor stepper ditentukan oleh **posisi servo dari titik tengah (90°)** — Jika posisi servo berada pada sudut lebih dari 90°, maka motor stepper akan berputar searah jarum jam (CW). Jika posisi servo berada pada sudut kurang dari 90°, maka motor stepper akan berputar berlawanan arah jarum jam (CCW). Jika posisi servo sama dengan 90°, maka motor stepper berhenti total **(Terapkan mekanisme dead zone)**. 
+3. Potensiometer 2 menentukan **kecepatan dasar** (base frequency) putaran stepper.
 
 **Pertanyaan Analisis:**
-1. Jelaskan bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan pengali dari deviasi posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
-2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — jelaskan apa yang direpresentasikan oleh sinyal PWM pada servo (C.6 Kontrol Posisi Motor Servo) dibanding pada stepper (C.7 Motor Stepper)
-3. Jelaskan mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja
-
-**Tugas 2 (Bonus) — Implementasi Level Register:**
-Percobaan 2 (Sensor Basis Lain — Ultrasonik HC-SR04) pada modul ini dapat diimplementasikan ulang **tanpa fungsi bawaan `pulseIn()`**, langsung memanipulasi register GPIO. Kerjakan (boleh dikerjakan di Wokwi maupun hardware asli):
-
-| Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
-|---|---|---|---|
-| Percobaan 2 (Ultrasonik HC-SR04) | `pulseIn()` | `GPIO.in` (baca level pin ECHO), `micros()` | Implementasikan ulang `pulseIn()` secara manual: polling `GPIO.in` dalam loop ketat sambil mencatat waktu mulai/selesai transisi LOW→HIGH→LOW pada pin ECHO |
-
-**Deliverable:** kode program level-register, beserta penjelasan tiap baris register yang ditulis, dan perbandingan perilaku (mis. kecepatan eksekusi, akurasi timing, kompleksitas kode) dengan versi API tingkat tinggi pada Percobaan aslinya.
+1. Jelaskan bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan arah dair posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
+2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — jelaskan apa yang direpresentasikan oleh sinyal PWM pada servo dibanding pada stepper.
+3. Jelaskan mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja.
 
 **Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project Wokwi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
 
