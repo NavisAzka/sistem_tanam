@@ -152,11 +152,13 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Siapkan dua project terpisah: satu untuk **Transmitter**, satu untuk **Receiver**
+1. Siapkan dua project terpisah: **Transmitter** dan **Receiver**
 2. Tulis dan upload kode Transmitter ke board pertama
 3. Tulis dan upload kode Receiver ke board kedua
-4. Sambungkan TX2-RX2 (silang) dan GND kedua board sesuai skema
-5. Buka Serial Monitor pada board Receiver, amati data yang diterima setiap detik
+4. Sambungkan TX2-RX2 (silang) dan GND kedua board
+5. Buka Serial Monitor Receiver, amati data masuk tiap detik
+6. Ubah baud rate `UART.begin()` di **Receiver saja** (mis. jadi 9600), Build & Upload ulang, amati datanya
+7. Analisis mengapa UART mengharuskan kedua sisi memakai baud rate yang sama, padahal tidak ada jalur clock bersama seperti I2C/SPI
 
 **Kode Program (ESP32 Transmitter):**
 ```cpp
@@ -239,17 +241,19 @@ platform = espressif32
 board = esp32dev
 framework = arduino
 lib_deps =
-    adafruit/Adafruit SH110X@^2.1.11
+    adafruit/Adafruit SSD1306@^2.5.9
     adafruit/Adafruit GFX Library@^1.11.9
 ```
 > MPU6500 diakses melalui pembacaan/penulisan register `Wire` secara manual, sehingga tidak memerlukan library tambahan.
 
 **Langkah Kerja:**
-1. Rangkai OLED dan MPU6500 pada bus I2C yang sama sesuai skema (SDA dan SCL kedua modul terhubung ke pin GPIO yang sama), pastikan pin CS/NCS pada MPU6500 **ditarik ke 3.3V** agar modul beroperasi dalam mode I2C
-2. Jalankan I2C scanner sederhana (`Wire.beginTransmission(addr)` untuk tiap alamat 1–127, cek `Wire.endTransmission() == 0`) untuk memverifikasi **kedua alamat** (`0x3C` dan `0x68`) terdeteksi pada bus yang sama
-3. Inisialisasi kedua perangkat dalam satu program: OLED via library Adafruit SSD1306, MPU6500 via pembacaan/penulisan register manual
-4. Bangunkan MPU6500 dari sleep mode (tulis `0x00` ke register `PWR_MGMT_1`, alamat `0x6B`), lalu baca data akselerometer secara berkala (register `ACCEL_XOUT_H`, alamat `0x3B`)
-5. Tampilkan hasil pembacaan akselerometer pada layar OLED (bukan hanya Serial Monitor) — buktikan kedua perangkat dapat diakses bergantian pada bus yang sama tanpa saling mengganggu
+1. Rangkai OLED dan MPU6500 di bus I2C yang sama (SDA/SCL bareng), CS MPU6500 **ditarik ke 3.3V** agar mode I2C
+2. Jalankan I2C scanner, verifikasi **kedua alamat** (`0x3C` dan `0x68`) terdeteksi
+3. Inisialisasi keduanya dalam satu program: OLED via library Adafruit SSD1306, MPU6500 via register manual
+4. Bangunkan MPU6500 dari sleep (`PWR_MGMT_1` = `0x00`), lalu baca akselerometer berkala (`ACCEL_XOUT_H`)
+5. Tampilkan hasil di layar OLED — buktikan kedua perangkat bisa diakses bergantian tanpa saling mengganggu
+6. Lepas sementara salah satu perangkat (mis. cabut OLED), amati MPU6500 tetap terbaca normal
+7. Analisis mengapa melepas satu perangkat I2C tidak mengganggu yang lain — kaitkan dengan pengalamatan (`0x3C` vs `0x68`)
 
 **Kode Program (OLED + MPU6500 pada Satu Bus I2C):**
 ```cpp
@@ -380,10 +384,12 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Rangkai modul MPU6500 sesuai skema
-2. Implementasikan fungsi baca/tulis register dasar (`readRegister`/`writeRegister`) sesuai protokol SPI MPU6500 (bit MSB pada alamat register menandai operasi baca)
-3. Baca register `WHO_AM_I` (alamat `0x75`) untuk memverifikasi komunikasi berhasil (nilai yang diharapkan: `0x70` untuk MPU6500)
-4. Bangunkan sensor dari sleep mode melalui register `PWR_MGMT_1` (alamat `0x6B`)
-5. Implementasikan pembacaan data akselerometer (register `0x3B`–`0x40`) secara berkala, konversi ke satuan g
+2. Implementasikan `readRegister`/`writeRegister` dasar sesuai protokol SPI MPU6500 (bit MSB menandai operasi baca)
+3. Baca register `WHO_AM_I` (`0x75`), verifikasi hasilnya `0x70`
+4. Bangunkan sensor dari sleep (`PWR_MGMT_1`)
+5. Implementasikan pembacaan akselerometer (`0x3B`–`0x40`) berkala, konversi ke satuan g
+6. Uji tambahan: lepas kabel CS dari GPIO 15, Build & Upload ulang, amati nilai `WHO_AM_I` yang terbaca
+7. Analisis mengapa datanya jadi tidak valid — kaitkan dengan fungsi pin CS pada bus SPI
 
 **Kode Program (Baca Register MPU6500 via SPI):**
 ```cpp
@@ -481,10 +487,10 @@ framework = arduino
 > Tidak ada library tambahan — driver `spi_master` diakses langsung dari header ESP-IDF (`driver/spi_master.h`) yang sudah termasuk dalam Arduino-ESP32 core.
 
 **Langkah Kerja:**
-1. Gunakan kembali rangkaian MPU6500 dari Percobaan 3
-2. Jalankan kembali kode Percobaan 3 sebagai pembanding, catat estimasi waktu pembacaan 6 byte data akselerometer secara byte-per-byte
-3. Implementasikan pembacaan register akselerometer secara *burst* (satu transaksi sekaligus) menggunakan driver `spi_master` dengan DMA diaktifkan pada inisialisasi bus
-4. Ukur waktu satu transaksi burst menggunakan `micros()`, bandingkan dengan hasil pengamatan pada langkah 2
+1. Gunakan rangkaian MPU6500 dari Percobaan 3
+2. Jalankan kode Percobaan 3 sebagai pembanding, catat estimasi waktu baca 6 byte secara byte-per-byte
+3. Implementasikan pembacaan *burst* via driver `spi_master` dengan DMA diaktifkan
+4. Ukur waktu transaksi burst dengan `micros()`, bandingkan dengan langkah 2
 
 **Kode Program (Pembacaan Burst MPU6500 via SPI Master + DMA):**
 ```cpp
@@ -632,11 +638,14 @@ Kode contoh memberi ESP32 alamat `192.168.1.177`. Atur PC pada subnet yang sama 
 - **Setelah selesai praktikum, kembalikan setelan ke "Obtain an IP address automatically" / "Automatic (DHCP)"** agar laptop dapat kembali terhubung ke jaringan biasa
 
 **Langkah Kerja:**
-1. Rangkai modul W5500 sesuai skema, lalu sambungkan port RJ45 — ke switch/router yang sama dengan PC, **atau** langsung ke port Ethernet laptop
-2. Jika koneksi langsung: atur IP statis pada PC sesuai bagian **Menyiapkan IP Statis pada PC Windows** di atas. Jika via router: cek IP PC dengan `ipconfig`, lalu sesuaikan alamat `ip` pada kode agar satu subnet dengan PC dan belum terpakai
-3. Upload kode program di bawah, buka Serial Monitor untuk melihat status inisialisasi dan alamat IP yang terpasang pada W5500
-4. Dari Command Prompt Windows, jalankan `ping <alamat-IP-ESP32>` — pastikan muncul balasan `Reply from ...`
-5. Jika tidak ada balasan: bila Serial Monitor menampilkan `EthernetNoHardware` periksa wiring SPI; bila `LinkOFF` periksa kabel RJ45; bila keduanya normal tetapi ping `Request timed out`, pastikan IP PC dan ESP32 berada pada subnet yang sama (`ipconfig` vs nilai `ip(...)` pada kode)
+1. Rangkai modul W5500, sambungkan RJ45 ke switch/router yang sama dengan PC **atau** langsung ke port Ethernet laptop
+2. Atur IP: statis di PC (lihat **Menyiapkan IP Statis pada PC Windows**) kalau koneksi langsung, atau sesuaikan `ip` di kode kalau via router
+3. Upload, buka Serial Monitor untuk cek status inisialisasi dan IP W5500
+4. Dari Command Prompt, jalankan `ping <alamat-IP-ESP32>`, pastikan ada balasan
+5. Kalau gagal, cek pesan Serial Monitor: `EthernetNoHardware`→wiring SPI, `LinkOFF`→kabel RJ45, timeout→subnet IP belum sama
+6. Ubah oktet ketiga `IPAddress ip(...)` ke subnet lain, Build & Upload ulang, coba `ping` lagi
+7. Analisis mengapa ping pada langkah 6 gagal meski wiring dan kabel tetap normal
+8. Analisis mengapa `loop()` boleh kosong untuk merespons ping, padahal protokol lain (UART/I2C/SPI) harus aktif membaca/menulis data — kaitkan dengan sifat W5500 sebagai chip TCP/IP "hardwired"
 
 **Kode Program (ESP32 + W5500 — Merespons Ping dari PC):**
 ```cpp

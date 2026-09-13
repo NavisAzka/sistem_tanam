@@ -66,13 +66,13 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 | 8 | Magnet kecil | untuk uji hall effect | 1 |
 | 9 | Sensor ultrasonik | HC-SR04 | 1 |
 | 10 | Sensor IR obstacle | — | 1 |
-| 11 | Motor DC + driver | mis. L298N/L293D | 1 |
-| 12 | Motor stepper | mis. NEMA17 atau sejenis | 1 |
-| 13 | Driver motor stepper | mis. A4988/DRV8825 | 1 |
+| 11 | Motor DC + driver | Motor: JGA25-370 (1000RPM), kabel M1 (Merah, +) / M2 (Putih, −); Driver: L298N | 1 |
+| 12 | Motor stepper | 28BYJ-48 (unipolar, 5V) — sesuai kode Percobaan 4 | 1 |
+| 13 | Driver motor stepper | ULN2003 (modul driver 4-fasa bawaan 28BYJ-48) — sesuai kode Percobaan 4 | 1 |
 | 14 | Servo motor | SG90 | 1 |
 | 15 | Catu daya eksternal | sesuai kebutuhan motor DC/stepper (jangan gunakan 5V dari USB langsung) | 1 |
-| 16 | ESC (Electronic Speed Controller) | mis. ESC brushless 20-30A (RC hobby) | 1 |
-| 17 | Motor brushless (BLDC) | mis. motor brushless RC 2200KV, **tanpa propeller/baling-baling terpasang** | 1 |
+| 16 | ESC (Electronic Speed Controller) | ESC brushless 20A (RC hobby) | 1 |
+| 17 | Motor brushless (BLDC) | Motor brushless RC 2200KV, **tanpa propeller/baling-baling terpasang** | 1 |
 | 18 | Baterai LiPo | 2S–3S (7.4V–11.1V), sesuai spesifikasi ESC dan motor | 1 |
 | 19 | Laptop/PC | VSCode + PlatformIO terinstal | 1 |
 
@@ -192,11 +192,14 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai joystick KY-023 (VCC, GND, VRx ke GPIO 34, VRy ke GPIO 35, SW ke GPIO 27)
-2. Rangkai modul TTP223 (VCC, GND, dan OUT ke GPIO 4)
+1. Rangkai joystick KY-023 (VCC, GND, VRx→GPIO34, VRy→GPIO35, SW→GPIO27)
+2. Rangkai modul TTP223 (VCC, GND, OUT→GPIO4)
 3. Rangkai hall effect sensor module pada GPIO 26
-4. Upload program gabungan di bawah, amati keempat pembacaan (VRx, VRy, SW, TTP223, hall effect) sekaligus pada Serial Monitor
-5. Uji joystick dengan menggerakkan stick ke berbagai arah serta menekannya, uji TTP223 dengan menyentuh pad sensor, dan uji hall effect dengan mendekatkan magnet — catat rentang/status hasil masing-masing
+4. Upload program gabungan, amati kelima pembacaan sekaligus di Serial Monitor
+5. Uji tiap sensor (gerakkan/tekan joystick, sentuh TTP223, dekatkan magnet ke hall effect) — catat hasilnya
+6. Lepas joystick ke posisi netral, catat VRx/VRy 3 kali — apakah selalu tepat 2048?
+7. Analisis mengapa dibutuhkan *dead zone* toleransi, bukan sekadar memeriksa `== 2048`
+8. Bandingkan basis transduksi ketiga sensor — analisis mengapa TTP223 dan hall effect langsung digital, sedangkan joystick analog
 
 **Kode Program (Joystick KY-023, TTP223, & Hall Effect):**
 ```cpp
@@ -262,9 +265,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai HC-SR04 sesuai skema, tulis program pengukuran jarak berbasis `pulseIn()`
+1. Rangkai HC-SR04, tulis program pengukuran jarak berbasis `pulseIn()`
 2. Rangkai sensor IR obstacle, uji pembacaan status halangan
-3. Amati kedua pembacaan secara bersamaan pada Serial Monitor, uji dengan berbagai jarak dan objek
+3. Amati keduanya bersamaan di Serial Monitor, uji berbagai jarak dan objek
+4. Ukur 3 jarak nyata dengan penggaris (mis. 10, 30, 60 cm), bandingkan dengan Serial Monitor, catat selisihnya
+5. Uji IR obstacle pada jarak sama dengan beberapa permukaan (terang/gelap, halus/kasar)
+6. Analisis mengapa sensor optik terpengaruh warna/tekstur permukaan, beda dari ultrasonik
 
 **Kode Program (Ultrasonik HC-SR04 & IR Obstacle):**
 ```cpp
@@ -339,6 +345,8 @@ Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC me
 | Driver motor (ENA) | GPIO 25 | Sinyal PWM kecepatan |
 | Driver motor (IN1) | GPIO 26 | Arah putar motor |
 | Driver motor (IN2) | GPIO 33 | Arah putar motor |
+| Motor DC — M1 (kabel Merah, +) | Driver OUT1 | Menukar M1/M2 membalik arah putar default motor |
+| Motor DC — M2 (kabel Putih, −) | Driver OUT2 | — |
 
 **`platformio.ini`:**
 ```ini
@@ -349,11 +357,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor DC melalui driver L298N sesuai skema, gunakan catu daya eksternal untuk motor (bukan 5V dari USB langsung)
-2. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
-3. Implementasikan kontrol PWM pada pin ENA untuk mengatur kecepatan, serta IN1/IN2 untuk mengatur arah (maju/mundur/berhenti), semuanya berdasarkan posisi joystick
-4. Uji kendali motor dengan menggerakkan joystick ke kedua sisi, amati perubahan kecepatan dan arah putar sesuai besar dan arah deviasi joystick dari titik tengah
-5. Uji tombol SW sebagai stop darurat — pastikan motor langsung berhenti selama tombol ditekan, terlepas dari posisi VRx
+1. Rangkai motor DC via driver L298N, pakai catu daya eksternal (bukan 5V USB)
+2. Rangkai joystick (VRx→GPIO34, SW→GPIO27) — sama seperti Percobaan 1
+3. Implementasikan kontrol PWM (ENA) dan arah (IN1/IN2) berdasarkan posisi joystick
+4. Gerakkan joystick ke kedua sisi, amati kecepatan dan arah putar berubah sesuai deviasi
+5. Uji SW sebagai stop darurat — motor harus langsung berhenti selama ditekan
+6. Analisis mengapa arah (`IN1`/`IN2`) harus diset **sebelum** PWM (`ENA`) — apa yang terjadi kalau urutannya terbalik?
 
 **Kode Program (Kontrol Motor DC via Joystick):**
 ```cpp
@@ -486,12 +495,13 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor stepper melalui driver sesuai skema, gunakan catu daya eksternal sesuai spesifikasi motor
-2. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
-3. Upload kode program di bawah, amati bahwa motor **diam** saat joystick di posisi tengah
-4. Geser joystick ke satu sisi, amati motor berputar searah jarum jam (CW); geser ke sisi berlawanan, amati motor berputar berlawanan arah jarum jam (CCW) — perhatikan bagaimana besar deviasi memengaruhi "rasa" kecepatan (jumlah step per burst)
-5. Uji tombol SW sebagai stop darurat — pastikan motor berhenti bergerak selama tombol ditekan
-6. Sebagai latihan tambahan, ukur waktu antar pulsa (`MIN_DELAY_US`) minimum yang masih membuat motor berputar dengan lancar (tanpa "kehilangan step")
+1. Rangkai motor stepper melalui driver, pakai catu daya eksternal
+2. Rangkai joystick (VRx→GPIO34, SW→GPIO27) — sama seperti Percobaan 1
+3. Upload kode, amati motor **diam** saat joystick di posisi tengah
+4. Geser joystick ke tiap sisi, amati arah CW/CCW dan bagaimana besar deviasi memengaruhi "rasa" kecepatan
+5. Uji SW sebagai stop darurat
+6. Latihan tambahan: turunkan `MIN_DELAY_US` bertahap (`600` → `400` → `200`), cari nilai terendah yang motornya masih lancar
+7. Analisis mengapa motor kehilangan step saat `MIN_DELAY_US` terlalu kecil — kaitkan dengan waktu kumparan berpindah fasa
 
 **Kode Program (Kontrol Motor Stepper via Joystick, dengan Profil Akselerasi):**
 ```cpp
@@ -651,10 +661,12 @@ lib_deps = madhephaestus/ESP32Servo@^3.0.0
 ```
 
 **Langkah Kerja:**
-1. Rangkai servo motor sesuai skema (sinyal ke GPIO 13, VCC dan GND ke catu daya yang sesuai)
-2. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
-3. Upload program, geser joystick dari ujung ke ujung dan amati servo mengikuti posisi secara langsung (0°–180°)
-4. Tekan dan tahan SW, coba putar poros servo dengan tangan (harus terasa bebas/tanpa torsi); lepas SW dan amati servo kembali mengunci pada posisi sesuai joystick saat itu
+1. Rangkai servo motor (sinyal→GPIO13)
+2. Rangkai joystick (VRx→GPIO34, SW→GPIO27) — sama seperti Percobaan 1
+3. Upload, geser joystick ujung ke ujung, amati servo mengikuti posisi (0°–180°)
+4. Tahan SW, coba putar servo dengan tangan (harus bebas) — lepas SW, amati servo mengunci lagi
+5. Catat sudut servo di 3 posisi joystick (kiri, tengah, kanan) — apakah sesuai ekspektasi (0°/~90°/180°)?
+6. Analisis mengapa servo tak perlu encoder eksternal, beda dari motor DC di Percobaan 3 (kaitkan dengan potensiometer umpan balik internal servo)
 
 **Kode Program (Kontrol Motor Servo via Joystick):**
 ```cpp
@@ -735,13 +747,15 @@ framework = arduino
 > **Catatan:** Percobaan ini **tidak memerlukan** library ESP32Servo — sinyal PWM 50Hz untuk ESC dibangkitkan langsung melalui API **LEDC** (`ledcSetup`/`ledcAttachPin`/`ledcWrite`), sebagai kontras dengan pendekatan Percobaan 5 (Servo) yang menggunakan abstraksi library. Keduanya menghasilkan sinyal yang identik (pulsa 1000–2000µs pada periode 20ms) — hanya berbeda pada tingkat abstraksi API yang dipakai.
 
 **Langkah Kerja:**
-1. Pastikan propeller/baling-baling **sudah dilepas** dari motor brushless (keselamatan) sebelum melanjutkan
-2. Rangkai ESC sesuai skema: sinyal ke GPIO 25, GND sinyal disatukan dengan GND ESP32, dan jalur daya (power) ESC ke baterai LiPo — **terpisah** dari power ESP32
-3. Rangkai joystick KY-023 (VRx ke GPIO 34, SW ke GPIO 27) — dapat menggunakan rangkaian yang sama seperti Percobaan 1
-4. Pastikan joystick berada pada posisi paling kiri (throttle minimum) **sebelum** menyalakan baterai ESC, lalu upload kode program di bawah
-5. Amati Serial Monitor: proses **arming** (throttle minimum 1000µs selama 5 detik) berjalan otomatis di `setup()`, ditandai bunyi *beep* dari ESC (jika ada)
-6. Setelah arming selesai, geser joystick secara perlahan dari kiri ke kanan, amati kecepatan motor meningkat sesuai posisi joystick
-7. Uji tombol SW sebagai kill switch — tekan SW saat motor berputar, pastikan motor langsung kembali ke throttle minimum
+1. Pastikan propeller **sudah dilepas** dari motor brushless
+2. Rangkai ESC (sinyal→GPIO25, GND disatukan dengan ESP32, daya dari baterai LiPo **terpisah**)
+3. Rangkai joystick (VRx→GPIO34, SW→GPIO27) — sama seperti Percobaan 1
+4. Pastikan joystick di posisi paling kiri **sebelum** menyalakan baterai ESC, lalu upload
+5. Amati Serial Monitor: **arming** (throttle minimum 1000µs, 5 detik) berjalan otomatis, ditandai *beep* dari ESC
+6. Setelah arming, geser joystick pelan dari kiri ke kanan, amati kecepatan motor naik
+7. Uji SW sebagai kill switch — tekan saat motor berputar, analisis apakah transisinya mulus atau menyentak
+8. Analisis mengapa proses arming penting bagi ESC, dan risikonya bila dilewati
+9. Bandingkan LEDC manual (`pulseToDuty()`) di percobaan ini dengan `writeMicroseconds()` (ESP32Servo, Percobaan 5) — diskusikan kelebihan/kekurangannya
 
 **Kode Program (Arming ESC & Kontrol Kecepatan Motor Brushless via Joystick, berbasis LEDC):**
 ```cpp
@@ -835,9 +849,9 @@ Buatlah simulasi Wokwi di mana **dua potensiometer** mengendalikan servo dan mot
 3. Potensiometer 2 menentukan **kecepatan dasar** (base frequency) putaran stepper.
 
 **Pertanyaan Analisis:**
-1. Jelaskan bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan arah dair posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
-2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — jelaskan apa yang direpresentasikan oleh sinyal PWM pada servo dibanding pada stepper.
-3. Jelaskan mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja.
+1. Analisis bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan arah dair posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
+2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — analisis apa yang direpresentasikan oleh sinyal PWM pada servo dibanding pada stepper.
+3. Analisis mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja.
 
 **Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project Wokwi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
 
