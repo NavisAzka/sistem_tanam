@@ -49,7 +49,7 @@ Setelah menyelesaikan Modul 4, praktikan mampu:
 | No | Nama Komponen | Spesifikasi | Jumlah |
 |---|---|---|---|
 | 1 | Board ESP32 DevKit | ESP32 DevKit v1 | 1 |
-| 2 | Motor DC + encoder magnetik quadrature | modul dengan konektor JST 6-pin, mis. tipe JGB37-520: Merah/Putih = daya motor (+/−), Kuning/Hijau = Channel A/Channel B encoder, Biru/Hitam = VCC/GND encoder (dapat memakai motor dari Modul 2 — **verifikasi ulang pemetaan warna pada modul fisik Anda**, karena dapat berbeda antar produsen) | 1 |
+| 2 | Motor DC + encoder magnetik quadrature | **JGA25-370 (1000RPM)**, konektor JST 6-pin: M1 Merah = daya motor (+), M2 Putih = daya motor (−), C1 Kuning = encoder Channel A, C2 Hijau = encoder Channel B, Biru = VCC encoder (3.3–5V), Hitam = GND encoder — motor yang sama dari Modul 2 Percobaan 3 | 1 |
 | 3 | LED + resistor 220Ω | untuk uji timer interrupt & indikator tombol darurat | 1 |
 | 4 | Pushbutton (tactile) | dipakai ulang pada tombol darurat (Percobaan 1) dan multitasking + queue (Percobaan 5) | 1 |
 | 5 | Breadboard | 830 titik | 1 |
@@ -134,12 +134,12 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Rangkai LED dan pushbutton sesuai skema
-2. Implementasikan program normal: LED berkedip + pesan status dicetak ke Serial secara berkala
-3. Pasang ISR pada pushbutton yang **langsung memanggil `esp_restart()`** (bukan sekadar mengatur flag), dengan tombol berfungsi sebagai "tombol darurat"
-4. Jalankan program, uji tombol darurat dalam kondisi normal — pastikan board berhasil restart
-5. Aktifkan simulasi hang dengan meng-uncomment baris `// simulateHang();` pada `loop()`, amati bahwa LED berhenti berkedip dan Serial berhenti mencetak pesan (sistem tampak benar-benar macet)
-6. **Saat sistem dalam kondisi hang tersebut**, tekan tombol darurat — amati bahwa board tetap berhasil restart meskipun `loop()` sedang terjebak total
-7. Diskusikan: bandingkan mekanisme ini dengan Watchdog Timer (Percobaan 4) — kapan sebaiknya masing-masing digunakan?
+2. Implementasikan program normal: LED berkedip + status dicetak ke Serial berkala
+3. Pasang ISR pada pushbutton yang **langsung memanggil `esp_restart()`** — tombol sebagai "tombol darurat"
+4. Uji tombol darurat dalam kondisi normal — pastikan board restart
+5. Uncomment `// simulateHang();` pada `loop()`, amati LED dan Serial berhenti (sistem macet)
+6. Saat hang, tekan tombol darurat — amati board tetap restart meski `loop()` terjebak total
+7. Diskusikan mekanisme ini dibanding Watchdog Timer (Percobaan 4) — kapan masing-masing sebaiknya dipakai?
 
 **Kode Program (Tombol Darurat — Restart Manual Saat Sistem Hang):**
 ```cpp
@@ -223,11 +223,14 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai encoder sesuai skema — hanya kabel encoder (VCC, GND, Channel A, Channel B) yang perlu disambungkan, kabel motor tidak digunakan pada percobaan ini
-2. Implementasikan ISR pada Channel A (trigger `RISING`) yang membaca status Channel B untuk menentukan arah putaran (decoding quadrature)
-3. Gunakan `portMUX_TYPE` beserta critical section untuk melindungi variabel `encoderCount` yang diakses bersama oleh ISR dan `loop()`
-4. Tampilkan jumlah pulsa dan arah putaran secara periodik (setiap 100ms) menggunakan pola `millis()` non-blocking
-5. Amati nilai pulsa dan arah pada Serial Monitor sambil memutar poros motor searah dan berlawanan arah jarum jam
+1. Rangkai encoder sesuai skema — kabel motor tidak dipakai di percobaan ini
+2. Implementasikan ISR pada Channel A (`RISING`) yang membaca Channel B untuk menentukan arah
+3. Gunakan `portMUX_TYPE` untuk melindungi `encoderCount` yang diakses ISR dan `loop()`
+4. Tampilkan jumlah pulsa dan arah secara periodik (tiap 100ms) via `millis()` non-blocking
+5. Amati pulsa dan arah di Serial Monitor sambil memutar poros dua arah
+6. Putar poros pelan lalu cepat, analisis hubungan kecepatan putar dengan nilai `Delta`
+7. Tukar Channel A dan B (tanpa ubah kode), amati arah yang terbaca
+8. Analisis mengapa pertukaran itu membalik hasil pembacaan arah
 
 **Kode Program (Decoding Quadrature Encoder via External Interrupt):**
 ```cpp
@@ -329,10 +332,12 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Rangkai LED sesuai skema
-2. Upload kode program di bawah — timer hardware sudah diatur memicu interrupt setiap 500 ms
-3. Perhatikan pola pada kode: ISR hanya mengubah flag `volatile bool`, sedangkan toggle LED dikerjakan di `loop()` (aksi seperti `digitalWrite()` sebaiknya tidak dijalankan langsung di dalam ISR)
-4. Amati LED berkedip setiap 500 ms dan Serial Monitor mencetak pesan setiap kali interrupt terpicu
-5. Uncomment baris `// Serial.println("loop jalan terus");` pada `loop()`, upload ulang, lalu amati kedip LED tetap stabil 500 ms — ritme kedip dijaga oleh timer hardware, bukan oleh kecepatan `loop()`
+2. Upload kode di bawah — timer hardware sudah diatur memicu interrupt tiap 500 ms
+3. Perhatikan pola pada kode: ISR cuma ubah flag `volatile bool`, toggle LED dikerjakan di `loop()`
+4. Amati LED kedip tiap 500 ms dan Serial Monitor mencetak pesan tiap interrupt
+5. Uncomment `// Serial.println("loop jalan terus");`, upload ulang, amati kedip LED tetap stabil 500 ms
+6. Ubah nilai alarm `timerAlarmWrite(timer, 500000, true)` ke `100000` lalu `1000000`, amati kecepatan kedip tiap nilai
+7. Catat hubungan nilai alarm dengan periode kedip yang teramati
 
 **Kode Program (Timer Interrupt — Toggle LED):**
 ```cpp
@@ -402,10 +407,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Implementasikan inisialisasi Task Watchdog Timer dengan timeout 3 detik sesuai dengan kode di bawah
-2. Jalankan program normal — di dalam `loop()`, "beri makan" watchdog secara berkala (`esp_task_wdt_reset()`)
+1. Implementasikan Task Watchdog dengan timeout 3 detik sesuai kode di bawah
+2. Jalankan normal — di `loop()`, "beri makan" watchdog berkala (`esp_task_wdt_reset()`)
 3. Amati Serial Monitor, program berjalan normal tanpa reset
-4. Kemudian ubah program dengan menyimulasikan kondisi hang dengan meng-uncomment baris `// while (true) {}` pada `loop()` (watchdog tidak lagi "diberi makan"), upload ulang, lalu amati board **restart otomatis** setelah timeout 3 detik tercapai
+4. Uncomment `// while (true) {}` pada `loop()`, upload ulang, amati board **restart otomatis** setelah 3 detik
+5. Ubah `WDT_TIMEOUT_S` ke `1` lalu `6`, ukur berapa lama board butuh waktu untuk restart tiap nilai
+6. Analisis risiko `WDT_TIMEOUT_S` terlalu kecil pada sistem dengan tugas berat/lambat di `loop()`
 
 **Kode Program (Watchdog Timer):**
 ```cpp
@@ -467,9 +474,13 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Rangkai LED (GPIO 2) dan pushbutton (GPIO 27) sesuai skema
-2. Upload kode program di bawah — tiga task dibuat di `setup()` dengan `xTaskCreatePinnedToCore()`, `loop()` dibiarkan kosong
-3. Amati LED berkedip 500 ms tanpa henti; pada saat bersamaan tekan tombol beberapa kali dan amati Serial Monitor mencetak "Total: n" — kedua aktivitas berjalan bersamaan tanpa saling menunggu
-4. Perhatikan alur queue: `taskButton` mengirim jumlah penekanan lewat `xQueueSend()`, `taskDisplay` menerimanya lewat `xQueueReceive()` lalu mencetak — komunikasi antar task tanpa variabel global yang rawan *race condition*
+2. Upload kode di bawah — tiga task dibuat di `setup()`, `loop()` dibiarkan kosong
+3. Amati LED kedip 500 ms tanpa henti sambil tekan tombol beberapa kali — kedua aktivitas berjalan bersamaan tanpa saling menunggu
+4. Perhatikan alur queue: `taskButton` kirim via `xQueueSend()`, `taskDisplay` terima via `xQueueReceive()` lalu cetak
+5. Naikkan priority `taskButton` lebih tinggi dari `taskBlink` (mis. `2` dan `1`), amati apakah kedipan LED terpengaruh
+6. Analisis bagaimana scheduler FreeRTOS menangani prioritas berbeda pada core yang sama
+7. Pindahkan `taskButton` ke core yang sama dengan `taskBlink`, amati apakah tombol tetap responsif
+8. Diskusikan trade-off satu core vs dua core untuk banyak task
 
 **Kode Program (Multitasking FreeRTOS — 3 Task + Queue):**
 ```cpp
@@ -582,4 +593,4 @@ Percobaan 4 (Watchdog Timer) pada modul ini dapat diimplementasikan ulang **tanp
 2. Espressif Systems, *ESP-IDF Programming Guide — FreeRTOS, Task Watchdog Timer*, https://docs.espressif.com/projects/esp-idf/
 3. Arduino-ESP32 Core Documentation — Timer, https://docs.espressif.com/projects/arduino-esp32/
 4. FreeRTOS Official Documentation — Queue Management, https://www.freertos.org/
-5. sss2022, *Closed-Loop Speed Control of a DC Motor With Encoder Using a Discrete PI Controller on Arduino*, Instructables — rujukan wiring encoder & motor JGB37-520, https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/
+5. sss2022, *Closed-Loop Speed Control of a DC Motor With Encoder Using a Discrete PI Controller on Arduino*, Instructables — rujukan umum wiring motor gearbox + encoder (modul ini memakai JGA25-370), https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/

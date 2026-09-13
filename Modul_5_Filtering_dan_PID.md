@@ -6,7 +6,7 @@
 **Platform:** ESP32 (Framework Arduino)
 **IDE:** VSCode + PlatformIO
 
-> **Catatan:** Modul ini merupakan modul kapstone yang menggabungkan **Modul 2** (motor DC + PWM) dan **Modul 4 Percobaan 2** (quadrature encoder via external interrupt). Pastikan rangkaian motor+encoder+driver dari kedua modul tersebut sudah berfungsi sebelum memulai modul ini. Seluruh contoh kode menggunakan platform PlatformIO resmi `espressif32` (Arduino-ESP32 **core versi 2.0.x**), konsisten dengan Modul 2–4, termasuk API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`/`ledcWrite`) untuk kontrol PWM motor DC.
+> **Catatan:** Modul ini merupakan modul kapstone yang menggabungkan **Modul 2** (motor DC + PWM), **Modul 3** (MPU6500), dan **Modul 4 Percobaan 2** (quadrature encoder via external interrupt). Pastikan rangkaian motor+encoder+driver dan modul MPU6500 dari modul-modul tersebut sudah berfungsi sebelum memulai modul ini. Seluruh contoh kode menggunakan platform PlatformIO resmi `espressif32` (Arduino-ESP32 **core versi 2.0.x**), konsisten dengan Modul 2–4, termasuk API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`/`ledcWrite`) untuk kontrol PWM motor DC.
 
 ---
 
@@ -24,8 +24,8 @@
     - [C.5 Kontrol PID](#c5-kontrol-pid)
   - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
   - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-    - [PERCOBAAN 1 — Dari Pulsa ke RPM (Konversi \& Kalibrasi)](#percobaan-1--dari-pulsa-ke-rpm-konversi--kalibrasi)
-    - [PERCOBAAN 2 — Filtering Sederhana dengan Alpha (Low-Pass Filter)](#percobaan-2--filtering-sederhana-dengan-alpha-low-pass-filter)
+    - [PERCOBAAN 1 — Filtering Alpha pada MPU6500 (Akselerometer)](#percobaan-1--filtering-alpha-pada-mpu6500-akselerometer)
+    - [PERCOBAAN 2 — Dari Pulsa ke RPM dengan Filtering Alpha](#percobaan-2--dari-pulsa-ke-rpm-dengan-filtering-alpha)
     - [PERCOBAAN 3 — Filtering dengan Kalman Filter](#percobaan-3--filtering-dengan-kalman-filter)
     - [PERCOBAAN 4 — Kontrol Closed-Loop: On-Off vs Proportional (P)](#percobaan-4--kontrol-closed-loop-on-off-vs-proportional-p)
     - [PERCOBAAN 5 — Kontrol PID Lengkap \& Tuning](#percobaan-5--kontrol-pid-lengkap--tuning)
@@ -37,8 +37,8 @@
 ## A. Capaian Pembelajaran
 
 Setelah menyelesaikan Modul 5, praktikan mampu:
-1. Mengonversi data pulsa mentah dari encoder menjadi kecepatan putar (RPM), termasuk kalibrasi pulsa per putaran
-2. Menerapkan filtering sederhana (low-pass filter berbasis alpha) untuk mengurangi noise pada sinyal RPM
+1. Mengonversi data pulsa mentah dari encoder menjadi kecepatan putar (RPM)
+2. Menerapkan filtering sederhana (low-pass filter berbasis alpha) untuk mengurangi noise, baik pada sinyal sensor sederhana (akselerometer MPU6500) maupun sinyal RPM encoder
 3. Menerapkan Kalman filter sebagai metode filtering alternatif, serta membandingkannya dengan filter alpha
 4. Menjelaskan konsep sistem kontrol closed-loop, serta mengimplementasikan kontrol on-off dan Proportional (P)
 5. Mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan motor DC berdasarkan target RPM, serta melakukan tuning parameter
@@ -50,52 +50,71 @@ Setelah menyelesaikan Modul 5, praktikan mampu:
 | No | Nama Komponen | Spesifikasi | Jumlah |
 |---|---|---|---|
 | 1 | Board ESP32 DevKit | ESP32 DevKit v1 | 1 |
-| 2 | Motor DC + encoder magnetik quadrature | modul dengan konektor JST 6-pin, mis. JGB37-520 (sama seperti Modul 4) | 1 |
-| 3 | Driver motor | mis. L298N/L293D (sama seperti Modul 2) | 1 |
-| 4 | Catu daya eksternal | sesuai kebutuhan motor (jangan gunakan 5V dari USB langsung) | 1 |
-| 5 | Pushbutton (tactile) | 2 buah — tombol naik/turun target RPM | 2 |
-| 6 | Breadboard | 830 titik | 1 |
-| 7 | Kabel jumper male-male | — | secukupnya |
-| 8 | Laptop/PC | VSCode + PlatformIO terinstal, Serial Plotter | 1 |
+| 2 | Modul IMU MPU6500 | mode I2C (sama seperti Modul 3 Percobaan 2) | 1 |
+| 3 | Motor DC + encoder magnetik quadrature | **JGA25-370 (1000RPM)**, konektor JST 6-pin (sama seperti Modul 4) | 1 |
+| 4 | Driver motor | L298N (sama seperti Modul 2) | 1 |
+| 5 | Catu daya eksternal | sesuai kebutuhan motor (jangan gunakan 5V dari USB langsung) | 1 |
+| 6 | Pushbutton (tactile) | 2 buah — tombol naik/turun target RPM | 2 |
+| 7 | Breadboard | 830 titik | 1 |
+| 8 | Kabel jumper male-male | — | secukupnya |
+| 9 | Laptop/PC | VSCode + PlatformIO terinstal, Serial Plotter | 1 |
 
 ---
 
 ## C. Dasar Teori
 
+> **Istilah penting di modul ini** (versi singkat, penjelasan lengkap ada di tiap subbab):
+> | Istilah | Maksudnya secara sederhana |
+> |---|---|
+> | **RPM** | Kecepatan putar — berapa kali poros berputar penuh dalam satu menit |
+> | **CPR** | Jumlah pulsa encoder untuk satu kali putaran penuh |
+> | **Noise** | "Getaran" kecil yang tidak diinginkan pada nilai sensor — nilainya naik-turun sendiri padahal kondisi sebenarnya stabil |
+> | **Filter** | Cara menghaluskan nilai yang naik-turun (noise) tadi, tanpa perlu mengganti sensor |
+> | **Setpoint** | Nilai target yang ingin dicapai (mis. "motor harus berputar 100 RPM") |
+> | **Error** | Selisih antara target (setpoint) dan nilai sebenarnya saat ini |
+> | **Steady-state error** | Selisih kecil yang tetap tersisa meski sistem sudah "stabil" — target tidak pernah tercapai persis |
+> | **PID** | Tiga cara mengoreksi error (Proportional, Integral, Derivative) yang digabung jadi satu sinyal kontrol |
+> | **Tuning** | Proses coba-coba mengatur angka-angka PID sampai responsnya bagus |
+> | **Overshoot** | Kelebihan target sesaat sebelum akhirnya stabil (mis. target 100 RPM, motor sempat naik ke 120 RPM dulu baru turun ke 100) |
+
 ### C.1 Dari Pulsa Encoder ke RPM
-Encoder menghasilkan sejumlah pulsa untuk setiap putaran porosnya. Untuk motor gearbox (seperti JGB37-520), jumlah pulsa per putaran yang dirasakan pada **poros output** bukan hanya resolusi encoder mentah (CPR — *Counts Per Revolution*), melainkan sudah dikalikan dengan rasio reduksi gearbox:
+Setiap kali poros encoder berputar, sejumlah pulsa listrik dihasilkan — semakin cepat putarannya, semakin banyak pulsa yang muncul dalam satu detik. Dari sinilah kecepatan putar (**RPM** — putaran per menit) bisa dihitung.
+
+Untuk motor bergearbox (seperti JGA25-370 yang dipakai di modul ini), jumlah pulsa yang terhitung di **poros output** (poros akhir setelah gearbox, tempat roda/beban terpasang) sudah dikalikan rasio reduksi gearbox — jadi bukan sekadar resolusi encoder mentah (disebut **CPR**, singkatan *Counts Per Revolution* = jumlah pulsa per satu putaran):
 
 ```
 CPR_TOTAL = CPR_encoder × Rasio_Gearbox
 ```
 
-Kecepatan putar (RPM) kemudian dihitung dari jumlah pulsa yang terhitung dalam suatu interval waktu:
+RPM lalu dihitung dari berapa banyak pulsa bertambah dalam satu periode waktu tertentu:
 
 ```
-RPM = (ΔPulsa / ΔT) × (60 / CPR_TOTAL)
+RPM = (Jumlah_Pulsa_Bertambah / Waktu_dalam_detik) × (60 / CPR_TOTAL)
 ```
 
-di mana `ΔPulsa` adalah jumlah pulsa yang terhitung selama interval `ΔT` (dalam detik). Karena nilai CPR dan rasio gearbox tidak selalu tercantum akurat pada datasheet/penjual, **kalibrasi langsung** (memutar poros output sejumlah putaran penuh yang diketahui, lalu mencatat total pulsa yang terhitung) umumnya menghasilkan nilai `CPR_TOTAL` yang lebih akurat.
+Angka CPR dan rasio gearbox pada datasheet/toko online sering tidak akurat — cara paling presisi adalah **kalibrasi langsung** (memutar poros output sejumlah putaran penuh yang diketahui, lalu menghitung pulsa yang tercatat). Pada modul ini, `CPR_TOTAL` cukup memakai **nilai estimasi dari spesifikasi motor** (untuk JGA25-370 1000RPM: ±102, lihat Percobaan 2) — cukup memadai untuk keperluan praktikum, meski nilai motor Anda sendiri bisa sedikit berbeda.
 
 ![Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros](img/diagram_quadrature_encoder.png)
 
-### C.2 Filtering Sederhana — Low-Pass Filter Alpha
-Hasil pengukuran RPM dari encoder secara mentah cenderung **berisik (noisy)** — nilainya dapat melonjak-lonjak antar sampel akibat variasi singkat pada interval antar pulsa, terutama pada kecepatan rendah atau saat beban motor berubah. Metode filtering paling sederhana adalah **low-pass filter orde-1 (exponential filter)**, dengan persamaan diskret:
+### C.2 Menghaluskan Sinyal — Filter Alpha
+Nilai RPM mentah dari encoder biasanya **tidak mulus** — angkanya bisa melompat-lompat sedikit antar pembacaan (disebut *noise*), terutama saat motor berputar pelan. Cara paling sederhana untuk menghaluskannya adalah **filter alpha** (juga disebut *low-pass filter*), dengan rumus:
 
 ```
-y[n] = α·y[n-1] + (1-α)·x[n]
+nilai_halus_baru = α × nilai_halus_lama + (1-α) × nilai_mentah_baru
 ```
 
-di mana `y[n]` adalah nilai hasil filter, `x[n]` nilai mentah saat ini, dan `α` (0–1) menentukan seberapa besar pengaruh nilai sebelumnya — semakin besar `α`, sinyal semakin halus namun semakin lambat merespons perubahan (lag lebih besar). Filter ini hanya memiliki **satu parameter** (`α`) yang perlu ditentukan, sehingga sangat mudah diimplementasikan, namun nilainya bersifat tetap (tidak menyesuaikan diri terhadap kondisi sinyal).
+`α` (dibaca "alpha") adalah angka antara 0–1 yang menentukan seberapa besar nilai lama dipertahankan. Semakin besar `α`, hasilnya semakin halus — tapi juga semakin lambat mengikuti perubahan nyata (istilahnya *lag*, alias "telat merespons"). Filter ini cukup satu angka (`α`) untuk diatur, jadi paling mudah diterapkan — tapi karena angkanya tetap, filter ini tidak bisa "menyesuaikan diri" saat kondisi sinyal berubah.
 
 ![Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag](img/grafik_filter_alpha.png)
 
-### C.3 Filtering Lanjut — Kalman Filter
-**Kalman filter** adalah metode estimasi rekursif yang menggabungkan **prediksi** (berdasarkan model sistem) dengan **pengukuran baru**, masing-masing diberi bobot sesuai tingkat kepercayaan (ketidakpastian) terhadapnya. Berbeda dengan low-pass filter alpha yang bobotnya tetap, Kalman filter menghitung ulang bobot optimalnya (**Kalman gain**, `K`) pada setiap sampel, berdasarkan dua parameter:
-- **Q (process noise):** seberapa besar nilai sebenarnya diperkirakan berubah dari waktu ke waktu — Q besar berarti sistem dianggap lebih dinamis/cepat berubah
-- **R (measurement noise):** seberapa "berisik" hasil pengukuran sensor — R besar berarti sensor dianggap kurang dapat dipercaya
+### C.3 Filter yang Lebih Pintar — Kalman Filter
+Bayangkan Anda punya dua sumber informasi tentang kecepatan motor: **perkiraan** (berdasarkan pembacaan sebelumnya) dan **pengukuran baru** dari sensor. **Kalman filter** menggabungkan keduanya secara otomatis, dengan lebih "percaya" pada sumber mana pun yang saat itu lebih bisa diandalkan.
 
-Versi sederhana Kalman filter 1-dimensi (skalar, tanpa model gerak eksplisit) bekerja dalam dua tahap setiap siklus:
+Berbeda dari filter alpha yang bobotnya (`α`) selalu tetap, Kalman filter menghitung ulang bobot terbaiknya (disebut **Kalman gain**, `K`) di setiap pembacaan, berdasarkan dua angka yang kita atur:
+- **Q (process noise):** seberapa cepat nilai sebenarnya diperkirakan berubah — Q besar = motor dianggap sering berubah kecepatan
+- **R (measurement noise):** seberapa "berisik"/tidak akurat sensornya — R besar = sensor dianggap kurang bisa dipercaya
+
+Versi sederhana Kalman filter ini bekerja dua tahap tiap siklus — **Predict** (menaikkan ketidakpastian sedikit karena waktu berlalu) lalu **Update** (mengoreksi pakai data sensor baru):
 ```
 // Predict
 P = P + Q
@@ -105,38 +124,38 @@ K = P / (P + R)
 X = X + K × (measurement - X)
 P = (1 - K) × P
 ```
-di mana `X` adalah estimasi nilai saat ini dan `P` adalah estimasi ketidakpastian (error covariance). Karena `K` dihitung ulang tiap siklus berdasarkan rasio `P` terhadap `R`, Kalman filter secara otomatis lebih "percaya" pada pengukuran saat estimasi belum yakin, dan lebih "percaya" pada model saat estimasi sudah stabil — perilaku adaptif yang tidak dimiliki filter alpha dengan bobot tetap.
+`X` adalah tebakan terbaik nilai saat ini, dan `P` adalah seberapa yakin kita pada tebakan itu (semakin kecil `P`, semakin yakin). Karena `K` dihitung ulang tiap siklus, Kalman filter otomatis lebih "percaya" ke sensor saat belum yakin, dan lebih "percaya" ke perkiraannya sendiri saat sudah stabil — perilaku adaptif yang tidak dimiliki filter alpha.
 
 ![Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama](img/diagram_kalman_filter.png)
 
-### C.4 Sistem Kontrol Closed-Loop
-Sistem kontrol closed-loop (loop tertutup) membandingkan nilai yang diinginkan (**setpoint**) dengan nilai terukur sebenarnya (**feedback**), menghasilkan **error** yang digunakan untuk menentukan aksi kontrol berikutnya:
+### C.4 Sistem Kontrol Closed-Loop (Loop Tertutup)
+Sistem kontrol closed-loop bekerja seperti termostat AC: alat terus **mengukur** kondisi sebenarnya, **membandingkannya** dengan target, lalu **mengoreksi** — berulang-ulang. Target yang ingin dicapai disebut **setpoint**, nilai sebenarnya yang diukur sensor disebut **feedback**, dan selisih antara keduanya disebut **error**:
 
 ```
 error = setpoint - nilai_terukur
 ```
 
-Dua pendekatan dasar:
-- **Kontrol On-Off (bang-bang):** aktuator diberi output penuh jika nilai terukur di bawah setpoint, dan dimatikan total jika sudah mencapai/melebihi setpoint. Sederhana, namun menghasilkan osilasi di sekitar setpoint (tidak pernah benar-benar stabil)
-- **Kontrol Proportional (P):** output aktuator sebanding dengan besar error (`output = Kp × error`) — semakin besar error, semakin besar aksi koreksi. Lebih halus dari on-off, namun umumnya masih menyisakan **steady-state error** (nilai akhir tidak pernah persis mencapai setpoint)
+Dua cara paling dasar mengoreksi error:
+- **Kontrol On-Off (seperti termostat murah):** aktuator dinyalakan penuh kalau nilai masih di bawah target, dimatikan total kalau sudah tercapai. Simpel, tapi hasilnya berosilasi naik-turun terus di sekitar target (tidak pernah benar-benar diam)
+- **Kontrol Proportional (P):** koreksi yang diberikan sebanding dengan besar error (`output = Kp × error`) — makin jauh dari target, makin besar koreksinya. Lebih halus dari on-off, tapi biasanya menyisakan sedikit selisih yang tidak pernah hilang (disebut **steady-state error**)
 
 ![Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)](img/diagram_closed_loop.png)
 
 ### C.5 Kontrol PID
-PID (Proportional-Integral-Derivative) menyempurnakan kontrol P dengan menambahkan dua komponen lain:
-- **Integral (I):** mengakumulasikan error dari waktu ke waktu, menghilangkan steady-state error yang tersisa pada kontrol P
-- **Derivative (D):** merespons **laju perubahan** error, membantu meredam overshoot dan mempercepat kestabilan
+PID menyempurnakan kontrol P dengan menambah dua "asisten" koreksi lain:
+- **Integral (I):** menjumlahkan error dari waktu ke waktu — semakin lama error tersisa, semakin besar dorongan tambahan ini, sampai akhirnya menghabiskan sisa steady-state error yang tidak bisa diatasi kontrol P sendirian
+- **Derivative (D):** melihat seberapa cepat error berubah — membantu "mengerem" sebelum motor melewati target (mengurangi *overshoot*) dan membuat sistem lebih cepat stabil
 
-Dalam bentuk diskret (sesuai untuk implementasi pada mikrokontroler dengan periode sampling tetap):
+Ketiganya dijumlahkan jadi satu sinyal kontrol (bentuk diskret, cocok untuk mikrokontroler dengan interval sampling tetap):
 
 ```
-u[n] = Kp·e[n] + Ki·Σ(e[n]·ΔT) + Kd·((e[n]-e[n-1])/ΔT)
+output = Kp·error + Ki·(jumlah error dari waktu ke waktu) + Kd·(kecepatan perubahan error)
 ```
 
-Beberapa pertimbangan praktis dalam implementasi PID pada sistem nyata:
-- **Integral windup:** akumulasi error pada komponen integral perlu dibatasi (*clamping*) agar tidak membesar tanpa batas saat sistem tidak dapat mengejar setpoint dalam waktu lama
-- **PWM minimum:** motor DC seringkali membutuhkan PWM minimum tertentu agar benar-benar mulai berputar (mengatasi gesekan/deadzone) — output PID yang terlalu kecil namun bukan nol perlu dinaikkan ke ambang minimum ini
-- **Tuning:** nilai Kp, Ki, Kd yang tepat umumnya dicari melalui trial-and-error terarah (amati respons, sesuaikan satu parameter setiap kali), atau metode yang lebih sistematis seperti **Ziegler-Nichols**
+Tiga hal praktis yang perlu diperhatikan saat menerapkan PID di dunia nyata:
+- **Integral windup:** bagian Integral bisa "menumpuk" jadi sangat besar kalau target sulit dicapai dalam waktu lama — nilainya perlu dibatasi (di-*clamp*) supaya tidak kebablasan
+- **PWM minimum:** motor DC sering butuh tenaga minimum tertentu untuk mulai bergerak (melawan gesekan) — kalau output PID kecil tapi bukan nol, nilainya perlu dinaikkan ke ambang minimum ini
+- **Tuning:** mencari angka Kp, Ki, Kd yang pas biasanya lewat coba-coba terarah — ubah satu angka, amati responsnya, ulangi (ada juga metode lebih sistematis seperti **Ziegler-Nichols**, di luar cakupan modul ini)
 
 ![Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning](img/diagram_blok_pid.png)
 
@@ -152,7 +171,7 @@ Beberapa pertimbangan praktis dalam implementasi PID pada sistem nyata:
    - Pada panel yang terbuka: pilih **port** serial ESP32 dan **baud rate** (115200, sesuai `Serial.begin()` pada kode), lalu klik **Start**
    - Ekstensi ini membaca format baris `>nama_variabel:nilai,nama_variabel2:nilai2` — persis format yang digunakan pada seluruh contoh kode `Serial.print()` di modul ini
    - **Penting:** port serial hanya dapat diakses satu proses dalam satu waktu — klik **Stop** pada Serial Plotter sebelum melakukan Upload program baru, agar proses upload tidak gagal karena port sedang terpakai
-3. Pastikan rangkaian motor DC + driver (Modul 2) dan encoder quadrature (Modul 4 Percobaan 2) sudah tergabung dalam satu rangkaian — motor dan encoder berasal dari modul fisik yang sama
+3. Pastikan rangkaian motor DC + driver (Modul 2), encoder quadrature (Modul 4 Percobaan 2), dan modul MPU6500 mode I2C (Modul 3) masing-masing sudah berfungsi normal — motor dan encoder berasal dari modul fisik yang sama
 4. Buat project baru untuk Modul 5:
    - Name: `modul5-filtering-pid`
    - Board: **"Espressif ESP32 Dev Module"**
@@ -166,28 +185,24 @@ Beberapa pertimbangan praktis dalam implementasi PID pada sistem nyata:
    ```
 6. Tidak ada library eksternal tambahan yang dibutuhkan — seluruh fitur (interrupt, LEDC PWM) sudah tersedia dalam Arduino-ESP32 core, tidak perlu menambahkan baris `lib_deps` apa pun pada `platformio.ini`
 7. **Alur kerja tiap Percobaan:** seluruh Percobaan pada modul ini (1–5) menggunakan **satu project PlatformIO yang sama** dari langkah 4–5 di atas. Setiap kode program pada modul ini bersifat **lengkap dan berdiri sendiri (self-contained)** — untuk berpindah ke Percobaan berikutnya, cukup **hapus seluruh isi** `src/main.cpp` dan **ganti dengan kode program Percobaan yang bersangkutan**, lalu **Build & Upload** ulang. Tidak perlu menggabungkan potongan kode dari beberapa Percobaan secara manual.
-8. Sebelum upload, pastikan nilai `PULSES_PER_REV` pada tiap kode program sudah disesuaikan dengan hasil kalibrasi Anda sendiri pada Percobaan 1 (bukan nilai `2124.0` pada contoh, kecuali kalibrasi Anda kebetulan menghasilkan nilai yang sama)
 
 ---
 
 ## E. Kegiatan Praktikum
 
-### PERCOBAAN 1 — Dari Pulsa ke RPM (Konversi & Kalibrasi)
+### PERCOBAAN 1 — Filtering Alpha pada MPU6500 (Akselerometer)
 
 **Tujuan:**
-Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2) menjadi nilai RPM, serta melakukan kalibrasi `CPR_TOTAL` secara langsung pada motor yang digunakan.
+Mahasiswa mampu mengidentifikasi noise pada sinyal sensor mentah dan menerapkan low-pass filter alpha untuk menghaluskannya, sebagai pengantar konsep filtering sebelum diterapkan pada sinyal RPM yang lebih kompleks di Percobaan 2.
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder — Channel A | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) — sama seperti Modul 4 Percobaan 2 |
-| Encoder — Channel B | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah |
-| Encoder — VCC / GND | 3.3V–5V (sesuai modul) / GND | Kabel VCC/GND encoder pada modul motor+encoder |
-
-> Kabel daya motor **tidak digunakan** pada Percobaan 1–3 — motor diputar dengan tangan.
-
-![Gambar 6: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
+| MPU6500 — SDA | GPIO 21 | Mode I2C |
+| MPU6500 — SCL | GPIO 22 | Mode I2C |
+| MPU6500 — CS/NCS | 3.3V (ditarik tetap) | Wajib, agar modul beroperasi dalam mode I2C |
+| MPU6500 — VCC/GND | 3.3V, GND | — |
 
 **`platformio.ini`:**
 ```ini
@@ -198,107 +213,107 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Gunakan kembali kode decoding quadrature dari Modul 4 Percobaan 2 sebagai basis
-2. **Kalibrasi:** beri tanda fisik pada poros output motor (mis. spidol atau selotip kecil) sebagai penanda titik awal. Upload program tanpa perhitungan RPM terlebih dahulu (cukup tampilkan `encoderCount` mentah). Putar poros output **tepat 10 putaran penuh** searah yang sama (hitung manual sambil memutar, kembali ke tanda yang sama = 1 putaran), lalu catat nilai `encoderCount` akhir yang tertampil di Serial Monitor
-3. Hitung `CPR_TOTAL = encoderCount_akhir ÷ 10`, lalu isi nilai ini ke `PULSES_PER_REV` pada kode program — **gunakan nilai hasil kalibrasi motor Anda sendiri**, bukan nilai contoh `2124.0` pada kode, kecuali kebetulan hasilnya sama. Nilai ini akan dipakai ulang pada seluruh Percobaan 2–5, jadi pastikan sudah benar sebelum lanjut
-4. Tambahkan perhitungan RPM ke program encoder menggunakan rumus pada Dasar Teori C.1 (lihat kode program lengkap di bawah — bagian kalibrasi pada poin 2 hanya perlu `encoderCount` mentah, tanpa rumus RPM)
-5. Upload ulang program lengkap (dengan `PULSES_PER_REV` hasil kalibrasi), lalu putar motor menggunakan sumber daya terpisah (atau motor dari Modul 2). Nilai RPM pada Serial Monitor harus **berubah real-time** mengikuti kecepatan putar (naik saat dipercepat, turun mendekati 0 saat diperlambat/berhenti). Jika nilai RPM tetap 0 terus meskipun motor diputar, periksa apakah Channel A/B tertukar pin atau `PULSES_PER_REV` belum terisi hasil kalibrasi
-6. Putar motor dua kali pada kecepatan yang kira-kira sama (mis. putar tangan dengan usaha serupa) — nilai RPM yang tertampil pada kedua percobaan seharusnya **konsisten** (selisih wajar, tidak melompat drastis). Jika nilai RPM jauh di luar perkiraan wajar motor Anda, ulangi kalibrasi pada poin 2–3
+1. Rangkai MPU6500 mode I2C sesuai skema
+2. Upload kode di bawah, amati akselerometer mentah di **Serial Plotter**
+3. Ketuk meja pelan atau goyangkan sensor — amati `Accel_Mentah` naik-turun tajam (noise)
+4. Implementasikan low-pass filter alpha, tampilkan `Accel_Mentah` dan `Accel_Alpha` bersamaan
+5. Uji α = 0.3, lalu 0.7, lalu 0.9 — Build & Upload ulang tiap nilai. Analisis trade-off: α besar lebih halus tapi lebih telat merespons
 
-**Kode Program (Encoder + Konversi RPM):**
+**Kode Program (MPU6500 + Low-Pass Filter Alpha):**
 ```cpp
 #include <Arduino.h>
+#include <Wire.h>
 
-#define ENCODER_A_PIN 32
-#define ENCODER_B_PIN 33
+#define MPU6500_ADDR 0x68
+#define PWR_MGMT_1   0x6B
+#define ACCEL_XOUT_H 0x3B
 
-// Hasil kalibrasi: total pulsa / jumlah putaran penuh poros output
-// Contoh pada motor referensi: 2124 (SESUAIKAN dengan hasil kalibrasi motor Anda)
-const float PULSES_PER_REV = 2124.0;
+#define FILTER_ALPHA 0.7 // sesuaikan: makin besar = makin halus, makin lambat merespons
 
-volatile int32_t encoderCount = 0;
-portMUX_TYPE encoderMux = portMUX_INITIALIZER_UNLOCKED;
+float rawAccel = 0.0;
+float filteredAccel = 0.0;
 
-int32_t previousCount = 0;
-unsigned long previousMillis = 0;
-const unsigned long SAMPLE_INTERVAL_MS = 100;
-
-void IRAM_ATTR encoderA_ISR()
+void writeRegister(uint8_t reg, uint8_t value)
 {
-    bool channelB = digitalRead(ENCODER_B_PIN);
+    Wire.beginTransmission(MPU6500_ADDR);
+    Wire.write(reg);
+    Wire.write(value);
+    Wire.endTransmission();
+}
 
-    portENTER_CRITICAL_ISR(&encoderMux);
-    if (channelB == HIGH)
-    {
-        encoderCount++;
-    }
-    else
-    {
-        encoderCount--;
-    }
-    portEXIT_CRITICAL_ISR(&encoderMux);
+int16_t read16(uint8_t reg)
+{
+    Wire.beginTransmission(MPU6500_ADDR);
+    Wire.write(reg);
+    Wire.endTransmission(false); // repeated start, bus tetap dikuasai
+
+    Wire.requestFrom(MPU6500_ADDR, 2);
+
+    uint8_t high = Wire.read();
+    uint8_t low  = Wire.read();
+
+    return (high << 8) | low;
 }
 
 void setup()
 {
     Serial.begin(115200);
+    Wire.begin(21, 22); // SDA, SCL
 
-    pinMode(ENCODER_A_PIN, INPUT_PULLUP);
-    pinMode(ENCODER_B_PIN, INPUT_PULLUP);
-
-    attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), encoderA_ISR, RISING);
+    writeRegister(PWR_MGMT_1, 0x00); // bangunkan dari sleep mode
+    delay(100);
 }
 
 void loop()
 {
-    unsigned long currentMillis = millis();
+    int16_t az = read16(ACCEL_XOUT_H + 4); // sumbu Z
 
-    if (currentMillis - previousMillis >= SAMPLE_INTERVAL_MS)
-    {
-        float deltaTime = (currentMillis - previousMillis) / 1000.0;
-        previousMillis = currentMillis;
+    // Sensitivitas default +-2g -> 16384 LSB/g
+    rawAccel = az / 16384.0;
 
-        int32_t currentCount;
-        portENTER_CRITICAL(&encoderMux);
-        currentCount = encoderCount;
-        portEXIT_CRITICAL(&encoderMux);
+    // Low-pass filter alpha
+    filteredAccel = FILTER_ALPHA * filteredAccel + (1.0 - FILTER_ALPHA) * rawAccel;
 
-        int32_t deltaCount = currentCount - previousCount;
-        previousCount = currentCount;
+    Serial.print(">");
+    Serial.print("Accel_Mentah:");
+    Serial.print(rawAccel, 3);
+    Serial.print(",Accel_Alpha:");
+    Serial.print(filteredAccel, 3);
+    Serial.println();
 
-        // RPM = (Delta Pulsa / Delta Waktu) x (60 / CPR_TOTAL)
-        float rpm = (deltaCount / deltaTime) * (60.0 / PULSES_PER_REV);
-
-        Serial.printf("RPM: %.2f\n", rpm);
-    }
+    delay(50);
 }
 ```
 
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `PULSES_PER_REV` | Hasil kalibrasi manual (total pulsa ÷ jumlah putaran) — nilainya spesifik untuk tiap motor, tidak boleh disamakan begitu saja antar motor berbeda |
-| `deltaTime = (currentMillis - previousMillis) / 1000.0` | Interval waktu sampling dikonversi ke detik, agar hasil RPM sesuai satuan (menit) |
-| `rpm = (deltaCount / deltaTime) * (60.0 / PULSES_PER_REV)` | Implementasi langsung rumus RPM pada Dasar Teori C.1 |
+| `writeRegister()` / `read16()` | Fungsi baca/tulis register MPU6500 via I2C |
+| `az / 16384.0` | Konversi nilai mentah 16-bit ke satuan g, sesuai sensitivitas default ±2g |
+| `filteredAccel = FILTER_ALPHA * filteredAccel + (1.0 - FILTER_ALPHA) * rawAccel` | Implementasi rumus low-pass filter alpha pada Dasar Teori C.2 — persis sama dengan yang dipakai untuk RPM di Percobaan 2 |
+| `delay(50)` | Sampling lebih cepat dibanding percobaan RPM (100ms) karena sinyal akselerometer berubah lebih cepat |
 
 ---
 
-### PERCOBAAN 2 — Filtering Sederhana dengan Alpha (Low-Pass Filter)
+### PERCOBAAN 2 — Dari Pulsa ke RPM dengan Filtering Alpha
 
 **Tujuan:**
-Mahasiswa mampu mengidentifikasi noise pada sinyal RPM mentah dan menerapkan low-pass filter alpha untuk menghaluskannya.
-
-> **Catatan:** Percobaan ini tidak mengubah cara Anda memutar motor — motor tetap diputar tangan/sumber daya terpisah seperti Percobaan 1. Fokusnya murni pada **membandingkan bentuk grafik** RPM mentah vs RPM terfilter di Serial Plotter, bukan mengejar nilai RPM tertentu.
-
-![Gambar 7: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
+Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2) menjadi nilai RPM menggunakan konstanta estimasi dari spesifikasi motor, serta menerapkan low-pass filter alpha untuk menghaluskan sinyal RPM.
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder — Channel A | GPIO 32 | Sama seperti Percobaan 1 |
-| Encoder — Channel B | GPIO 33 | Sama seperti Percobaan 1 |
-| Encoder — VCC / GND | 3.3V–5V / GND | Sama seperti Percobaan 1 |
+| Encoder — Channel A (C1, kabel Kuning) | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) — sama seperti Modul 4 Percobaan 2 |
+| Encoder — Channel B (C2, kabel Hijau) | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah |
+| Encoder — VCC (kabel Biru) | 3.3V–5V | — |
+| Encoder — GND (kabel Hitam) | GND | — |
+
+> Kabel daya motor (M1 Merah / M2 Putih) **tidak digunakan** pada percobaan ini — motor diputar dengan tangan.
+
+![Gambar 6: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
+
+![Gambar 7: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
 
 **`platformio.ini`:**
 ```ini
@@ -309,9 +324,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Upload kode program di bawah (encoder + konversi RPM dari Percobaan 1, ditambah filter alpha), lalu amati nilai RPM pada **Serial Plotter** (bukan hanya Serial Monitor) untuk melihat fluktuasi secara visual — sinyal RPM mentah akan tampak bergerigi/naik-turun tajam antar sampel
-2. Implementasikan low-pass filter alpha pada nilai RPM, tampilkan `RPM_Mentah` dan `RPM_Alpha` **secara bersamaan** di Serial Plotter (lihat contoh tampilan yang diharapkan pada Gambar 7) — garis `RPM_Alpha` seharusnya tampak jauh lebih halus, mengikuti tren `RPM_Mentah` dengan sedikit keterlambatan
-3. Uji nilai α = 0.3, lalu α = 0.7, lalu α = 0.9 — ubah `#define FILTER_ALPHA` ke tiap nilai tersebut lalu **Build & Upload ulang** untuk masing-masing. Catat kesan visual tiap nilai: semakin besar α, garis `RPM_Alpha` semakin halus **namun** semakin telat mengikuti perubahan `RPM_Mentah` — trade-off inilah yang perlu Anda jelaskan pada laporan (kapan α besar lebih menguntungkan, dan kapan α kecil lebih menguntungkan)
+1. Gunakan kode decoding quadrature dari Modul 4 Percobaan 2 sebagai basis
+2. Tambahkan rumus RPM dari Dasar Teori C.1, pakai `PULSES_PER_REV = 102.0` (lihat kode di bawah)
+3. Upload, putar poros dengan tangan — amati RPM berubah langsung. Kalau tetap 0, cek Channel A/B tertukar pin
+4. Amati RPM mentah di **Serial Plotter** — lebih bergerigi dibanding akselerometer di Percobaan 1
+5. Implementasikan filter alpha yang sama seperti Percobaan 1, tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 7)
+6. Uji α = 0.3, lalu 0.7, lalu 0.9 — Build & Upload ulang tiap nilai. Analisis kapan α besar/kecil lebih menguntungkan
 
 **Kode Program (Encoder + RPM + Low-Pass Filter Alpha — Program Lengkap):**
 ```cpp
@@ -320,8 +338,9 @@ framework = arduino
 #define ENCODER_A_PIN 32
 #define ENCODER_B_PIN 33
 
-// Hasil kalibrasi Percobaan 1 — SESUAIKAN dengan motor Anda
-const float PULSES_PER_REV = 2124.0;
+// Estimasi dari spesifikasi motor JGA25-370 1000RPM (11 PPR x rasio gearbox ~9.28)
+// Bukan hasil kalibrasi manual, sehingga bisa meleset dari motor sungguhan Anda
+const float PULSES_PER_REV = 102.0;
 
 #define FILTER_ALPHA 0.7 // sesuaikan: makin besar = makin halus, makin lambat merespons
 
@@ -378,10 +397,10 @@ void loop()
         int32_t deltaCount = currentCount - previousCount;
         previousCount = currentCount;
 
-        // Percobaan 1: konversi pulsa -> RPM
+        // Konversi pulsa -> RPM
         rawRPM = (deltaCount / deltaTime) * (60.0 / PULSES_PER_REV);
 
-        // Percobaan 2: filtering alpha
+        // Filtering alpha
         filteredRPM = FILTER_ALPHA * filteredRPM + (1.0 - FILTER_ALPHA) * rawRPM;
 
         // Format khusus agar terbaca oleh ESP32 Serial Plotter (Serial Monitor -> Plotter)
@@ -399,9 +418,10 @@ void loop()
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `filteredRPM = FILTER_ALPHA * filteredRPM + (1.0 - FILTER_ALPHA) * rawRPM` | Implementasi langsung persamaan low-pass filter alpha pada Dasar Teori C.2 |
-| `Serial.print(">")` ... format `Nama:nilai,` | Format khusus yang dikenali ESP32 Serial Plotter pada VSCode/Arduino IDE untuk menampilkan beberapa variabel dalam satu grafik sekaligus |
-| Nilai `FILTER_ALPHA` diuji bertahap | Menunjukkan trade-off mendasar: semakin agresif filtering (semakin halus), semakin besar pula keterlambatan (lag) terhadap perubahan nyata |
+| `PULSES_PER_REV` | Estimasi dari spesifikasi motor (11 pulsa/putaran motor × rasio gearbox ~9.28) — bukan hasil kalibrasi manual, jadi bisa berbeda dari motor sungguhan Anda |
+| `deltaTime = (currentMillis - previousMillis) / 1000.0` | Interval waktu sampling dikonversi ke detik, agar hasil RPM sesuai satuan (menit) |
+| `rawRPM = (deltaCount / deltaTime) * (60.0 / PULSES_PER_REV)` | Implementasi langsung rumus RPM pada Dasar Teori C.1 |
+| `filteredRPM = FILTER_ALPHA * filteredRPM + (1.0 - FILTER_ALPHA) * rawRPM` | Implementasi rumus low-pass filter alpha yang sama seperti Percobaan 1, kali ini pada sinyal RPM |
 
 ---
 
@@ -418,9 +438,9 @@ Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif 
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder — Channel A | GPIO 32 | Sama seperti Percobaan 1 |
-| Encoder — Channel B | GPIO 33 | Sama seperti Percobaan 1 |
-| Encoder — VCC / GND | 3.3V–5V / GND | Sama seperti Percobaan 1 |
+| Encoder — Channel A | GPIO 32 | `INPUT_PULLUP`, trigger `RISING` |
+| Encoder — Channel B | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR |
+| Encoder — VCC / GND | 3.3V–5V / GND | — |
 
 **`platformio.ini`:**
 ```ini
@@ -431,11 +451,11 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Upload kode program di bawah — sudah mencakup encoder + konversi RPM (Percobaan 1) dan filter alpha (Percobaan 2) sebagai pembanding, ditambah Kalman filter yang baru
-2. Perhatikan implementasi kelas `KalmanFilter` sederhana pada kode di bawah
-3. Terapkan Kalman filter pada sinyal RPM mentah, tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` **secara bersamaan** pada Serial Plotter (lihat contoh tampilan yang diharapkan pada Gambar 8) — pastikan ketiga garis tampil dalam satu grafik yang sama
-4. Uji dua kombinasi Q/R: pertama dengan nilai default pada kode (Q = 0.001, R = 0.1), lalu ubah menjadi Q = 0.1, R = 5 dan **Build & Upload ulang** — amati perubahan bentuk garis `RPM_Kalman` pada kedua kombinasi
-5. Bandingkan secara visual pada kondisi RPM yang sama: garis `RPM_Kalman` seharusnya terlihat **lebih halus namun tetap lebih cepat mengikuti perubahan** dibanding `RPM_Alpha` — inilah ciri khas Kalman filter yang membedakannya dari filter alpha, tuliskan pengamatan ini pada laporan
+1. Upload kode di bawah — sudah mencakup RPM + filter alpha sebagai pembanding, ditambah Kalman filter baru
+2. Perhatikan implementasi kelas `KalmanFilter` pada kode
+3. Tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` bersamaan di Serial Plotter (lihat Gambar 8)
+4. Uji Q/R default (0.001, 0.1), lalu ubah ke Q=0.1, R=5 — amati perubahan bentuk garis `RPM_Kalman`
+5. Bandingkan visual: `RPM_Kalman` harus lebih halus namun lebih cepat merespons dibanding `RPM_Alpha` — tuliskan pengamatan ini
 
 **Kode Program (Encoder + RPM + Filter Alpha + Kalman Filter — Program Lengkap):**
 ```cpp
@@ -444,10 +464,10 @@ framework = arduino
 #define ENCODER_A_PIN 32
 #define ENCODER_B_PIN 33
 
-// Hasil kalibrasi Percobaan 1 — SESUAIKAN dengan motor Anda
-const float PULSES_PER_REV = 2124.0;
+// Estimasi dari spesifikasi motor JGA25-370 1000RPM — bukan hasil kalibrasi manual
+const float PULSES_PER_REV = 102.0;
 
-#define FILTER_ALPHA 0.7 // filter alpha (Percobaan 2), sebagai pembanding
+#define FILTER_ALPHA 0.7 // filter alpha, sebagai pembanding
 
 volatile int32_t encoderCount = 0;
 portMUX_TYPE encoderMux = portMUX_INITIALIZER_UNLOCKED;
@@ -529,13 +549,13 @@ void loop()
         int32_t deltaCount = currentCount - previousCount;
         previousCount = currentCount;
 
-        // Percobaan 1: konversi pulsa -> RPM
+        // Konversi pulsa -> RPM
         rawRPM = (deltaCount / deltaTime) * (60.0 / PULSES_PER_REV);
 
-        // Percobaan 2: filtering alpha (pembanding)
+        // Filtering alpha (pembanding)
         filteredRPM = FILTER_ALPHA * filteredRPM + (1.0 - FILTER_ALPHA) * rawRPM;
 
-        // Percobaan 3: filtering Kalman
+        // Filtering Kalman
         kalmanRPM = rpmKalman.update(rawRPM);
 
         Serial.print(">");
@@ -569,9 +589,9 @@ Bandingkan jumlah parameter yang perlu di-tuning (filter alpha: 1 parameter vs K
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kontrol Proportional (P) untuk mengatur kecepatan motor DC menuju target RPM.
 
-> **Catatan:** Percobaan ini adalah yang pertama di modul ini di mana motor dikendalikan oleh program (closed-loop) — bukan diputar tangan lagi seperti Percobaan 1–3.
+> **Catatan:** Percobaan ini adalah yang pertama di modul ini di mana motor dikendalikan oleh program (closed-loop) — bukan diputar tangan lagi seperti percobaan-percobaan sebelumnya.
 
-![Gambar 9: Wiring diagram gabungan encoder + driver motor (L298N/L293D) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
+![Gambar 9: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
 
 ![Gambar 10: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)](img/plot_onoff_vs_p_contoh.png)
 
@@ -579,13 +599,15 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder — Channel A / B | GPIO 32 / GPIO 33 | Sama seperti Percobaan 1–3 |
+| Encoder — Channel A / B | GPIO 32 / GPIO 33 | `INPUT_PULLUP`, decoding quadrature |
 | Driver motor — ENA | GPIO 25 | Sinyal PWM kecepatan (channel LEDC) |
 | Driver motor — IN1 | GPIO 26 | Arah putar motor |
 | Driver motor — IN2 | GPIO 27 | Arah putar motor |
-| Motor DC — daya | Catu daya eksternal via driver (L298N/L293D) | **Jangan** ambil dari 5V USB langsung |
+| Motor DC — M1 (Merah, +) | Driver OUT1 | Menukar M1/M2 membalik arah putar default motor |
+| Motor DC — M2 (Putih, −) | Driver OUT2 | — |
+| Motor DC — daya | Catu daya eksternal via driver (L298N) | **Jangan** ambil dari 5V USB langsung |
 
-> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 9 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha (Percobaan 2) sebagai sumber RPM terfilter.
+> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 9 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha sebagai sumber RPM terfilter.
 
 **`platformio.ini`:**
 ```ini
@@ -596,12 +618,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor DC + driver + encoder dalam satu rangkaian sesuai Gambar 9, gunakan catu daya eksternal untuk motor (bukan 5V dari USB langsung)
-2. Tentukan target RPM tetap sebesar 100 RPM langsung di kode program (jika kecepatan maksimum motor Anda jauh di bawah 100 RPM, gunakan 70% dari RPM maksimum motor sebagai target, dan catat nilai ini pada laporan)
-3. Implementasikan kontrol **on-off**: motor diberi PWM maksimum (255) jika RPM terfilter di bawah target, dan dimatikan (0) jika sudah mencapai/melebihi target. Pada Serial Plotter, grafik RPM akan **berosilasi naik-turun di sekitar target** (mis. target 100, RPM aktual bergantian sedikit di atas dan di bawah 100 terus-menerus, tidak pernah benar-benar diam) — motor juga akan terasa bergetar/berisik karena PWM berpindah antara 0 dan 255 terus-menerus, ini **perilaku yang diharapkan**, bukan kesalahan (bandingkan dengan Gambar 10)
-4. Implementasikan kontrol **Proportional (P)**: `outputPWM = Kp × error`, gunakan `Kp = 3.0` sebagai nilai awal (sesuai kode di bawah). Grafik RPM seharusnya jauh lebih stabil dibanding mode on-off, **tetapi** RPM aktual akan berhenti sedikit di bawah target dan tidak pernah benar-benar mencapainya persis (steady-state error) — ini juga **bukan bug**, memang karakteristik kontrol P
-5. Bandingkan kedua pendekatan pada Serial Plotter: RPM target, RPM terfilter, dan PWM yang diberikan — ambil screenshot kedua mode untuk laporan (bandingkan dengan Gambar 10), dan hitung kasar besar steady-state error mode P (target dikurangi RPM rata-rata saat stabil)
-6. Jika motor **tidak bergerak sama sekali** pada kedua mode, periksa kembali wiring driver motor (Gambar 9) dan pastikan `IN1`/`IN2` sudah diatur benar sebelum `ledcWrite()` dipanggil
+1. Rangkai motor DC + driver + encoder sesuai Gambar 9, pakai catu daya eksternal untuk motor (bukan 5V USB)
+2. Tentukan target RPM = 100 di kode
+3. Coba mode **on-off** dulu — amati Serial Plotter: RPM naik-turun terus di sekitar target dan motor bergetar, ini **normal** untuk mode on-off (bandingkan Gambar 10)
+4. Ganti ke mode **Proportional** (`Kp = 3.0`) — RPM lebih stabil, tapi berhenti sedikit di bawah target (disebut *steady-state error*), ini juga normal untuk kontrol P
+5. Screenshot Serial Plotter kedua mode, lalu hitung kasar *steady-state error* mode P (target dikurangi RPM rata-rata saat stabil)
+6. Kalau motor tidak bergerak sama sekali, cek wiring driver (Gambar 9) dan urutan `IN1`/`IN2` sebelum `ledcWrite()` dipanggil
 
 **Kode Program (Encoder + Filter + Kontrol On-Off/Proportional — Program Lengkap):**
 ```cpp
@@ -611,8 +633,8 @@ framework = arduino
 #define ENCODER_A_PIN 32
 #define ENCODER_B_PIN 33
 
-// Hasil kalibrasi Percobaan 1 — SESUAIKAN dengan motor Anda
-const float PULSES_PER_REV = 2124.0;
+// Estimasi dari spesifikasi motor JGA25-370 1000RPM — bukan hasil kalibrasi manual
+const float PULSES_PER_REV = 102.0;
 
 volatile int32_t encoderCount = 0;
 portMUX_TYPE encoderMux = portMUX_INITIALIZER_UNLOCKED;
@@ -623,7 +645,7 @@ const unsigned long SAMPLE_INTERVAL_MS = 100;
 
 float rawRPM = 0.0;
 float filteredRPM = 0.0;
-#define FILTER_ALPHA 0.7 // filter alpha dari Percobaan 2
+#define FILTER_ALPHA 0.7 // filter alpha
 
 // ==================== DRIVER MOTOR (Modul 2) ====================
 #define ENA 25
@@ -719,13 +741,13 @@ void loop()
         int32_t deltaCount = currentCount - previousCount;
         previousCount = currentCount;
 
-        // Percobaan 1: konversi pulsa -> RPM
+        // Konversi pulsa -> RPM
         rawRPM = (deltaCount / deltaTime) * (60.0 / PULSES_PER_REV);
 
-        // Percobaan 2: filtering alpha
+        // Filtering alpha
         filteredRPM = FILTER_ALPHA * filteredRPM + (1.0 - FILTER_ALPHA) * rawRPM;
 
-        // Percobaan 4: kontrol on-off / proportional
+        // Kontrol on-off / proportional
         applyControl(filteredRPM);
     }
 }
@@ -746,7 +768,7 @@ void loop()
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan motor DC menuju target RPM yang dapat diubah secara interaktif, serta melakukan tuning parameter Kp, Ki, dan Kd.
 
-> **Catatan:** Percobaan ini adalah puncak/akhir dari seluruh modul — menggabungkan encoder, filtering, dan kontrol dari Percobaan 1–4 menjadi satu sistem PID lengkap.
+> **Catatan:** Percobaan ini adalah puncak/akhir dari seluruh modul — menggabungkan encoder, filtering, dan kontrol dari percobaan-percobaan sebelumnya menjadi satu sistem PID lengkap.
 
 ![Gambar 11: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32](img/wiring_pid_lengkap.png)
 
@@ -756,8 +778,8 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder — Channel A / B | GPIO 32 / GPIO 33 | Sama seperti Percobaan 1–3 |
-| Driver motor — ENA / IN1 / IN2 | GPIO 25 / GPIO 26 / GPIO 27 | Sama seperti Percobaan 4 |
+| Encoder — Channel A / B | GPIO 32 / GPIO 33 | `INPUT_PULLUP`, decoding quadrature |
+| Driver motor — ENA / IN1 / IN2 | GPIO 25 / GPIO 26 / GPIO 27 | Sinyal PWM & arah putar motor |
 | Tombol Naik Target RPM | GPIO 14 | `INPUT_PULLUP` |
 | Tombol Turun Target RPM | GPIO 16 | `INPUT_PULLUP` |
 
@@ -772,16 +794,15 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai skema/Gambar 11 di atas
-2. Gabungkan encoder (Percobaan 1), filtering alpha (Percobaan 2), dan kontrol motor (Percobaan 4) menjadi satu program PID lengkap sesuai kode di bawah — kode ini sudah lengkap dan siap upload langsung
-3. Jalankan program dengan nilai awal Kp, Ki, Kd yang disediakan pada kode. Tekan tombol naik untuk memberi target RPM (mis. tekan beberapa kali hingga target ≈ 100) — target harus **berubah langsung saat program berjalan**, tanpa perlu upload ulang, dan motor menyesuaikan kecepatannya secara otomatis mengejar target baru. Amati respons pada Serial Plotter (Target, RPM terfilter, PWM); dengan nilai Kp/Ki/Kd contoh ini responsnya biasanya belum optimal (mungkin lambat/berosilasi/overshoot) — catat/screenshot grafik ini sebagai kondisi **"sebelum tuning"**
-4. **Tuning** — ubah parameter satu per satu, **jangan ubah ketiganya sekaligus** agar Anda tahu parameter mana yang menyebabkan perubahan perilaku:
-   - Naikkan **Kp** dulu sendirian (Ki=Kd=0) sampai respons cukup cepat tapi belum berosilasi liar
-   - Tambahkan **Ki** sedikit demi sedikit sampai RPM aktual benar-benar mencapai target tanpa selisih tersisa (steady-state error hilang — inilah yang membedakan PID dari kontrol P pada Percobaan 4)
-   - Tambahkan **Kd** secukupnya jika masih ada overshoot berlebihan
-   - Catat/screenshot grafik hasil akhir sebagai kondisi **"setelah tuning"**: seharusnya lebih cepat mencapai target, overshoot terkendali, tidak berosilasi terus-menerus (bandingkan dengan Gambar 12)
-5. Amati efek `integral clamping` (`INTEGRAL_MIN`/`INTEGRAL_MAX`) dengan mengubah/menghapus batasnya — apa yang terjadi pada respons sistem saat target RPM diturunkan tiba-tiba ke 0?
-6. **Latihan tambahan:** ganti sumber `filteredRPM` pada program dari hasil filter alpha (Percobaan 2) menjadi hasil Kalman filter (Percobaan 3), amati apakah respons kontrol PID berubah
+1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai Gambar 11
+2. Upload kode di bawah
+3. Tekan tombol naik sampai target ≈ 100 RPM — motor otomatis mengejar
+4. Amati Serial Plotter — respons awal biasanya belum bagus. Screenshot sebagai **"sebelum tuning"**
+5. **Tuning** satu parameter per waktu:
+   - Naikkan **Kp** sampai respons cepat tapi belum berosilasi liar
+   - Tambah **Ki** sampai target tercapai (steady-state error hilang)
+   - Tambah **Kd** kalau masih overshoot
+   - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 12)
 
 **Kode Program (Kontrol PID Lengkap — Encoder, Filter, PID, Tombol Target):**
 ```cpp
@@ -792,8 +813,8 @@ framework = arduino
 constexpr uint8_t ENCODER_A_PIN = 32;
 constexpr uint8_t ENCODER_B_PIN = 33;
 
-// Hasil kalibrasi Percobaan 1 — SESUAIKAN dengan motor Anda
-constexpr float PULSES_PER_OUTPUT_REV = 2124.0f;
+// Estimasi dari spesifikasi motor JGA25-370 1000RPM — bukan hasil kalibrasi manual
+constexpr float PULSES_PER_OUTPUT_REV = 102.0f;
 
 volatile int32_t encoderCount = 0;
 portMUX_TYPE encoderMux = portMUX_INITIALIZER_UNLOCKED;
@@ -836,8 +857,8 @@ struct Button
 Button buttonUp = {BUTTON_UP_PIN, HIGH, HIGH, 0};
 Button buttonDown = {BUTTON_DOWN_PIN, HIGH, HIGH, 0};
 
-// ==================== FILTER (ALPHA — Percobaan 2) ====================
-constexpr float FILTER_ALPHA = 0.70f; // hasil Percobaan 2
+// ==================== FILTER (ALPHA) ====================
+constexpr float FILTER_ALPHA = 0.70f;
 
 float rawRPM = 0.0f;
 float filteredRPM = 0.0f;
@@ -996,13 +1017,13 @@ void loop()
         int32_t deltaCount = currentCount - previousCount;
         previousCount = currentCount;
 
-        // Percobaan 1: konversi pulsa -> RPM
+        // Konversi pulsa -> RPM
         rawRPM = fabsf((deltaCount * 60.0f) / (PULSES_PER_OUTPUT_REV * deltaTime));
 
-        // Percobaan 2: filtering alpha (dapat diganti Kalman filter dari Percobaan 3 — lihat Latihan Tambahan)
+        // Filtering alpha (dapat diganti Kalman filter — lihat Latihan Tambahan)
         filteredRPM = FILTER_ALPHA * filteredRPM + (1.0f - FILTER_ALPHA) * rawRPM;
 
-        // Percobaan 5: kontrol PID
+        // Kontrol PID
         updatePID(deltaTime);
 
         // Output untuk Serial Plotter
@@ -1026,26 +1047,13 @@ void loop()
 | `integralError = constrain(integralError, INTEGRAL_MIN, INTEGRAL_MAX)` | Mencegah *integral windup* — akumulasi error yang membesar tanpa batas saat sistem tidak dapat mengejar target dalam waktu lama |
 | `PWM_MIN_RUN` | Mengatasi *deadzone* motor — output PID kecil namun bukan nol dinaikkan ke ambang minimum agar motor benar-benar mulai berputar |
 | `buttonPressed()` dengan `struct Button` | Debouncing berbasis state machine (sama seperti Modul 1) untuk kedua tombol target RPM, mencegah satu kali tekan terhitung berkali-kali |
-| Alur `loop()` | Menggabungkan seluruh Percobaan 1–4 modul ini dalam satu siklus sampling: decoding encoder → konversi RPM → filtering → kontrol PID → tampilkan hasil |
+| Alur `loop()` | Menggabungkan seluruh tahapan modul ini dalam satu siklus sampling: decoding encoder → konversi RPM → filtering → kontrol PID → tampilkan hasil |
 
 ---
 
 ## F. Tugas Modul
 
-Motor DC + encoder quadrature JGB37-520 yang digunakan pada modul ini kemungkinan **tidak tersedia** sebagai part siap pakai di [Wokwi](https://wokwi.com), sehingga closed-loop nyata (motor fisik sebagai *plant*) tidak dapat direproduksi langsung. Sebagai gantinya, tugas berikut menggunakan pendekatan **simulasi software**: motor digantikan oleh model matematis sederhana (*plant* orde-1) yang dihitung di dalam kode itu sendiri — pendekatan umum yang dipakai untuk menguji algoritma kontrol sebelum diuji ke hardware asli. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
-
-> **Tips:** Ekstensi Wokwi untuk VSCode dapat meneruskan output Serial simulasi ke Serial Monitor/Serial Plotter VSCode yang sama seperti digunakan pada hardware asli (lihat Bagian D), sehingga visualisasi grafik tetap dapat dilakukan dengan cara yang sudah dikenal.
-
-**Tugas 1 — Filtering pada Sinyal Sintetis (Wokwi):**
-1. Buat project Wokwi baru dengan board **ESP32**, rangkai satu **potensiometer** sebagai baseline sinyal
-2. Pada kode, tambahkan **noise buatan** ke nilai potensiometer setiap sampling menggunakan `noisyValue = baseValue + random(-50, 50)`, mensimulasikan sinyal RPM mentah yang berisik seperti pada Percobaan 1
-3. Terapkan **filter alpha** (Percobaan 2) dan **Kalman filter** (Percobaan 3) pada sinyal sintetis yang sama, kirim ketiga nilai (mentah, alpha, Kalman) ke Serial Plotter secara bersamaan
-4. Bandingkan hasil kedua filter pada sinyal buatan ini dengan hasil pada Percobaan 1–3 (hardware asli) — apakah kesimpulan mengenai trade-off kehalusan vs lag tetap konsisten?
-
-**Tugas 2 — PID terhadap Plant Simulasi (Wokwi):**
-Ganti sumber RPM dengan **model plant orde-1 dalam kode**: `simulatedRPM += (pwmOutput - simulatedRPM) * dt / tau`, dengan `tau = 0.5` (konstanta waktu motor buatan, satuan detik), lalu jalankan kontroler PID (Percobaan 5) terhadap plant simulasi tersebut alih-alih motor fisik. Gunakan nilai awal Kp = 2.0, Ki = 0.8, Kd = 0.05 (sama seperti kode Percobaan 5) pada plant simulasi ini sebagai *starting point* sebelum tuning ulang pada motor fisik — diskusikan apakah parameter yang baik pada simulasi juga baik pada hardware asli, dan mengapa bisa berbeda (mismatch antara model sederhana dengan motor nyata).
-
-**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+*(Sementara dikosongkan — akan diisi ulang menyesuaikan struktur baru modul ini.)*
 
 ---
 
