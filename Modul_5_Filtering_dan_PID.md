@@ -788,7 +788,9 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 
 > **Catatan:** Percobaan ini adalah puncak/akhir dari seluruh modul — menggabungkan encoder, filtering, dan kontrol dari percobaan-percobaan sebelumnya menjadi satu sistem PID lengkap.
 
-![Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32](img/wiring_pid_lengkap.png)
+<img src="img/wiring_pid_lengkap.png" alt="Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32" width="60%">
+
+*Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32*
 
 <img src="img/plot_pid_sebelum_sesudah_tuning.png" alt="Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)" width="60%">
 
