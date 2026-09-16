@@ -823,6 +823,11 @@ framework = arduino
    - Tambah **Ki** sampai target tercapai (steady-state error hilang)
    - Tambah **Kd** kalau masih overshoot
    - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 13)
+6. Bandingkan bentuk respons yang Anda dapatkan di sepanjang proses tuning dengan jenis-jenis hasil umum pada Gambar 14 — analisis kombinasi Kp/Ki/Kd apa yang kira-kira menyebabkan tiap jenis respons tersebut
+
+<img src="img/jenis_respons_pid.png" alt="Gambar 14: Jenis-jenis hasil respons kontrol PID — overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup" width="90%">
+
+*Gambar 14: Jenis-jenis hasil respons kontrol PID — overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup*
 
 **Kode Program (Kontrol PID Lengkap — Encoder, Filter, PID, Tombol Target):**
 ```cpp

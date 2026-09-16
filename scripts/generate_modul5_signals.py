@@ -10,6 +10,7 @@ Usage:
 """
 
 import os
+import textwrap
 
 import matplotlib
 
@@ -225,6 +226,73 @@ def plot_pid_tuning():
     save(fig, "plot_pid_sebelum_sesudah_tuning.png")
 
 
+# ---------------------------------------------------------------------------
+# Gambar 14 (Percobaan 5): jenis-jenis hasil respons PID
+# ---------------------------------------------------------------------------
+def _settle_noise(n, std=1.0):
+    return rng.normal(0, std, n)
+
+
+def plot_pid_response_types():
+    t = np.arange(0, 260)
+    target = 100.0
+
+    # 1) Overdamped: naik lambat, tanpa overshoot sama sekali, telat mengejar target
+    overdamped = target * (1 - np.exp(-t / 110.0)) + _settle_noise(len(t), 1.0)
+
+    # 2) Underdamped: overshoot signifikan, lalu berosilasi teredam sampai stabil
+    underdamped = target * (1 - np.exp(-t / 18.0)) + 30 * np.exp(-t / 55.0) * np.cos(t / 14.0)
+    underdamped += _settle_noise(len(t), 1.2)
+
+    # 3) Kritis / ideal (well-tuned): cepat naik, overshoot kecil, cepat stabil
+    ideal = target * (1 - np.exp(-t / 16.0)) + 5 * np.exp(-t / 14.0) * np.cos(t / 8.0)
+    ideal += _settle_noise(len(t), 0.8)
+
+    # 4) Tidak stabil: osilasi yang membesar (Kp/Ki terlalu agresif)
+    unstable = target + 6 * np.exp(t / 140.0) * np.sin(t / 9.0)
+    unstable += _settle_noise(len(t), 1.0)
+    unstable = np.clip(unstable, 0, 220)  # batas realistis PWM/RPM
+
+    # 5) Steady-state error: hanya P (tanpa I), naik lalu berhenti di bawah target
+    p_only = target - 22 * np.exp(-t / 45.0) - 14  # -14 = steady-state error permanen
+    p_only += _settle_noise(len(t), 0.9)
+
+    # 6) Overshoot & undershoot berulang (integral windup): Ki terlalu besar
+    windup = target * (1 - np.exp(-t / 12.0)) + 40 * np.exp(-t / 90.0) * np.cos(t / 22.0)
+    windup += _settle_noise(len(t), 1.3)
+
+    panels = [
+        (overdamped, "1. Overdamped", "Kp terlalu kecil — respons lambat, tidak overshoot, telat mengejar target"),
+        (underdamped, "2. Underdamped", "Kp besar / Kd kurang — overshoot besar, berosilasi teredam sebelum stabil"),
+        (ideal, "3. Kritis / Well-Tuned", "Kp-Ki-Kd seimbang — respons cepat, overshoot kecil, cepat stabil (target tuning)"),
+        (unstable, "4. Tidak Stabil", "Kp/Ki terlalu agresif — osilasi makin membesar, tidak pernah stabil"),
+        (p_only, "5. Steady-State Error", "Hanya P tanpa I — mendekati target tapi berhenti di bawahnya secara permanen"),
+        (windup, "6. Integral Windup", "Ki terlalu besar — overshoot lalu undershoot berulang sebelum akhirnya stabil"),
+    ]
+
+    fig, axes = plt.subplots(2, 3, figsize=(14, 9.2), sharex=True)
+    for ax, (data, title, desc) in zip(axes.flat, panels):
+        ax.plot(t, data, color="#1f77b4", linewidth=1.4)
+        ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+        ax.set_title(title, fontsize=11, fontweight="bold")
+        ax.set_xlabel("waktu (sample)", fontsize=8.5)
+        wrapped = "\n".join(textwrap.wrap(desc, width=34))
+        ax.text(
+            0.5,
+            -0.42,
+            wrapped,
+            transform=ax.transAxes,
+            ha="center",
+            va="top",
+            fontsize=8,
+        )
+        ax.legend(fontsize=7.5, loc="lower right")
+
+    fig.suptitle("Jenis-Jenis Hasil Respons Kontrol PID", fontsize=14, y=0.99)
+    fig.subplots_adjust(hspace=1.05, wspace=0.3, top=0.93, bottom=0.07)
+    save(fig, "jenis_respons_pid.png")
+
+
 if __name__ == "__main__":
     plot_quadrature_encoder()
     plot_alpha_theory()
@@ -232,3 +300,4 @@ if __name__ == "__main__":
     plot_kalman_contoh()
     plot_onoff_vs_p()
     plot_pid_tuning()
+    plot_pid_response_types()
