@@ -504,6 +504,10 @@ Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal ste
 
 > **Catatan:** Skema ini menggunakan driver stepper 4-fasa (mis. ULN2003 untuk motor stepper 28BYJ-48), sesuai kode program yang mengatur `stepSequence` 4-bit secara langsung — berbeda dari driver STEP/DIR (A4988/DRV8825) yang dibahas pada **C.7 Motor Stepper**. Jika menggunakan driver STEP/DIR, sesuaikan fungsi `setStep()`/`stopMotor()` menjadi pulsa pada pin STEP dan level pada pin DIR.
 
+<img src="img/wiring_motor_stepper_percobaan4.png" alt="Gambar 12: Contoh wiring motor stepper 28BYJ-48 via driver ULN2003 dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="70%">
+
+*Gambar 12: Contoh wiring motor stepper 28BYJ-48 via driver ULN2003 dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]
@@ -669,9 +673,9 @@ Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan
 | Joystick KY-023 — SW | GPIO 27 | Toggle detach/attach servo, aktif LOW |
 | Servo motor (sinyal) | GPIO 13 | Sinyal PWM servo (50Hz) |
 
-<img src="img/wiring_servo_joystick.png" alt="Gambar 12: Contoh wiring motor servo dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_servo_joystick.png" alt="Gambar 13: Contoh wiring motor servo dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 12: Contoh wiring motor servo dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 13: Contoh wiring motor servo dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
@@ -758,9 +762,9 @@ Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, s
 | ESC — GND (sinyal) | GND | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
 | ESC — Power (input daya) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
 
-<img src="img/wiring_esc_bldc.png" alt="Gambar 13: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_esc_bldc.png" alt="Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 13: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
