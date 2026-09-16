@@ -234,6 +234,8 @@ Mahasiswa mampu mengimplementasikan interfacing lebih dari satu modul I2C nyata 
 
 > Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6500 = `0x68`). Perhatikan juga bahwa modul MPU6500 ini adalah **modul yang sama** yang nanti dipakai ulang pada Percobaan 3–4 melalui SPI — cukup pindahkan wiring CS dari "ditarik ke 3.3V" menjadi "terhubung ke GPIO CS ESP32" saat berpindah Percobaan.
 
+![Gambar 5: Wiring OLED SSD1306 dan MPU6500 berbagi bus I2C (SDA/SCL) yang sama pada ESP32](img/wiring_oled_mpu6500.png)
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]
@@ -594,6 +596,8 @@ Mahasiswa mampu mengimplementasikan komunikasi Ethernet menggunakan modul W5500 
 > - **Via switch/router (DHCP aktif):** colokkan W5500 dan PC ke switch/router yang sama. PC tetap dapat internet, cukup pilih `ip(...)` pada kode yang satu subnet dengan router dan belum dipakai perangkat lain.
 > - **Koneksi langsung (kabel RJ45 W5500 → port Ethernet laptop):** tidak ada DHCP, sehingga **IP statis wajib diatur manual di kedua sisi** (ESP32 lewat kode, PC lewat setelan Windows di bawah). Cara ini paling sederhana untuk praktikum karena tidak bergantung pada jaringan lab.
 
+![Gambar 6: Contoh wiring modul W5500 ke ESP32 via SPI (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)](img/wiring_w5500_percobaan5.png)
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]
@@ -618,7 +622,7 @@ Kode contoh memberi ESP32 alamat `192.168.1.177`. Atur PC pada subnet yang sama 
    - **DNS:** kosongkan
 5. Klik **Save**
 
-![Gambar 5: Tangkapan layar Settings Windows 11 — Network & internet → Ethernet → IP assignment diatur ke Manual, IPv4 aktif dengan IP address 192.168.1.10 dan subnet mask 255.255.255.0](img/win_static_ip_settings.png)
+![Gambar 7: Tangkapan layar Settings Windows 11 — Network & internet → Ethernet → IP assignment diatur ke Manual, IPv4 aktif dengan IP address 192.168.1.10 dan subnet mask 255.255.255.0](img/win_static_ip_settings.png)
 
 *Cara 2 — Control Panel (semua versi Windows):*
 1. Tekan `Win + R`, ketik `ncpa.cpl`, tekan Enter
@@ -630,7 +634,7 @@ Kode contoh memberi ESP32 alamat `192.168.1.177`. Atur PC pada subnet yang sama 
    - **Default gateway:** kosong
 5. Biarkan DNS kosong → **OK** → **Close**
 
-![Gambar 6: Tangkapan layar dialog "Internet Protocol Version 4 (TCP/IPv4) Properties" pada Control Panel Windows, dengan opsi "Use the following IP address" dipilih dan diisi IP 192.168.1.10 / subnet 255.255.255.0](img/win_static_ip_ncpa.png)
+![Gambar 8: Tangkapan layar dialog "Internet Protocol Version 4 (TCP/IPv4) Properties" pada Control Panel Windows, dengan opsi "Use the following IP address" dipilih dan diisi IP 192.168.1.10 / subnet 255.255.255.0](img/win_static_ip_ncpa.png)
 
 *Verifikasi & pengembalian setelan:*
 - Buka **Command Prompt**, jalankan `ipconfig` — pastikan adapter Ethernet menampilkan `IPv4 Address` = `192.168.1.10`

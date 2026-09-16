@@ -83,7 +83,7 @@ STM32 dapat diprogram menggunakan **framework Arduino** (dikenal sebagai **STM32
 
 Salah satu ciri khas STM32duino adalah dukungan penamaan pin langsung sesuai label port fisik pada board, misalnya `PC13` atau `PA0`, alih-alih hanya nomor pin generik seperti pada board Arduino biasa.
 
-![Gambar 1: Pinout board STM32 Blackpill F411CE/F401CC, menunjukkan label PA/PB/PC, LED onboard PC13, dan tombol user PA0](img/pinout_stm32_blackpill.png)
+![Gambar 1: Pinout board STM32 Blackpill (WeAct STM32F401), menunjukkan label PA/PB/PC, LED onboard PC13, dan tombol user](img/pinout_stm32_blackpill.png)
 
 ### C.3 ESP32 dan Framework ESP-IDF
 ESP32 adalah mikrokontroler 32-bit dual-core (Xtensa LX6) dengan WiFi dan Bluetooth terintegrasi, serta dilengkapi USB-to-Serial bawaan sehingga dapat langsung diprogram melalui kabel USB tanpa programmer eksternal.
@@ -271,6 +271,8 @@ framework = arduino
 | Pushbutton 1 (pull-up eksternal) | GPIO 32 | Satu kaki ke GPIO **dan** ke 3.3V melalui resistor 10kΩ (pull-up), kaki lain ke GND |
 | Pushbutton 2 (pull-down eksternal) | GPIO 33 | Satu kaki ke GPIO **dan** ke GND melalui resistor 10kΩ (pull-down), kaki lain ke 3.3V |
 
+![Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32](img/skematik_pullup_pulldown_eksternal.png)
+
 **Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
 #define BUTTON_PULLUP_PIN 32   // pull-up eksternal
@@ -300,6 +302,7 @@ void loop() {
 | Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
 | Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
 
+![Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33](img/skematik_pullup_pulldown_internal.png)
 
 **Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
@@ -343,6 +346,8 @@ Mahasiswa mampu mengidentifikasi permasalahan bouncing pada tombol mekanik dan m
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
 | Pushbutton (tactile) | GPIO 25 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
+
+![Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal](img/skematik_debounce_percobaan.png)
 
 **`platformio.ini`:**
 ```ini

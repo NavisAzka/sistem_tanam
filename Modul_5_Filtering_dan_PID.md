@@ -204,6 +204,8 @@ Mahasiswa mampu mengidentifikasi noise pada sinyal sensor mentah dan menerapkan 
 | MPU6500 — CS/NCS | 3.3V (ditarik tetap) | Wajib, agar modul beroperasi dalam mode I2C |
 | MPU6500 — VCC/GND | 3.3V, GND | — |
 
+![Gambar 6: Wiring MPU6500 mode I2C ke ESP32](img/wiring_mpu6500_p1.png)
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]
@@ -311,9 +313,9 @@ Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2)
 
 > Kabel daya motor (M1 Merah / M2 Putih) **tidak digunakan** pada percobaan ini — motor diputar dengan tangan.
 
-![Gambar 6: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
+![Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
 
-![Gambar 7: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
+![Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
 
 **`platformio.ini`:**
 ```ini
@@ -328,7 +330,7 @@ framework = arduino
 2. Tambahkan rumus RPM dari Dasar Teori C.1, pakai `PULSES_PER_REV = 102.0` (lihat kode di bawah)
 3. Upload, putar poros dengan tangan — amati RPM berubah langsung. Kalau tetap 0, cek Channel A/B tertukar pin
 4. Amati RPM mentah di **Serial Plotter** — lebih bergerigi dibanding akselerometer di Percobaan 1
-5. Implementasikan filter alpha yang sama seperti Percobaan 1, tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 7)
+5. Implementasikan filter alpha yang sama seperti Percobaan 1, tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 8)
 6. Uji α = 0.3, lalu 0.7, lalu 0.9 — Build & Upload ulang tiap nilai. Analisis kapan α besar/kecil lebih menguntungkan
 
 **Kode Program (Encoder + RPM + Low-Pass Filter Alpha — Program Lengkap):**
@@ -432,7 +434,7 @@ Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif 
 
 > **Catatan:** Sama seperti Percobaan 2, fokusnya adalah **membandingkan bentuk tiga garis** pada grafik, bukan mengubah kecepatan motor.
 
-![Gambar 8: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual](img/plot_filter_kalman_contoh.png)
+![Gambar 9: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual](img/plot_filter_kalman_contoh.png)
 
 **Skema Rangkaian:**
 
@@ -453,7 +455,7 @@ framework = arduino
 **Langkah Kerja:**
 1. Upload kode di bawah — sudah mencakup RPM + filter alpha sebagai pembanding, ditambah Kalman filter baru
 2. Perhatikan implementasi kelas `KalmanFilter` pada kode
-3. Tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` bersamaan di Serial Plotter (lihat Gambar 8)
+3. Tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` bersamaan di Serial Plotter (lihat Gambar 9)
 4. Uji Q/R default (0.001, 0.1), lalu ubah ke Q=0.1, R=5 — amati perubahan bentuk garis `RPM_Kalman`
 5. Bandingkan visual: `RPM_Kalman` harus lebih halus namun lebih cepat merespons dibanding `RPM_Alpha` — tuliskan pengamatan ini
 
@@ -591,9 +593,9 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 
 > **Catatan:** Percobaan ini adalah yang pertama di modul ini di mana motor dikendalikan oleh program (closed-loop) — bukan diputar tangan lagi seperti percobaan-percobaan sebelumnya.
 
-![Gambar 9: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
+![Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
 
-![Gambar 10: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)](img/plot_onoff_vs_p_contoh.png)
+![Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)](img/plot_onoff_vs_p_contoh.png)
 
 **Skema Rangkaian:**
 
@@ -607,7 +609,7 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 | Motor DC — M2 (Putih, −) | Driver OUT2 | — |
 | Motor DC — daya | Catu daya eksternal via driver (L298N) | **Jangan** ambil dari 5V USB langsung |
 
-> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 9 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha sebagai sumber RPM terfilter.
+> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 10 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha sebagai sumber RPM terfilter.
 
 **`platformio.ini`:**
 ```ini
@@ -618,12 +620,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor DC + driver + encoder sesuai Gambar 9, pakai catu daya eksternal untuk motor (bukan 5V USB)
+1. Rangkai motor DC + driver + encoder sesuai Gambar 10, pakai catu daya eksternal untuk motor (bukan 5V USB)
 2. Tentukan target RPM = 100 di kode
-3. Coba mode **on-off** dulu — amati Serial Plotter: RPM naik-turun terus di sekitar target dan motor bergetar, ini **normal** untuk mode on-off (bandingkan Gambar 10)
+3. Coba mode **on-off** dulu — amati Serial Plotter: RPM naik-turun terus di sekitar target dan motor bergetar, ini **normal** untuk mode on-off (bandingkan Gambar 11)
 4. Ganti ke mode **Proportional** (`Kp = 3.0`) — RPM lebih stabil, tapi berhenti sedikit di bawah target (disebut *steady-state error*), ini juga normal untuk kontrol P
 5. Screenshot Serial Plotter kedua mode, lalu hitung kasar *steady-state error* mode P (target dikurangi RPM rata-rata saat stabil)
-6. Kalau motor tidak bergerak sama sekali, cek wiring driver (Gambar 9) dan urutan `IN1`/`IN2` sebelum `ledcWrite()` dipanggil
+6. Kalau motor tidak bergerak sama sekali, cek wiring driver (Gambar 10) dan urutan `IN1`/`IN2` sebelum `ledcWrite()` dipanggil
 
 **Kode Program (Encoder + Filter + Kontrol On-Off/Proportional — Program Lengkap):**
 ```cpp
@@ -770,9 +772,9 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 
 > **Catatan:** Percobaan ini adalah puncak/akhir dari seluruh modul — menggabungkan encoder, filtering, dan kontrol dari percobaan-percobaan sebelumnya menjadi satu sistem PID lengkap.
 
-![Gambar 11: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32](img/wiring_pid_lengkap.png)
+![Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32](img/wiring_pid_lengkap.png)
 
-![Gambar 12: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)](img/plot_pid_sebelum_sesudah_tuning.png)
+![Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)](img/plot_pid_sebelum_sesudah_tuning.png)
 
 **Skema Rangkaian:**
 
@@ -783,7 +785,7 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 | Tombol Naik Target RPM | GPIO 14 | `INPUT_PULLUP` |
 | Tombol Turun Target RPM | GPIO 16 | `INPUT_PULLUP` |
 
-Lihat Gambar 11 untuk wiring gabungan seluruh komponen di atas dalam satu rangkaian.
+Lihat Gambar 12 untuk wiring gabungan seluruh komponen di atas dalam satu rangkaian.
 
 **`platformio.ini`:**
 ```ini
@@ -794,7 +796,7 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai Gambar 11
+1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai Gambar 12
 2. Upload kode di bawah
 3. Tekan tombol naik sampai target ≈ 100 RPM — motor otomatis mengejar
 4. Amati Serial Plotter — respons awal biasanya belum bagus. Screenshot sebagai **"sebelum tuning"**
@@ -802,7 +804,7 @@ framework = arduino
    - Naikkan **Kp** sampai respons cepat tapi belum berosilasi liar
    - Tambah **Ki** sampai target tercapai (steady-state error hilang)
    - Tambah **Kd** kalau masih overshoot
-   - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 12)
+   - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 13)
 
 **Kode Program (Kontrol PID Lengkap — Encoder, Filter, PID, Tombol Target):**
 ```cpp
