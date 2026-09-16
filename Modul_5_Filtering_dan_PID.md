@@ -96,9 +96,9 @@ RPM = (Jumlah_Pulsa_Bertambah / Waktu_dalam_detik) × (60 / CPR_TOTAL)
 
 Angka CPR dan rasio gearbox pada datasheet/toko online sering tidak akurat — cara paling presisi adalah **kalibrasi langsung** (memutar poros output sejumlah putaran penuh yang diketahui, lalu menghitung pulsa yang tercatat). Pada modul ini, `CPR_TOTAL` cukup memakai **nilai estimasi dari spesifikasi motor** (untuk JGA25-370 1000RPM: ±102, lihat Percobaan 2) — cukup memadai untuk keperluan praktikum, meski nilai motor Anda sendiri bisa sedikit berbeda.
 
-<img src="img/diagram_quadrature_encoder.png" alt="Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros" width="60%">
+<img src="img/anim_quadrature_direction.gif" alt="Gambar 1: Animasi sinyal quadrature encoder Channel A dan Channel B, menunjukkan bagaimana urutan fasa antar kedua channel menentukan arah putaran (maju vs mundur)" width="70%">
 
-*Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros*
+*Gambar 1: Animasi sinyal quadrature encoder Channel A dan Channel B — perhatikan urutan fasa antar kedua channel berbalik saat arah putaran berbalik (Channel A mendahului B saat maju/CW, Channel B mendahului A saat mundur/CCW)*
 
 ### C.2 Menghaluskan Sinyal — Filter Alpha
 Nilai RPM mentah dari encoder biasanya **tidak mulus** — angkanya bisa melompat-lompat sedikit antar pembacaan (disebut *noise*), terutama saat motor berputar pelan. Cara paling sederhana untuk menghaluskannya adalah **filter alpha** (juga disebut *low-pass filter*), dengan rumus:
