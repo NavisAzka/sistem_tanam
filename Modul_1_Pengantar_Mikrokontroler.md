@@ -83,12 +83,14 @@ STM32 dapat diprogram menggunakan **framework Arduino** (dikenal sebagai **STM32
 
 Salah satu ciri khas STM32duino adalah dukungan penamaan pin langsung sesuai label port fisik pada board, misalnya `PC13` atau `PA0`, alih-alih hanya nomor pin generik seperti pada board Arduino biasa.
 
-![Gambar 1: Pinout board STM32 Blackpill F411CE/F401CC, menunjukkan label PA/PB/PC, LED onboard PC13, dan tombol user PA0](img/pinout_stm32_blackpill.png)
+![Gambar 1: Pinout board STM32 Blackpill (WeAct STM32F401), menunjukkan label PA/PB/PC, LED onboard PC13, dan tombol user](img/pinout_stm32_blackpill.png)
 
 ### C.3 ESP32 dan Framework ESP-IDF
 ESP32 adalah mikrokontroler 32-bit dual-core (Xtensa LX6) dengan WiFi dan Bluetooth terintegrasi, serta dilengkapi USB-to-Serial bawaan sehingga dapat langsung diprogram melalui kabel USB tanpa programmer eksternal.
 
-![Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard](img/pinout_esp32_devkit.png)
+<img src="img/pinout_esp32_devkit.png" alt="Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard" width="80%">
+
+*Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard*
 
 **ESP-IDF (Espressif IoT Development Framework)** adalah framework resmi dan native dari Espressif, dibangun di atas FreeRTOS. Berbeda dengan framework Arduino yang menyederhanakan program menjadi `setup()` dan `loop()`, ESP-IDF menggunakan struktur berbasis **task/component** dengan titik masuk program berupa fungsi `app_main()`. ESP-IDF memberi akses lebih penuh ke fitur ESP32 (mis. konfigurasi low-level WiFi, task scheduling FreeRTOS secara langsung) dan umum digunakan pada pengembangan produk IoT tingkat lanjut.
 
@@ -106,12 +108,16 @@ Saat sebuah tombol/pushbutton tidak ditekan dan kedua kakinya tidak terhubung ke
 
 Resistor pull-up/pull-down di atas dapat dipasang secara **eksternal** (komponen resistor fisik pada breadboard), maupun diaktifkan secara **internal** melalui firmware tanpa resistor tambahan. ESP32 menyediakan keduanya pada framework Arduino: `pinMode(pin, INPUT_PULLUP)` untuk pull-up internal, dan `pinMode(pin, INPUT_PULLDOWN)` untuk pull-down internal. Perlu diperhatikan bahwa **tidak semua pin GPIO ESP32 mendukung resistor pull internal** — pin input-only (GPIO 34–39) sama sekali tidak memiliki resistor pull-up/pull-down internal, sehingga wajib menggunakan resistor eksternal jika digunakan sebagai input tombol.
 
-![Gambar 3: Diagram skematik rangkaian pull-up resistor (GPIO ke VCC via resistor, tombol ke GND) berdampingan dengan pull-down resistor (GPIO ke GND via resistor, tombol ke VCC)](img/skematik_pullup_pulldown.png)
+<img src="img/skematik_pullup_pulldown_teori.png" alt="Gambar 3: Skematik rangkaian pull-up resistor (GPIO ke VCC via resistor, tombol ke GND) berdampingan dengan pull-down resistor (GPIO ke GND via resistor, tombol ke VCC)" width="70%">
+
+*Gambar 3: Skematik rangkaian pull-up resistor (GPIO ke VCC via resistor, tombol ke GND) berdampingan dengan pull-down resistor (GPIO ke GND via resistor, tombol ke VCC)*
 
 ### C.5 Debouncing
 Kontak mekanik pada tombol/saklar menghasilkan beberapa transisi sinyal HIGH-LOW dalam waktu sangat singkat akibat getaran fisik saat kontak bersentuhan/terlepas ("bouncing"). Tanpa penanganan, satu kali aksi tekan dapat terbaca sebagai beberapa kali event. **Debouncing** memastikan hanya satu transisi valid yang terdeteksi, dengan menunggu sinyal stabil selama periode waktu tertentu (mis. 20–50ms) sebelum event dianggap sah.
 
-![Gambar 4: Grafik sinyal tombol pada osiloskop/logic analyzer yang memperlihatkan bouncing (transisi HIGH-LOW berulang saat kontak menyentuh/lepas), dibandingkan dengan sinyal yang sudah didebounce](img/grafik_bouncing_debounce.png)
+<img src="img/grafik_bouncing_debounce.png" alt="Gambar 4: Grafik sinyal tombol pada osiloskop/logic analyzer yang memperlihatkan bouncing (transisi HIGH-LOW berulang saat kontak menyentuh/lepas), dibandingkan dengan sinyal yang sudah didebounce" width="70%">
+
+*Gambar 4: Grafik sinyal tombol pada osiloskop/logic analyzer yang memperlihatkan bouncing (transisi HIGH-LOW berulang saat kontak menyentuh/lepas), dibandingkan dengan sinyal yang sudah didebounce*
 
 ### C.6 ADC sebagai Mode Akses GPIO Ketiga
 Sejauh ini, GPIO telah digunakan dalam dua mode: **digital output** (Percobaan 1–2, menyalakan LED) dan **digital input** (Percobaan 3–4, membaca status tombol/saklar — hanya mengenal dua kondisi, HIGH atau LOW). Mode ketiga yang juga umum digunakan adalah **analog input**, yaitu membaca tegangan yang berubah secara kontinu (bukan hanya dua kondisi), melalui peripheral **ADC (Analog-to-Digital Converter)**.
@@ -120,7 +126,9 @@ ADC mengubah tegangan analog pada suatu pin menjadi nilai digital yang dapat dio
 
 > **Catatan:** Percobaan ADC pada modul ini hanya memperkenalkan *cara mengakses* GPIO sebagai input analog menggunakan satu sensor sederhana (LDR). Pembahasan lebih lanjut mengenai klasifikasi sensor berdasarkan basis pengukurannya (resistif, kapasitif, induktif, dan basis lain) beserta ragam sensor/aktuator lain akan dibahas lebih mendalam pada **Modul 2**.
 
-![Gambar 5: Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard](img/modul_ldr_pembagi_tegangan.png)
+<img src="img/modul_ldr_pembagi_tegangan.png" alt="Gambar 5: Foto komponen LDR (Light Dependent Resistor) — rangkai sebagai pembagi tegangan bersama resistor 10kΩ sesuai tabel Skema Rangkaian di atas" width="45%">
+
+*Gambar 5: Foto komponen LDR (Light Dependent Resistor) — rangkai sebagai pembagi tegangan bersama resistor 10kΩ sesuai tabel Skema Rangkaian di atas*
 
 ---
 
@@ -271,6 +279,10 @@ framework = arduino
 | Pushbutton 1 (pull-up eksternal) | GPIO 32 | Satu kaki ke GPIO **dan** ke 3.3V melalui resistor 10kΩ (pull-up), kaki lain ke GND |
 | Pushbutton 2 (pull-down eksternal) | GPIO 33 | Satu kaki ke GPIO **dan** ke GND melalui resistor 10kΩ (pull-down), kaki lain ke 3.3V |
 
+<img src="img/skematik_pullup_pulldown_eksternal.png" alt="Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32" width="60%">
+
+*Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32*
+
 **Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
 #define BUTTON_PULLUP_PIN 32   // pull-up eksternal
@@ -300,6 +312,9 @@ void loop() {
 | Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
 | Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
 
+<img src="img/skematik_pullup_pulldown_internal.png" alt="Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33" width="60%">
+
+*Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
 
 **Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
@@ -343,6 +358,10 @@ Mahasiswa mampu mengidentifikasi permasalahan bouncing pada tombol mekanik dan m
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
 | Pushbutton (tactile) | GPIO 25 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
+
+<img src="img/skematik_debounce_percobaan.png" alt="Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal" width="60%">
+
+*Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal*
 
 **`platformio.ini`:**
 ```ini

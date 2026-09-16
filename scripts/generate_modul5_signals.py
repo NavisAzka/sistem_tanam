@@ -1,0 +1,467 @@
+"""
+Generate dummy reference signal plots for Modul 5 (Filtering & PID).
+
+Bukan data hasil pengukuran alat sungguhan -- hanya sinyal buatan (simulasi)
+untuk memberi gambaran bentuk grafik yang diharapkan praktikan di Serial
+Plotter. Jalankan ulang skrip ini jika ingin memperbarui gambar di img/.
+
+Usage:
+    python scripts/generate_modul5_signals.py
+"""
+
+import os
+import textwrap
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
+
+OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "img")
+os.makedirs(OUT_DIR, exist_ok=True)
+
+plt.rcParams.update(
+    {
+        "font.size": 11,
+        "axes.grid": True,
+        "grid.alpha": 0.3,
+        "figure.dpi": 150,
+    }
+)
+
+rng = np.random.default_rng(42)
+
+
+def save(fig, name):
+    path = os.path.join(OUT_DIR, name)
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)
+    print(f"saved {path}")
+
+
+def box(ax, xy, w, h, text, fc="#cfe8ff", ec="#1f4e8c", fontsize=9.5):
+    b = FancyBboxPatch(
+        xy,
+        w,
+        h,
+        boxstyle="round,pad=0.02,rounding_size=0.04",
+        linewidth=1.4,
+        edgecolor=ec,
+        facecolor=fc,
+    )
+    ax.add_patch(b)
+    ax.text(xy[0] + w / 2, xy[1] + h / 2, text, ha="center", va="center", fontsize=fontsize, wrap=True)
+    return b
+
+
+def arrow(ax, start, end, text=None, color="#333333", connectionstyle="arc3,rad=0.0", lw=1.6, fontsize=8):
+    a = FancyArrowPatch(
+        start,
+        end,
+        arrowstyle="-|>",
+        mutation_scale=13,
+        linewidth=lw,
+        color=color,
+        connectionstyle=connectionstyle,
+    )
+    ax.add_patch(a)
+    if text:
+        mx, my = (start[0] + end[0]) / 2, (start[1] + end[1]) / 2
+        ax.text(mx, my, text, ha="center", va="bottom", fontsize=fontsize, color=color)
+
+
+def alpha_filter(raw, alpha):
+    out = np.empty_like(raw)
+    out[0] = raw[0]
+    for i in range(1, len(raw)):
+        out[i] = alpha * out[i - 1] + (1 - alpha) * raw[i]
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Gambar 1 (teori C.1): sinyal quadrature encoder Channel A & Channel B
+# ---------------------------------------------------------------------------
+def plot_quadrature_encoder():
+    t = np.linspace(0, 8, 4000)
+    period = 1.0  # satu siklus A/B per 1 satuan waktu
+    a = (np.mod(t, period) < period / 2).astype(float)
+    # Channel B tertinggal 90 derajat (seperempat periode) dari Channel A
+    b = (np.mod(t - period / 4, period) < period / 2).astype(float)
+
+    fig, axes = plt.subplots(2, 1, figsize=(8, 3.6), sharex=True)
+    axes[0].step(t, a + 2.2, where="post", color="#d62728", linewidth=1.6)
+    axes[0].set_yticks([2.2, 3.2])
+    axes[0].set_yticklabels(["LOW", "HIGH"])
+    axes[0].set_ylabel("Channel A", rotation=0, ha="right", va="center")
+
+    axes[1].step(t, b, where="post", color="#1f77b4", linewidth=1.6)
+    axes[1].set_yticks([0, 1])
+    axes[1].set_yticklabels(["LOW", "HIGH"])
+    axes[1].set_ylabel("Channel B", rotation=0, ha="right", va="center")
+    axes[1].set_xlabel("waktu")
+
+    for i in range(3):
+        axes[0].axvline(i * period + period / 4, color="gray", ls=":", lw=0.8)
+
+    axes[0].annotate(
+        "rising edge Channel A dipakai\nsebagai trigger interrupt",
+        xy=(period, 3.2),
+        xytext=(period + 1.4, 2.9),
+        fontsize=8.5,
+        arrowprops=dict(arrowstyle="->", lw=0.8),
+    )
+    axes[1].annotate(
+        "Channel B dibaca saat interrupt\nuntuk menentukan arah putar",
+        xy=(period / 4, 1.0),
+        xytext=(period + 1.4, 1.3),
+        fontsize=8.5,
+        arrowprops=dict(arrowstyle="->", lw=0.8),
+    )
+
+    fig.suptitle("Sinyal Quadrature Encoder — Channel A & Channel B", y=1.06)
+    save(fig, "diagram_quadrature_encoder.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 2 (teori C.2) & Gambar 8 (Percobaan 2): RPM mentah vs filter alpha
+# ---------------------------------------------------------------------------
+def make_noisy_rpm(n=400, base=100.0, noise_std=6.0, step_at=None, step_to=None):
+    t = np.arange(n)
+    signal = np.full(n, base, dtype=float)
+    if step_at is not None:
+        signal[step_at:] = step_to
+    # noise + sedikit ripple periodik supaya terlihat "sinyal nyata"
+    noise = rng.normal(0, noise_std, n)
+    ripple = 2.5 * np.sin(t / 3.3)
+    return t, signal + noise + ripple
+
+
+def plot_alpha_theory():
+    t, raw = make_noisy_rpm(n=300, base=100.0, noise_std=7.0)
+    fig, ax = plt.subplots(figsize=(8, 3.6))
+    ax.plot(t, raw, color="#bbbbbb", linewidth=1, label="RPM Mentah (noisy)")
+    for alpha, color in [(0.3, "#2ca02c"), (0.7, "#1f77b4"), (0.9, "#d62728")]:
+        ax.plot(t, alpha_filter(raw, alpha), color=color, linewidth=2, label=f"Filter Alpha (α={alpha})")
+    ax.set_xlabel("sample ke-n")
+    ax.set_ylabel("RPM")
+    ax.set_title("Perbandingan Filter Alpha pada Beberapa Nilai α")
+    ax.legend(loc="upper right", fontsize=9)
+    save(fig, "grafik_filter_alpha.png")
+
+
+def plot_alpha_percobaan2():
+    t, raw = make_noisy_rpm(n=250, base=100.0, noise_std=6.5)
+    filtered = alpha_filter(raw, 0.7)
+    fig, ax = plt.subplots(figsize=(8, 3.4))
+    ax.plot(t, raw, color="#d62728", linewidth=1, label="RPM_Mentah")
+    ax.plot(t, filtered, color="#1f77b4", linewidth=2, label="RPM_Alpha (α=0.7)")
+    ax.set_xlabel("sample ke-n")
+    ax.set_ylabel("RPM")
+    ax.set_title("Contoh Tampilan Serial Plotter — RPM_Mentah vs RPM_Alpha")
+    ax.legend(loc="upper right", fontsize=9)
+    save(fig, "plot_filter_alpha_contoh.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 9 (Percobaan 3): RPM Mentah vs Alpha vs Kalman
+# ---------------------------------------------------------------------------
+def kalman_1d(raw, q=0.001, r=0.1):
+    n = len(raw)
+    x = np.empty(n)
+    p = 1.0
+    x[0] = raw[0]
+    for i in range(1, n):
+        # predict
+        x_pred = x[i - 1]
+        p_pred = p + q
+        # update
+        k = p_pred / (p_pred + r)
+        x[i] = x_pred + k * (raw[i] - x_pred)
+        p = (1 - k) * p_pred
+    return x
+
+
+def plot_kalman_contoh():
+    t, raw = make_noisy_rpm(n=250, base=100.0, noise_std=6.5)
+    alpha_out = alpha_filter(raw, 0.7)
+    kalman_out = kalman_1d(raw, q=0.05, r=4.0)
+
+    fig, ax = plt.subplots(figsize=(8, 3.4))
+    ax.plot(t, raw, color="#bbbbbb", linewidth=1, label="RPM_Mentah")
+    ax.plot(t, alpha_out, color="#2ca02c", linewidth=2, label="RPM_Alpha")
+    ax.plot(t, kalman_out, color="#1f77b4", linewidth=2, label="RPM_Kalman")
+    ax.set_xlabel("sample ke-n")
+    ax.set_ylabel("RPM")
+    ax.set_title("Contoh Tampilan Serial Plotter — RPM_Mentah vs RPM_Alpha vs RPM_Kalman")
+    ax.legend(loc="upper right", fontsize=9)
+    save(fig, "plot_filter_kalman_contoh.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 11 (Percobaan 4): mode On-Off vs Proportional
+# ---------------------------------------------------------------------------
+def plot_onoff_vs_p():
+    t = np.arange(0, 300)
+    target = 100.0
+
+    # On-off: berosilasi terus-menerus di sekitar target
+    onoff = target + 8 * np.sign(np.sin(t / 6.0)) + rng.normal(0, 1.2, len(t))
+
+    # Proportional: naik menuju target lalu menetap dengan steady-state error
+    p_response = target - 25 * np.exp(-t / 40.0) - 6  # -6 = steady-state error
+    p_response += rng.normal(0, 1.0, len(t))
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.6), sharey=True)
+
+    axes[0].plot(t, onoff, color="#d62728", linewidth=1.2)
+    axes[0].axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    axes[0].set_title("Mode On-Off (berosilasi)")
+    axes[0].set_xlabel("waktu (sample)")
+    axes[0].set_ylabel("RPM")
+    axes[0].legend(fontsize=8, loc="lower right")
+
+    axes[1].plot(t, p_response, color="#1f77b4", linewidth=1.4)
+    axes[1].axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    axes[1].set_title("Mode Proportional (steady-state error)")
+    axes[1].set_xlabel("waktu (sample)")
+    axes[1].legend(fontsize=8, loc="lower right")
+
+    fig.suptitle("Perbandingan Respons Mode On-Off vs Proportional (P)", y=1.03)
+    save(fig, "plot_onoff_vs_p_contoh.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 13 (Percobaan 5): respons sebelum vs sesudah tuning PID
+# ---------------------------------------------------------------------------
+def plot_pid_tuning():
+    t = np.arange(0, 300)
+    target = 100.0
+
+    # Sebelum tuning: naik cepat, overshoot besar, lalu berosilasi lambat meredam
+    before = target * (1 - np.exp(-t / 25.0)) + 45 * np.exp(-t / 70.0) * np.cos(t / 18.0)
+    before += rng.normal(0, 1.5, len(t))
+
+    # Sesudah tuning: naik cepat, overshoot kecil, cepat stabil
+    after = target * (1 - np.exp(-t / 20.0)) + 6 * np.exp(-t / 18.0) * np.cos(t / 9.0)
+    after += rng.normal(0, 1.0, len(t))
+
+    fig, ax = plt.subplots(figsize=(8, 3.6))
+    ax.plot(t, before, color="#d62728", linewidth=1.3, label="Sebelum Tuning")
+    ax.plot(t, after, color="#1f77b4", linewidth=1.6, label="Sesudah Tuning")
+    ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    ax.set_xlabel("waktu (sample)")
+    ax.set_ylabel("RPM")
+    ax.set_title("Respons Kontrol PID — Sebelum vs Sesudah Tuning")
+    ax.legend(fontsize=9)
+    save(fig, "plot_pid_sebelum_sesudah_tuning.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 14 (Percobaan 5): jenis-jenis hasil respons PID
+# ---------------------------------------------------------------------------
+def _settle_noise(n, std=1.0):
+    return rng.normal(0, std, n)
+
+
+def plot_pid_response_types():
+    t = np.arange(0, 260)
+    target = 100.0
+
+    # 1) Overdamped: naik lambat, tanpa overshoot sama sekali, telat mengejar target
+    overdamped = target * (1 - np.exp(-t / 110.0)) + _settle_noise(len(t), 1.0)
+
+    # 2) Underdamped: overshoot signifikan, lalu berosilasi teredam sampai stabil
+    underdamped = target * (1 - np.exp(-t / 18.0)) + 30 * np.exp(-t / 55.0) * np.cos(t / 14.0)
+    underdamped += _settle_noise(len(t), 1.2)
+
+    # 3) Kritis / ideal (well-tuned): cepat naik, overshoot kecil, cepat stabil
+    ideal = target * (1 - np.exp(-t / 16.0)) + 5 * np.exp(-t / 14.0) * np.cos(t / 8.0)
+    ideal += _settle_noise(len(t), 0.8)
+
+    # 4) Tidak stabil: osilasi yang membesar (Kp/Ki terlalu agresif)
+    unstable = target + 6 * np.exp(t / 140.0) * np.sin(t / 9.0)
+    unstable += _settle_noise(len(t), 1.0)
+    unstable = np.clip(unstable, 0, 220)  # batas realistis PWM/RPM
+
+    # 5) Steady-state error: hanya P (tanpa I), naik lalu berhenti di bawah target
+    p_only = target - 22 * np.exp(-t / 45.0) - 14  # -14 = steady-state error permanen
+    p_only += _settle_noise(len(t), 0.9)
+
+    # 6) Overshoot & undershoot berulang (integral windup): Ki terlalu besar
+    windup = target * (1 - np.exp(-t / 12.0)) + 40 * np.exp(-t / 90.0) * np.cos(t / 22.0)
+    windup += _settle_noise(len(t), 1.3)
+
+    panels = [
+        (overdamped, "1. Overdamped", "Kp terlalu kecil — respons lambat, tidak overshoot, telat mengejar target"),
+        (underdamped, "2. Underdamped", "Kp besar / Kd kurang — overshoot besar, berosilasi teredam sebelum stabil"),
+        (ideal, "3. Kritis / Well-Tuned", "Kp-Ki-Kd seimbang — respons cepat, overshoot kecil, cepat stabil (target tuning)"),
+        (unstable, "4. Tidak Stabil", "Kp/Ki terlalu agresif — osilasi makin membesar, tidak pernah stabil"),
+        (p_only, "5. Steady-State Error", "Hanya P tanpa I — mendekati target tapi berhenti di bawahnya secara permanen"),
+        (windup, "6. Integral Windup", "Ki terlalu besar — overshoot lalu undershoot berulang sebelum akhirnya stabil"),
+    ]
+
+    fig, axes = plt.subplots(2, 3, figsize=(14, 9.2), sharex=True)
+    for ax, (data, title, desc) in zip(axes.flat, panels):
+        ax.plot(t, data, color="#1f77b4", linewidth=1.4)
+        ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+        ax.set_title(title, fontsize=11, fontweight="bold")
+        ax.set_xlabel("waktu (sample)", fontsize=8.5)
+        wrapped = "\n".join(textwrap.wrap(desc, width=34))
+        ax.text(
+            0.5,
+            -0.42,
+            wrapped,
+            transform=ax.transAxes,
+            ha="center",
+            va="top",
+            fontsize=8,
+        )
+        ax.legend(fontsize=7.5, loc="lower right")
+
+    fig.suptitle("Jenis-Jenis Hasil Respons Kontrol PID", fontsize=14, y=0.99)
+    fig.subplots_adjust(hspace=1.05, wspace=0.3, top=0.93, bottom=0.07)
+    save(fig, "jenis_respons_pid.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 3 teori (C.3): siklus predict-update Kalman filter + grafik
+# ---------------------------------------------------------------------------
+def plot_kalman_theory_combined():
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"width_ratios": [1, 1.3]})
+
+    ax = axes[0]
+    box(ax, (0.5, 2.2), 3, 1.3, "PREDICT\nperkirakan state\nberdasarkan model", fc="#cfe8ff", ec="#1f4e8c")
+    box(ax, (0.5, 0.3), 3, 1.3, "UPDATE\nkoreksi perkiraan\ndengan pengukuran baru", fc="#d6f5d6", ec="#2e7d32")
+    arrow(ax, (2.0, 2.15), (2.0, 1.65), text="state prediksi")
+    arrow(ax, (0.5, 0.95), (-0.6, 0.95), text="")
+    arrow(ax, (-0.6, 0.95), (-0.6, 2.85))
+    arrow(ax, (-0.6, 2.85), (0.5, 2.85), text="state terkoreksi\n(untuk siklus berikutnya)")
+    ax.annotate("pengukuran baru\n(sensor)", xy=(2.0, 0.3), xytext=(2.0, -0.6), ha="center", fontsize=8.5,
+                arrowprops=dict(arrowstyle="->", lw=1))
+    ax.set_xlim(-1.3, 4.2)
+    ax.set_ylim(-1.0, 4.0)
+    ax.axis("off")
+    ax.set_title("Siklus Predict–Update Kalman Filter", fontsize=11)
+
+    ax = axes[1]
+    t, raw = make_noisy_rpm(n=220, base=100.0, noise_std=6.5)
+    alpha_out = alpha_filter(raw, 0.7)
+    kalman_out = kalman_1d(raw, q=0.05, r=4.0)
+    ax.plot(t, raw, color="#bbbbbb", linewidth=1, label="RPM_Mentah")
+    ax.plot(t, alpha_out, color="#2ca02c", linewidth=1.8, label="RPM_Alpha")
+    ax.plot(t, kalman_out, color="#1f77b4", linewidth=1.8, label="RPM_Kalman")
+    ax.set_xlabel("sample ke-n")
+    ax.set_ylabel("RPM")
+    ax.set_title("Kalman Filter vs Filter Alpha pada Sinyal yang Sama", fontsize=11)
+    ax.legend(fontsize=8.5)
+
+    fig.suptitle("Kalman Filter — Konsep & Hasil", y=1.02, fontsize=13)
+    fig.tight_layout()
+    save(fig, "diagram_kalman_filter.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 4 teori (C.4): blok closed-loop + grafik on-off vs P
+# ---------------------------------------------------------------------------
+def plot_closed_loop_combined():
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4), gridspec_kw={"width_ratios": [1.3, 1]})
+
+    ax = axes[0]
+    box(ax, (0, 1.1), 1.8, 0.9, "Setpoint", fc="#fff3cf", ec="#a3670a", fontsize=9)
+    box(ax, (2.3, 1.1), 1.8, 0.9, "Kontroler", fc="#cfe8ff", ec="#1f4e8c", fontsize=9)
+    box(ax, (4.6, 1.1), 1.8, 0.9, "Aktuator", fc="#ffe4b3", ec="#a3670a", fontsize=9)
+    box(ax, (6.9, 1.1), 1.8, 0.9, "Plant\n(motor)", fc="#d6f5d6", ec="#2e7d32", fontsize=9)
+    box(ax, (4.6, -0.6), 1.8, 0.9, "Sensor\n(encoder)", fc="#f5d6f5", ec="#8c1f8c", fontsize=9)
+
+    arrow(ax, (1.8, 1.55), (2.3, 1.55))
+    arrow(ax, (4.1, 1.55), (4.6, 1.55))
+    arrow(ax, (6.4, 1.55), (6.9, 1.55))
+    arrow(ax, (7.8, 1.1), (7.8, -0.15))
+    arrow(ax, (7.8, -0.15), (6.4, -0.15))
+    arrow(ax, (4.6, -0.15), (1.0, -0.15), text="feedback")
+    arrow(ax, (1.0, -0.15), (1.0, 1.1))
+
+    ax.text(4.4, 2.25, "error = target − aktual", fontsize=8, ha="center", color="gray")
+    ax.set_xlim(-0.5, 9.3)
+    ax.set_ylim(-1.3, 2.9)
+    ax.axis("off")
+    ax.set_title("Sistem Kontrol Closed-Loop", fontsize=11)
+
+    ax = axes[1]
+    t = np.arange(0, 250)
+    target = 100.0
+    onoff = target + 8 * np.sign(np.sin(t / 6.0)) + rng.normal(0, 1.2, len(t))
+    p_response = target - 25 * np.exp(-t / 40.0) - 6 + rng.normal(0, 1.0, len(t))
+    ax.plot(t, onoff, color="#d62728", linewidth=1.1, label="Mode On-Off (osilasi)")
+    ax.plot(t, p_response, color="#1f77b4", linewidth=1.4, label="Mode P (steady-state error)")
+    ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    ax.set_xlabel("waktu (sample)")
+    ax.set_ylabel("RPM")
+    ax.set_title("Respons On-Off vs Proportional (P)", fontsize=11)
+    ax.legend(fontsize=8)
+
+    fig.suptitle("Kontrol Closed-Loop — Blok Sistem & Contoh Respons", y=1.02, fontsize=13)
+    fig.tight_layout()
+    save(fig, "diagram_closed_loop.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 5 teori (C.5): blok kontroler PID + grafik sebelum/sesudah tuning
+# ---------------------------------------------------------------------------
+def plot_pid_block_combined():
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.2), gridspec_kw={"width_ratios": [1.2, 1]})
+
+    ax = axes[0]
+    box(ax, (0, 1.6), 1.6, 0.8, "Error e(t)", fc="#fff3cf", ec="#a3670a", fontsize=8.5)
+    box(ax, (2.2, 2.8), 1.8, 0.8, "P: Kp·e(t)", fc="#cfe8ff", ec="#1f4e8c", fontsize=8.5)
+    box(ax, (2.2, 1.6), 1.8, 0.8, "I: Ki·∫e(t)dt", fc="#d6f5d6", ec="#2e7d32", fontsize=8.5)
+    box(ax, (2.2, 0.4), 1.8, 0.8, "D: Kd·de(t)/dt", fc="#f5d6d6", ec="#a31515", fontsize=8.5)
+    box(ax, (5.0, 1.6), 1.8, 0.8, "Σ (jumlah)", fc="#fff3cf", ec="#a3670a", fontsize=9)
+    box(ax, (7.3, 1.6), 1.9, 0.8, "Output PWM\nke motor", fc="#e6d6f5", ec="#5b1f8c", fontsize=8.5)
+
+    arrow(ax, (1.6, 2.0), (2.2, 3.2))
+    arrow(ax, (1.6, 2.0), (2.2, 2.0))
+    arrow(ax, (1.6, 2.0), (2.2, 0.8))
+    arrow(ax, (4.0, 3.2), (5.0, 2.15))
+    arrow(ax, (4.0, 2.0), (5.0, 2.0))
+    arrow(ax, (4.0, 0.8), (5.0, 1.85))
+    arrow(ax, (6.8, 2.0), (7.3, 2.0))
+
+    ax.set_xlim(-0.5, 9.4)
+    ax.set_ylim(0, 4.0)
+    ax.axis("off")
+    ax.set_title("Diagram Blok Kontroler PID", fontsize=11)
+
+    ax = axes[1]
+    t = np.arange(0, 250)
+    target = 100.0
+    before = target * (1 - np.exp(-t / 25.0)) + 45 * np.exp(-t / 70.0) * np.cos(t / 18.0)
+    before += rng.normal(0, 1.5, len(t))
+    after = target * (1 - np.exp(-t / 20.0)) + 6 * np.exp(-t / 18.0) * np.cos(t / 9.0)
+    after += rng.normal(0, 1.0, len(t))
+    ax.plot(t, before, color="#d62728", linewidth=1.2, label="Sebelum Tuning")
+    ax.plot(t, after, color="#1f77b4", linewidth=1.5, label="Sesudah Tuning")
+    ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    ax.set_xlabel("waktu (sample)")
+    ax.set_ylabel("RPM")
+    ax.set_title("Respons Sebelum vs Sesudah Tuning", fontsize=11)
+    ax.legend(fontsize=8)
+
+    fig.suptitle("Kontroler PID — Diagram Blok & Contoh Hasil Tuning", y=1.02, fontsize=13)
+    fig.tight_layout()
+    save(fig, "diagram_blok_pid.png")
+
+
+if __name__ == "__main__":
+    plot_quadrature_encoder()
+    plot_alpha_theory()
+    plot_alpha_percobaan2()
+    plot_kalman_contoh()
+    plot_onoff_vs_p()
+    plot_pid_tuning()
+    plot_pid_response_types()
+    plot_kalman_theory_combined()
+    plot_closed_loop_combined()
+    plot_pid_block_combined()

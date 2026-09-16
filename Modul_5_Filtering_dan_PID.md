@@ -7,6 +7,8 @@
 **IDE:** VSCode + PlatformIO
 
 > **Catatan:** Modul ini merupakan modul kapstone yang menggabungkan **Modul 2** (motor DC + PWM), **Modul 3** (MPU6500), dan **Modul 4 Percobaan 2** (quadrature encoder via external interrupt). Pastikan rangkaian motor+encoder+driver dan modul MPU6500 dari modul-modul tersebut sudah berfungsi sebelum memulai modul ini. Seluruh contoh kode menggunakan platform PlatformIO resmi `espressif32` (Arduino-ESP32 **core versi 2.0.x**), konsisten dengan Modul 2–4, termasuk API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`/`ledcWrite`) untuk kontrol PWM motor DC.
+>
+> Grafik sinyal contoh (quadrature encoder, filter alpha, filter Kalman, on-off vs P, respons PID) pada modul ini adalah **data simulasi/dummy**, bukan hasil pengukuran alat sungguhan — dibuat dengan skrip Python **[scripts/generate_modul5_signals.py](scripts/generate_modul5_signals.py)** (`matplotlib` + `numpy`) untuk memberi gambaran bentuk sinyal yang diharapkan di Serial Plotter. Bentuk sinyal asli hasil praktikum bisa berbeda.
 
 ---
 
@@ -94,7 +96,9 @@ RPM = (Jumlah_Pulsa_Bertambah / Waktu_dalam_detik) × (60 / CPR_TOTAL)
 
 Angka CPR dan rasio gearbox pada datasheet/toko online sering tidak akurat — cara paling presisi adalah **kalibrasi langsung** (memutar poros output sejumlah putaran penuh yang diketahui, lalu menghitung pulsa yang tercatat). Pada modul ini, `CPR_TOTAL` cukup memakai **nilai estimasi dari spesifikasi motor** (untuk JGA25-370 1000RPM: ±102, lihat Percobaan 2) — cukup memadai untuk keperluan praktikum, meski nilai motor Anda sendiri bisa sedikit berbeda.
 
-![Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros](img/diagram_quadrature_encoder.png)
+<img src="img/anim_quadrature_direction.gif" alt="Gambar 1: Animasi sinyal quadrature encoder Channel A dan Channel B, menunjukkan bagaimana urutan fasa antar kedua channel menentukan arah putaran (maju vs mundur)" width="70%">
+
+*Gambar 1: Animasi sinyal quadrature encoder Channel A dan Channel B — perhatikan urutan fasa antar kedua channel berbalik saat arah putaran berbalik (Channel A mendahului B saat maju/CW, Channel B mendahului A saat mundur/CCW)*
 
 ### C.2 Menghaluskan Sinyal — Filter Alpha
 Nilai RPM mentah dari encoder biasanya **tidak mulus** — angkanya bisa melompat-lompat sedikit antar pembacaan (disebut *noise*), terutama saat motor berputar pelan. Cara paling sederhana untuk menghaluskannya adalah **filter alpha** (juga disebut *low-pass filter*), dengan rumus:
@@ -105,7 +109,9 @@ nilai_halus_baru = α × nilai_halus_lama + (1-α) × nilai_mentah_baru
 
 `α` (dibaca "alpha") adalah angka antara 0–1 yang menentukan seberapa besar nilai lama dipertahankan. Semakin besar `α`, hasilnya semakin halus — tapi juga semakin lambat mengikuti perubahan nyata (istilahnya *lag*, alias "telat merespons"). Filter ini cukup satu angka (`α`) untuk diatur, jadi paling mudah diterapkan — tapi karena angkanya tetap, filter ini tidak bisa "menyesuaikan diri" saat kondisi sinyal berubah.
 
-![Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag](img/grafik_filter_alpha.png)
+<img src="img/grafik_filter_alpha.png" alt="Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag" width="60%">
+
+*Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag*
 
 ### C.3 Filter yang Lebih Pintar — Kalman Filter
 Bayangkan Anda punya dua sumber informasi tentang kecepatan motor: **perkiraan** (berdasarkan pembacaan sebelumnya) dan **pengukuran baru** dari sensor. **Kalman filter** menggabungkan keduanya secara otomatis, dengan lebih "percaya" pada sumber mana pun yang saat itu lebih bisa diandalkan.
@@ -126,7 +132,9 @@ P = (1 - K) × P
 ```
 `X` adalah tebakan terbaik nilai saat ini, dan `P` adalah seberapa yakin kita pada tebakan itu (semakin kecil `P`, semakin yakin). Karena `K` dihitung ulang tiap siklus, Kalman filter otomatis lebih "percaya" ke sensor saat belum yakin, dan lebih "percaya" ke perkiraannya sendiri saat sudah stabil — perilaku adaptif yang tidak dimiliki filter alpha.
 
-![Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama](img/diagram_kalman_filter.png)
+<img src="img/diagram_kalman_filter.png" alt="Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama" width="85%">
+
+*Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama*
 
 ### C.4 Sistem Kontrol Closed-Loop (Loop Tertutup)
 Sistem kontrol closed-loop bekerja seperti termostat AC: alat terus **mengukur** kondisi sebenarnya, **membandingkannya** dengan target, lalu **mengoreksi** — berulang-ulang. Target yang ingin dicapai disebut **setpoint**, nilai sebenarnya yang diukur sensor disebut **feedback**, dan selisih antara keduanya disebut **error**:
@@ -139,7 +147,9 @@ Dua cara paling dasar mengoreksi error:
 - **Kontrol On-Off (seperti termostat murah):** aktuator dinyalakan penuh kalau nilai masih di bawah target, dimatikan total kalau sudah tercapai. Simpel, tapi hasilnya berosilasi naik-turun terus di sekitar target (tidak pernah benar-benar diam)
 - **Kontrol Proportional (P):** koreksi yang diberikan sebanding dengan besar error (`output = Kp × error`) — makin jauh dari target, makin besar koreksinya. Lebih halus dari on-off, tapi biasanya menyisakan sedikit selisih yang tidak pernah hilang (disebut **steady-state error**)
 
-![Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)](img/diagram_closed_loop.png)
+<img src="img/diagram_closed_loop.png" alt="Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)" width="85%">
+
+*Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)*
 
 ### C.5 Kontrol PID
 PID menyempurnakan kontrol P dengan menambah dua "asisten" koreksi lain:
@@ -157,7 +167,9 @@ Tiga hal praktis yang perlu diperhatikan saat menerapkan PID di dunia nyata:
 - **PWM minimum:** motor DC sering butuh tenaga minimum tertentu untuk mulai bergerak (melawan gesekan) — kalau output PID kecil tapi bukan nol, nilainya perlu dinaikkan ke ambang minimum ini
 - **Tuning:** mencari angka Kp, Ki, Kd yang pas biasanya lewat coba-coba terarah — ubah satu angka, amati responsnya, ulangi (ada juga metode lebih sistematis seperti **Ziegler-Nichols**, di luar cakupan modul ini)
 
-![Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning](img/diagram_blok_pid.png)
+<img src="img/diagram_blok_pid.png" alt="Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning" width="85%">
+
+*Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning*
 
 ---
 
@@ -203,6 +215,10 @@ Mahasiswa mampu mengidentifikasi noise pada sinyal sensor mentah dan menerapkan 
 | MPU6500 — SCL | GPIO 22 | Mode I2C |
 | MPU6500 — CS/NCS | 3.3V (ditarik tetap) | Wajib, agar modul beroperasi dalam mode I2C |
 | MPU6500 — VCC/GND | 3.3V, GND | — |
+
+<img src="img/wiring_mpu6500_p1.png" alt="Gambar 6: Wiring MPU6500 mode I2C ke ESP32" width="60%">
+
+*Gambar 6: Wiring MPU6500 mode I2C ke ESP32*
 
 **`platformio.ini`:**
 ```ini
@@ -311,9 +327,13 @@ Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2)
 
 > Kabel daya motor (M1 Merah / M2 Putih) **tidak digunakan** pada percobaan ini — motor diputar dengan tangan.
 
-![Gambar 6: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
+<img src="img/wiring_encoder_esp32.png" alt="Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2" width="60%">
 
-![Gambar 7: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
+*Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2*
+
+<img src="img/plot_filter_alpha_contoh.png" alt="Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus" width="60%">
+
+*Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus*
 
 **`platformio.ini`:**
 ```ini
@@ -328,7 +348,7 @@ framework = arduino
 2. Tambahkan rumus RPM dari Dasar Teori C.1, pakai `PULSES_PER_REV = 102.0` (lihat kode di bawah)
 3. Upload, putar poros dengan tangan — amati RPM berubah langsung. Kalau tetap 0, cek Channel A/B tertukar pin
 4. Amati RPM mentah di **Serial Plotter** — lebih bergerigi dibanding akselerometer di Percobaan 1
-5. Implementasikan filter alpha yang sama seperti Percobaan 1, tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 7)
+5. Implementasikan filter alpha yang sama seperti Percobaan 1, tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 8)
 6. Uji α = 0.3, lalu 0.7, lalu 0.9 — Build & Upload ulang tiap nilai. Analisis kapan α besar/kecil lebih menguntungkan
 
 **Kode Program (Encoder + RPM + Low-Pass Filter Alpha — Program Lengkap):**
@@ -432,7 +452,9 @@ Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif 
 
 > **Catatan:** Sama seperti Percobaan 2, fokusnya adalah **membandingkan bentuk tiga garis** pada grafik, bukan mengubah kecepatan motor.
 
-![Gambar 8: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual](img/plot_filter_kalman_contoh.png)
+<img src="img/plot_filter_kalman_contoh.png" alt="Gambar 9: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual" width="60%">
+
+*Gambar 9: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual*
 
 **Skema Rangkaian:**
 
@@ -453,7 +475,7 @@ framework = arduino
 **Langkah Kerja:**
 1. Upload kode di bawah — sudah mencakup RPM + filter alpha sebagai pembanding, ditambah Kalman filter baru
 2. Perhatikan implementasi kelas `KalmanFilter` pada kode
-3. Tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` bersamaan di Serial Plotter (lihat Gambar 8)
+3. Tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` bersamaan di Serial Plotter (lihat Gambar 9)
 4. Uji Q/R default (0.001, 0.1), lalu ubah ke Q=0.1, R=5 — amati perubahan bentuk garis `RPM_Kalman`
 5. Bandingkan visual: `RPM_Kalman` harus lebih halus namun lebih cepat merespons dibanding `RPM_Alpha` — tuliskan pengamatan ini
 
@@ -591,9 +613,13 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 
 > **Catatan:** Percobaan ini adalah yang pertama di modul ini di mana motor dikendalikan oleh program (closed-loop) — bukan diputar tangan lagi seperti percobaan-percobaan sebelumnya.
 
-![Gambar 9: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
+<img src="img/wiring_motor_encoder_gabungan.png" alt="Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul" width="65%">
 
-![Gambar 10: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)](img/plot_onoff_vs_p_contoh.png)
+*Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul*
+
+<img src="img/plot_onoff_vs_p_contoh.png" alt="Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)" width="60%">
+
+*Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)*
 
 **Skema Rangkaian:**
 
@@ -607,7 +633,7 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 | Motor DC — M2 (Putih, −) | Driver OUT2 | — |
 | Motor DC — daya | Catu daya eksternal via driver (L298N) | **Jangan** ambil dari 5V USB langsung |
 
-> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 9 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha sebagai sumber RPM terfilter.
+> Pin ENA/IN1/IN2 mengikuti Modul 2 Percobaan 3, kecuali IN2 dipindah ke GPIO 27 karena GPIO 33 kini dipakai encoder. Lihat Gambar 10 untuk wiring gabungan encoder + driver motor dalam satu rangkaian. Gunakan filter alpha sebagai sumber RPM terfilter.
 
 **`platformio.ini`:**
 ```ini
@@ -618,12 +644,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor DC + driver + encoder sesuai Gambar 9, pakai catu daya eksternal untuk motor (bukan 5V USB)
+1. Rangkai motor DC + driver + encoder sesuai Gambar 10, pakai catu daya eksternal untuk motor (bukan 5V USB)
 2. Tentukan target RPM = 100 di kode
-3. Coba mode **on-off** dulu — amati Serial Plotter: RPM naik-turun terus di sekitar target dan motor bergetar, ini **normal** untuk mode on-off (bandingkan Gambar 10)
+3. Coba mode **on-off** dulu — amati Serial Plotter: RPM naik-turun terus di sekitar target dan motor bergetar, ini **normal** untuk mode on-off (bandingkan Gambar 11)
 4. Ganti ke mode **Proportional** (`Kp = 3.0`) — RPM lebih stabil, tapi berhenti sedikit di bawah target (disebut *steady-state error*), ini juga normal untuk kontrol P
 5. Screenshot Serial Plotter kedua mode, lalu hitung kasar *steady-state error* mode P (target dikurangi RPM rata-rata saat stabil)
-6. Kalau motor tidak bergerak sama sekali, cek wiring driver (Gambar 9) dan urutan `IN1`/`IN2` sebelum `ledcWrite()` dipanggil
+6. Kalau motor tidak bergerak sama sekali, cek wiring driver (Gambar 10) dan urutan `IN1`/`IN2` sebelum `ledcWrite()` dipanggil
 
 **Kode Program (Encoder + Filter + Kontrol On-Off/Proportional — Program Lengkap):**
 ```cpp
@@ -770,9 +796,13 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 
 > **Catatan:** Percobaan ini adalah puncak/akhir dari seluruh modul — menggabungkan encoder, filtering, dan kontrol dari percobaan-percobaan sebelumnya menjadi satu sistem PID lengkap.
 
-![Gambar 11: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32](img/wiring_pid_lengkap.png)
+<img src="img/wiring_pid_lengkap.png" alt="Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32" width="60%">
 
-![Gambar 12: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)](img/plot_pid_sebelum_sesudah_tuning.png)
+*Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32*
+
+<img src="img/plot_pid_sebelum_sesudah_tuning.png" alt="Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)" width="60%">
+
+*Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)*
 
 **Skema Rangkaian:**
 
@@ -781,9 +811,9 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 | Encoder — Channel A / B | GPIO 32 / GPIO 33 | `INPUT_PULLUP`, decoding quadrature |
 | Driver motor — ENA / IN1 / IN2 | GPIO 25 / GPIO 26 / GPIO 27 | Sinyal PWM & arah putar motor |
 | Tombol Naik Target RPM | GPIO 14 | `INPUT_PULLUP` |
-| Tombol Turun Target RPM | GPIO 16 | `INPUT_PULLUP` |
+| Tombol Turun Target RPM | GPIO 16 (RX2) | `INPUT_PULLUP` |
 
-Lihat Gambar 11 untuk wiring gabungan seluruh komponen di atas dalam satu rangkaian.
+Lihat Gambar 12 untuk wiring gabungan seluruh komponen di atas dalam satu rangkaian.
 
 **`platformio.ini`:**
 ```ini
@@ -794,7 +824,7 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai Gambar 11
+1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai Gambar 12
 2. Upload kode di bawah
 3. Tekan tombol naik sampai target ≈ 100 RPM — motor otomatis mengejar
 4. Amati Serial Plotter — respons awal biasanya belum bagus. Screenshot sebagai **"sebelum tuning"**
@@ -802,7 +832,12 @@ framework = arduino
    - Naikkan **Kp** sampai respons cepat tapi belum berosilasi liar
    - Tambah **Ki** sampai target tercapai (steady-state error hilang)
    - Tambah **Kd** kalau masih overshoot
-   - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 12)
+   - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 13)
+6. Bandingkan bentuk respons yang Anda dapatkan di sepanjang proses tuning dengan jenis-jenis hasil umum pada Gambar 14 — analisis kombinasi Kp/Ki/Kd apa yang kira-kira menyebabkan tiap jenis respons tersebut
+
+<img src="img/jenis_respons_pid.png" alt="Gambar 14: Jenis-jenis hasil respons kontrol PID — overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup" width="90%">
+
+*Gambar 14: Jenis-jenis hasil respons kontrol PID — overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup*
 
 **Kode Program (Kontrol PID Lengkap — Encoder, Filter, PID, Tombol Target):**
 ```cpp
