@@ -613,7 +613,9 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 
 > **Catatan:** Percobaan ini adalah yang pertama di modul ini di mana motor dikendalikan oleh program (closed-loop) — bukan diputar tangan lagi seperti percobaan-percobaan sebelumnya.
 
-![Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
+<img src="img/wiring_motor_encoder_gabungan.png" alt="Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul" width="65%">
+
+*Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul*
 
 <img src="img/plot_onoff_vs_p_contoh.png" alt="Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)" width="60%">
 

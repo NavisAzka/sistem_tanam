@@ -88,7 +88,9 @@ Salah satu ciri khas STM32duino adalah dukungan penamaan pin langsung sesuai lab
 ### C.3 ESP32 dan Framework ESP-IDF
 ESP32 adalah mikrokontroler 32-bit dual-core (Xtensa LX6) dengan WiFi dan Bluetooth terintegrasi, serta dilengkapi USB-to-Serial bawaan sehingga dapat langsung diprogram melalui kabel USB tanpa programmer eksternal.
 
-![Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard](img/pinout_esp32_devkit.png)
+<img src="img/pinout_esp32_devkit.png" alt="Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard" width="80%">
+
+*Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard*
 
 **ESP-IDF (Espressif IoT Development Framework)** adalah framework resmi dan native dari Espressif, dibangun di atas FreeRTOS. Berbeda dengan framework Arduino yang menyederhanakan program menjadi `setup()` dan `loop()`, ESP-IDF menggunakan struktur berbasis **task/component** dengan titik masuk program berupa fungsi `app_main()`. ESP-IDF memberi akses lebih penuh ke fitur ESP32 (mis. konfigurasi low-level WiFi, task scheduling FreeRTOS secara langsung) dan umum digunakan pada pengembangan produk IoT tingkat lanjut.
 
@@ -124,7 +126,9 @@ ADC mengubah tegangan analog pada suatu pin menjadi nilai digital yang dapat dio
 
 > **Catatan:** Percobaan ADC pada modul ini hanya memperkenalkan *cara mengakses* GPIO sebagai input analog menggunakan satu sensor sederhana (LDR). Pembahasan lebih lanjut mengenai klasifikasi sensor berdasarkan basis pengukurannya (resistif, kapasitif, induktif, dan basis lain) beserta ragam sensor/aktuator lain akan dibahas lebih mendalam pada **Modul 2**.
 
-![Gambar 5: Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard](img/modul_ldr_pembagi_tegangan.png)
+<img src="img/modul_ldr_pembagi_tegangan.png" alt="Gambar 5: Foto komponen LDR (Light Dependent Resistor) — rangkai sebagai pembagi tegangan bersama resistor 10kΩ sesuai tabel Skema Rangkaian di atas" width="45%">
+
+*Gambar 5: Foto komponen LDR (Light Dependent Resistor) — rangkai sebagai pembagi tegangan bersama resistor 10kΩ sesuai tabel Skema Rangkaian di atas*
 
 ---
 

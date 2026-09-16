@@ -97,7 +97,9 @@ Selain untuk sensor, SPI juga umum dipakai untuk menghubungkan mikrokontroler ke
 
 Karena ARP dan **ICMP Echo (ping)** ditangani otomatis oleh hardware chip, cukup dengan `Ethernet.begin()` menggunakan IP yang valid, W5500 akan langsung dapat di-*ping* dari perangkat lain di jaringan yang sama — tanpa perlu menulis kode tambahan apa pun untuk merespons ping.
 
-![Gambar 5: Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal yang sama dengan PC](img/wiring_w5500_esp32.png)
+<img src="img/wiring_w5500_esp32.jpg" alt="Gambar 5: Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal yang sama dengan PC" width="65%">
+
+*Gambar 5: Diagram wiring SPI antara ESP32 dan modul W5500, beserta koneksi RJ45 ke jaringan lokal yang sama dengan PC*
 
 ---
 

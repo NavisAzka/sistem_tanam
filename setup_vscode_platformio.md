@@ -207,7 +207,9 @@ https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers
 https://www.wch-ic.com/downloads/CH341SER_ZIP.html
 ```
 
-![Gambar 16: Contoh penanda chip CP2102/CH340 pada board ESP32 — biasanya berbentuk chip kecil persegi di dekat port USB](img/chip_cp2102_ch340.png)
+<img src="img/chip_cp2102_ch340.jpg" alt="Gambar 16: Contoh penanda chip CP2102 dan CH340 pada board ESP32 — biasanya berbentuk chip kecil persegi di dekat port USB" width="55%">
+
+*Gambar 16: Contoh penanda chip CP2102 dan CH340 pada board ESP32 — biasanya berbentuk chip kecil persegi di dekat port USB*
 
 1. Unduh driver sesuai chip yang terdeteksi.
 2. Ekstrak file (jika berbentuk .zip), lalu jalankan installer di dalamnya.

@@ -87,23 +87,31 @@ Perbedaan mendasar dengan LDR terletak pada **peran** sensor tersebut dalam sist
 
 Setiap sumbu joystick menghasilkan nilai ADC 12-bit (0–4095) dengan **titik tengah (netral)** di sekitar nilai 2048 saat stick tidak disentuh — nilai ini umumnya tidak presisi tepat 2048 karena toleransi komponen, sehingga diperlukan **dead zone** (rentang toleransi di sekitar titik tengah yang dianggap "netral") agar motor tidak bergerak sendiri akibat noise pembacaan ADC saat stick dalam posisi diam.
 
-![Gambar 1: Foto modul joystick 2-axis KY-023 (label pin VRx/VRy/SW/VCC/GND)](img/modul_joystick_ky023.png)
+<img src="img/modul_joystick_ky023.png" alt="Gambar 1: Foto modul joystick 2-axis KY-023 (label pin VRx/VRy/SW/VCC/GND)" width="35%">
+
+*Gambar 1: Foto modul joystick 2-axis KY-023 (label pin VRx/VRy/SW/VCC/GND)*
 
 ### C.2 Sensor Kapasitif
 Sensor kapasitif mendeteksi besaran fisik (sentuhan, kelembapan, jarak dekat) melalui **perubahan nilai kapasitansi**. Pada praktikum ini digunakan modul **touch sensor TTP223** — modul berbasis IC TTP223 yang sudah mengintegrasikan rangkaian deteksi kapasitansi dan pembanding ambang batas (threshold) secara internal, sehingga cukup menghasilkan **output digital HIGH/LOW** siap pakai (umumnya aktif HIGH saat pad disentuh) tanpa perlu kalibrasi nilai analog secara manual — berbeda dengan fitur *touch* bawaan ESP32 (`touchRead()`) yang mengembalikan nilai mentah dan memerlukan penentuan threshold sendiri. Sensor kapasitif lain (mis. capacitive soil moisture, capacitive proximity) bekerja dengan prinsip serupa — mengukur perubahan kapasitansi pada elektroda sensor — namun umumnya berbentuk modul terpisah dengan output analog.
 
-![Gambar 2: Foto modul touch sensor TTP223 beserta label pin VCC/GND/OUT](img/modul_touch_ttp223.png)
+<img src="img/modul_touch_ttp223.png" alt="Gambar 2: Foto modul touch sensor TTP223 beserta label pin VCC/GND/OUT" width="45%">
+
+*Gambar 2: Foto modul touch sensor TTP223 beserta label pin VCC/GND/OUT*
 
 ### C.3 Sensor Induktif
 Sensor induktif mendeteksi objek logam atau perubahan medan magnet melalui **perubahan induktansi/medan magnet**. Pada praktikum ini digunakan **hall effect sensor**, yang mendeteksi keberadaan/kekuatan medan magnet secara langsung — umum digunakan untuk mendeteksi posisi magnet atau kecepatan putar (bersama magnet pada objek berputar). Contoh sensor induktif lain adalah *inductive proximity sensor*, yang menghasilkan medan elektromagnetik osilasi dan mendeteksi benda logam melalui redaman (eddy current) pada medan tersebut.
 
-![Gambar 3: Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji](img/modul_hall_effect.png)
+<img src="img/modul_hall_effect.png" alt="Gambar 3: Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji" width="40%">
+
+*Gambar 3: Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji*
 
 ### C.4 Sensor Basis Lain (Akustik & Optik)
 - **Ultrasonik (akustik):** mengukur jarak berdasarkan waktu tempuh gelombang suara (pulsa dipancarkan, dipantulkan objek, lalu diterima kembali); jarak dihitung dari selisih waktu dan kecepatan suara di udara
 - **Inframerah/optik:** mendeteksi objek berdasarkan pantulan cahaya inframerah; umum digunakan sebagai sensor jarak dekat/obstacle dengan output digital
 
-![Gambar 4: Foto modul sensor ultrasonik HC-SR04 (label pin Trig/Echo) berdampingan dengan modul sensor IR obstacle](img/sensor_ultrasonik_ir.png)
+<img src="img/sensor_ultrasonik_ir.png" alt="Gambar 4: Foto modul sensor ultrasonik HC-SR04 (label pin Trig/Echo) berdampingan dengan modul sensor IR obstacle" width="65%">
+
+*Gambar 4: Foto modul sensor ultrasonik HC-SR04 (label pin Trig/Echo) berdampingan dengan modul sensor IR obstacle*
 
 ### C.5 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC
 PWM adalah teknik menghasilkan sinyal digital yang menyerupai sinyal analog dengan mengatur **duty cycle** (persentase waktu sinyal HIGH dalam satu periode). Semakin besar duty cycle, semakin besar "rata-rata" tegangan yang dirasakan oleh beban (mis. motor DC), sehingga kecepatan putarnya meningkat. Pada ESP32 framework Arduino, PWM diakses melalui API **LEDC** berbasis **channel**: `ledcSetup(channel, freq, resolution)` untuk mengonfigurasi sebuah channel PWM (frekuensi & resolusi), `ledcAttachPin(pin, channel)` untuk menghubungkan channel tersebut ke pin fisik, dan `ledcWrite(channel, duty)` untuk mengatur duty cycle-nya berdasarkan nomor channel (bukan nomor pin). Arah putar motor DC diatur secara terpisah melalui driver motor (mis. L298N) menggunakan dua pin digital (IN1/IN2).
@@ -128,7 +136,9 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 - **EN (Enable):** mengaktifkan/menonaktifkan driver — saat dinonaktifkan, motor dapat diputar bebas secara manual
 - **RESET/SLEEP:** beberapa driver memiliki pin ini untuk mereset atau menonaktifkan mode tidur driver, umumnya perlu ditarik HIGH agar driver aktif normal
 
-![Gambar 7: Diagram wiring motor stepper NEMA17 ke driver A4988/DRV8825, beserta pin STEP/DIR/EN/RESET ke ESP32](img/wiring_motor_stepper.png)
+<img src="img/wiring_motor_stepper.png" alt="Gambar 7: Contoh wiring motor stepper NEMA17 ke driver STEP/DIR (mis. A4988/DRV8825) dan mikrokontroler (board pada gambar ilustratif, prinsip pin STEP/DIR/EN sama pada ESP32)" width="70%">
+
+*Gambar 7: Contoh wiring motor stepper NEMA17 ke driver STEP/DIR (mis. A4988/DRV8825) dan mikrokontroler — board pada gambar hanya ilustratif, prinsip pin STEP/DIR/EN berlaku sama saat dipasang ke ESP32*
 
 ### C.8 ESC (Electronic Speed Controller) dan Motor Brushless
 Motor **brushless (BLDC — Brushless DC Motor)** tidak dapat dikendalikan langsung oleh driver H-bridge sederhana seperti motor DC biasa, karena memerlukan **komutasi elektronik** — pengaturan urutan pemberian arus ke tiga lilitan stator secara presisi agar rotor berputar. Tugas ini dilakukan oleh **ESC (Electronic Speed Controller)**, rangkaian elektronik yang menerima sinyal kontrol sederhana dari mikrokontroler dan menerjemahkannya menjadi pola komutasi 3-fasa untuk motor.
