@@ -110,12 +110,16 @@ PWM adalah teknik menghasilkan sinyal digital yang menyerupai sinyal analog deng
 
 > **Catatan versi:** Seluruh contoh kode pada modul ini (dan modul-modul lain dalam rangkaian praktikum) menggunakan **platform PlatformIO resmi `espressif32`** tanpa mengunci versi khusus, yang secara default membawa **Arduino-ESP32 core versi 2.0.x**. API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`) adalah API yang tersedia pada core versi ini. Core versi 3.x (dengan API LEDC berbasis pin seperti `ledcAttach()`) memerlukan platform komunitas terpisah (mis. fork *pioarduino*) dan **tidak dibahas** pada praktikum ini agar tetap konsisten dan kompatibel dengan library lain (mis. ESP32Servo) yang digunakan di modul-modul ini.
 
-![Gambar 5: Grafik sinyal PWM dengan beberapa nilai duty cycle berbeda (mis. 25%, 50%, 75%), menunjukkan hubungan duty cycle dengan tegangan rata-rata](img/grafik_pwm_duty_cycle.png)
+<img src="img/grafik_pwm_duty_cycle.png" alt="Gambar 5: Grafik sinyal PWM dengan beberapa nilai duty cycle berbeda (mis. 25%, 50%, 75%), menunjukkan hubungan duty cycle dengan tegangan rata-rata" width="60%">
+
+*Gambar 5: Grafik sinyal PWM dengan beberapa nilai duty cycle berbeda (mis. 25%, 50%, 75%), menunjukkan hubungan duty cycle dengan tegangan rata-rata*
 
 ### C.6 Kontrol Posisi Motor Servo
 Motor servo juga dikendalikan menggunakan sinyal PWM, namun dengan prinsip yang berbeda dari kontrol kecepatan motor DC — pada servo, **lebar pulsa (pulse width)** itu sendiri yang menentukan posisi sudut, bukan rata-rata duty cycle. Umumnya sinyal kontrol servo memiliki periode 20ms (frekuensi 50Hz), dengan lebar pulsa sekitar 1ms merepresentasikan sudut 0° dan 2ms merepresentasikan sudut 180°. Pada framework Arduino, detail ini diabstraksi oleh library seperti **ESP32Servo**, sehingga cukup memanggil fungsi `.write(angle)` untuk menggerakkan servo ke sudut tertentu.
 
-![Gambar 6: Diagram lebar pulsa sinyal servo (1ms–2ms dalam periode 20ms) beserta sudut yang dihasilkan (0°–180°)](img/diagram_pulsa_servo.png)
+<img src="img/diagram_pulsa_servo.png" alt="Gambar 6: Diagram lebar pulsa sinyal servo (1ms–2ms dalam periode 20ms) beserta sudut yang dihasilkan (0°–180°)" width="65%">
+
+*Gambar 6: Diagram lebar pulsa sinyal servo (1ms–2ms dalam periode 20ms) beserta sudut yang dihasilkan (0°–180°)*
 
 ### C.7 Motor Stepper
 Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **langkah-langkah diskret (step)** sesuai jumlah pulsa yang diberikan — misalnya 1.8° per step pada motor stepper standar (200 step per putaran penuh). Motor stepper dikendalikan melalui **driver motor stepper** (mis. A4988, DRV8825), yang menerima sinyal:
@@ -137,7 +141,9 @@ Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz 
 
 > ⚠️ **Peringatan Keselamatan:** Motor brushless berputar sangat cepat dan bertenaga. **Selalu lepas propeller/baling-baling** sebelum menguji program, dan pastikan motor terpasang aman (tidak bisa terlempar) sebelum menyambungkan baterai. Jangan pernah menyentuh motor atau ESC saat baterai terhubung dan program sedang berjalan.
 
-![Gambar 8: Diagram wiring ESC ke ESP32 (sinyal PWM) dan ke baterai LiPo (daya utama), beserta motor brushless 3-fasa](img/wiring_esc_brushless.png)
+<img src="img/wiring_esc_brushless.png" alt="Gambar 8: Diagram wiring ESC ke ESP32 (sinyal PWM) dan ke baterai LiPo (daya utama), beserta motor brushless 3-fasa" width="60%">
+
+*Gambar 8: Diagram wiring ESC ke ESP32 (sinyal PWM) dan ke baterai LiPo (daya utama), beserta motor brushless 3-fasa*
 
 ---
 
