@@ -17,6 +17,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "img")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -38,6 +39,37 @@ def save(fig, name):
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
     print(f"saved {path}")
+
+
+def box(ax, xy, w, h, text, fc="#cfe8ff", ec="#1f4e8c", fontsize=9.5):
+    b = FancyBboxPatch(
+        xy,
+        w,
+        h,
+        boxstyle="round,pad=0.02,rounding_size=0.04",
+        linewidth=1.4,
+        edgecolor=ec,
+        facecolor=fc,
+    )
+    ax.add_patch(b)
+    ax.text(xy[0] + w / 2, xy[1] + h / 2, text, ha="center", va="center", fontsize=fontsize, wrap=True)
+    return b
+
+
+def arrow(ax, start, end, text=None, color="#333333", connectionstyle="arc3,rad=0.0", lw=1.6, fontsize=8):
+    a = FancyArrowPatch(
+        start,
+        end,
+        arrowstyle="-|>",
+        mutation_scale=13,
+        linewidth=lw,
+        color=color,
+        connectionstyle=connectionstyle,
+    )
+    ax.add_patch(a)
+    if text:
+        mx, my = (start[0] + end[0]) / 2, (start[1] + end[1]) / 2
+        ax.text(mx, my, text, ha="center", va="bottom", fontsize=fontsize, color=color)
 
 
 def alpha_filter(raw, alpha):
@@ -293,6 +325,135 @@ def plot_pid_response_types():
     save(fig, "jenis_respons_pid.png")
 
 
+# ---------------------------------------------------------------------------
+# Gambar 3 teori (C.3): siklus predict-update Kalman filter + grafik
+# ---------------------------------------------------------------------------
+def plot_kalman_theory_combined():
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4), gridspec_kw={"width_ratios": [1, 1.3]})
+
+    ax = axes[0]
+    box(ax, (0.5, 2.2), 3, 1.3, "PREDICT\nperkirakan state\nberdasarkan model", fc="#cfe8ff", ec="#1f4e8c")
+    box(ax, (0.5, 0.3), 3, 1.3, "UPDATE\nkoreksi perkiraan\ndengan pengukuran baru", fc="#d6f5d6", ec="#2e7d32")
+    arrow(ax, (2.0, 2.15), (2.0, 1.65), text="state prediksi")
+    arrow(ax, (0.5, 0.95), (-0.6, 0.95), text="")
+    arrow(ax, (-0.6, 0.95), (-0.6, 2.85))
+    arrow(ax, (-0.6, 2.85), (0.5, 2.85), text="state terkoreksi\n(untuk siklus berikutnya)")
+    ax.annotate("pengukuran baru\n(sensor)", xy=(2.0, 0.3), xytext=(2.0, -0.6), ha="center", fontsize=8.5,
+                arrowprops=dict(arrowstyle="->", lw=1))
+    ax.set_xlim(-1.3, 4.2)
+    ax.set_ylim(-1.0, 4.0)
+    ax.axis("off")
+    ax.set_title("Siklus Predict–Update Kalman Filter", fontsize=11)
+
+    ax = axes[1]
+    t, raw = make_noisy_rpm(n=220, base=100.0, noise_std=6.5)
+    alpha_out = alpha_filter(raw, 0.7)
+    kalman_out = kalman_1d(raw, q=0.05, r=4.0)
+    ax.plot(t, raw, color="#bbbbbb", linewidth=1, label="RPM_Mentah")
+    ax.plot(t, alpha_out, color="#2ca02c", linewidth=1.8, label="RPM_Alpha")
+    ax.plot(t, kalman_out, color="#1f77b4", linewidth=1.8, label="RPM_Kalman")
+    ax.set_xlabel("sample ke-n")
+    ax.set_ylabel("RPM")
+    ax.set_title("Kalman Filter vs Filter Alpha pada Sinyal yang Sama", fontsize=11)
+    ax.legend(fontsize=8.5)
+
+    fig.suptitle("Kalman Filter — Konsep & Hasil", y=1.02, fontsize=13)
+    fig.tight_layout()
+    save(fig, "diagram_kalman_filter.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 4 teori (C.4): blok closed-loop + grafik on-off vs P
+# ---------------------------------------------------------------------------
+def plot_closed_loop_combined():
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4), gridspec_kw={"width_ratios": [1.3, 1]})
+
+    ax = axes[0]
+    box(ax, (0, 1.1), 1.8, 0.9, "Setpoint", fc="#fff3cf", ec="#a3670a", fontsize=9)
+    box(ax, (2.3, 1.1), 1.8, 0.9, "Kontroler", fc="#cfe8ff", ec="#1f4e8c", fontsize=9)
+    box(ax, (4.6, 1.1), 1.8, 0.9, "Aktuator", fc="#ffe4b3", ec="#a3670a", fontsize=9)
+    box(ax, (6.9, 1.1), 1.8, 0.9, "Plant\n(motor)", fc="#d6f5d6", ec="#2e7d32", fontsize=9)
+    box(ax, (4.6, -0.6), 1.8, 0.9, "Sensor\n(encoder)", fc="#f5d6f5", ec="#8c1f8c", fontsize=9)
+
+    arrow(ax, (1.8, 1.55), (2.3, 1.55))
+    arrow(ax, (4.1, 1.55), (4.6, 1.55))
+    arrow(ax, (6.4, 1.55), (6.9, 1.55))
+    arrow(ax, (7.8, 1.1), (7.8, -0.15))
+    arrow(ax, (7.8, -0.15), (6.4, -0.15))
+    arrow(ax, (4.6, -0.15), (1.0, -0.15), text="feedback")
+    arrow(ax, (1.0, -0.15), (1.0, 1.1))
+
+    ax.text(4.4, 2.25, "error = target − aktual", fontsize=8, ha="center", color="gray")
+    ax.set_xlim(-0.5, 9.3)
+    ax.set_ylim(-1.3, 2.9)
+    ax.axis("off")
+    ax.set_title("Sistem Kontrol Closed-Loop", fontsize=11)
+
+    ax = axes[1]
+    t = np.arange(0, 250)
+    target = 100.0
+    onoff = target + 8 * np.sign(np.sin(t / 6.0)) + rng.normal(0, 1.2, len(t))
+    p_response = target - 25 * np.exp(-t / 40.0) - 6 + rng.normal(0, 1.0, len(t))
+    ax.plot(t, onoff, color="#d62728", linewidth=1.1, label="Mode On-Off (osilasi)")
+    ax.plot(t, p_response, color="#1f77b4", linewidth=1.4, label="Mode P (steady-state error)")
+    ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    ax.set_xlabel("waktu (sample)")
+    ax.set_ylabel("RPM")
+    ax.set_title("Respons On-Off vs Proportional (P)", fontsize=11)
+    ax.legend(fontsize=8)
+
+    fig.suptitle("Kontrol Closed-Loop — Blok Sistem & Contoh Respons", y=1.02, fontsize=13)
+    fig.tight_layout()
+    save(fig, "diagram_closed_loop.png")
+
+
+# ---------------------------------------------------------------------------
+# Gambar 5 teori (C.5): blok kontroler PID + grafik sebelum/sesudah tuning
+# ---------------------------------------------------------------------------
+def plot_pid_block_combined():
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.2), gridspec_kw={"width_ratios": [1.2, 1]})
+
+    ax = axes[0]
+    box(ax, (0, 1.6), 1.6, 0.8, "Error e(t)", fc="#fff3cf", ec="#a3670a", fontsize=8.5)
+    box(ax, (2.2, 2.8), 1.8, 0.8, "P: Kp·e(t)", fc="#cfe8ff", ec="#1f4e8c", fontsize=8.5)
+    box(ax, (2.2, 1.6), 1.8, 0.8, "I: Ki·∫e(t)dt", fc="#d6f5d6", ec="#2e7d32", fontsize=8.5)
+    box(ax, (2.2, 0.4), 1.8, 0.8, "D: Kd·de(t)/dt", fc="#f5d6d6", ec="#a31515", fontsize=8.5)
+    box(ax, (5.0, 1.6), 1.8, 0.8, "Σ (jumlah)", fc="#fff3cf", ec="#a3670a", fontsize=9)
+    box(ax, (7.3, 1.6), 1.9, 0.8, "Output PWM\nke motor", fc="#e6d6f5", ec="#5b1f8c", fontsize=8.5)
+
+    arrow(ax, (1.6, 2.0), (2.2, 3.2))
+    arrow(ax, (1.6, 2.0), (2.2, 2.0))
+    arrow(ax, (1.6, 2.0), (2.2, 0.8))
+    arrow(ax, (4.0, 3.2), (5.0, 2.15))
+    arrow(ax, (4.0, 2.0), (5.0, 2.0))
+    arrow(ax, (4.0, 0.8), (5.0, 1.85))
+    arrow(ax, (6.8, 2.0), (7.3, 2.0))
+
+    ax.set_xlim(-0.5, 9.4)
+    ax.set_ylim(0, 4.0)
+    ax.axis("off")
+    ax.set_title("Diagram Blok Kontroler PID", fontsize=11)
+
+    ax = axes[1]
+    t = np.arange(0, 250)
+    target = 100.0
+    before = target * (1 - np.exp(-t / 25.0)) + 45 * np.exp(-t / 70.0) * np.cos(t / 18.0)
+    before += rng.normal(0, 1.5, len(t))
+    after = target * (1 - np.exp(-t / 20.0)) + 6 * np.exp(-t / 18.0) * np.cos(t / 9.0)
+    after += rng.normal(0, 1.0, len(t))
+    ax.plot(t, before, color="#d62728", linewidth=1.2, label="Sebelum Tuning")
+    ax.plot(t, after, color="#1f77b4", linewidth=1.5, label="Sesudah Tuning")
+    ax.axhline(target, color="black", ls="--", lw=1, label="Target RPM")
+    ax.set_xlabel("waktu (sample)")
+    ax.set_ylabel("RPM")
+    ax.set_title("Respons Sebelum vs Sesudah Tuning", fontsize=11)
+    ax.legend(fontsize=8)
+
+    fig.suptitle("Kontroler PID — Diagram Blok & Contoh Hasil Tuning", y=1.02, fontsize=13)
+    fig.tight_layout()
+    save(fig, "diagram_blok_pid.png")
+
+
 if __name__ == "__main__":
     plot_quadrature_encoder()
     plot_alpha_theory()
@@ -301,3 +462,6 @@ if __name__ == "__main__":
     plot_onoff_vs_p()
     plot_pid_tuning()
     plot_pid_response_types()
+    plot_kalman_theory_combined()
+    plot_closed_loop_combined()
+    plot_pid_block_combined()

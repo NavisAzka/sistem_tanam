@@ -132,7 +132,9 @@ P = (1 - K) × P
 ```
 `X` adalah tebakan terbaik nilai saat ini, dan `P` adalah seberapa yakin kita pada tebakan itu (semakin kecil `P`, semakin yakin). Karena `K` dihitung ulang tiap siklus, Kalman filter otomatis lebih "percaya" ke sensor saat belum yakin, dan lebih "percaya" ke perkiraannya sendiri saat sudah stabil — perilaku adaptif yang tidak dimiliki filter alpha.
 
-![Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama](img/diagram_kalman_filter.png)
+<img src="img/diagram_kalman_filter.png" alt="Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama" width="85%">
+
+*Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama*
 
 ### C.4 Sistem Kontrol Closed-Loop (Loop Tertutup)
 Sistem kontrol closed-loop bekerja seperti termostat AC: alat terus **mengukur** kondisi sebenarnya, **membandingkannya** dengan target, lalu **mengoreksi** — berulang-ulang. Target yang ingin dicapai disebut **setpoint**, nilai sebenarnya yang diukur sensor disebut **feedback**, dan selisih antara keduanya disebut **error**:
@@ -145,7 +147,9 @@ Dua cara paling dasar mengoreksi error:
 - **Kontrol On-Off (seperti termostat murah):** aktuator dinyalakan penuh kalau nilai masih di bawah target, dimatikan total kalau sudah tercapai. Simpel, tapi hasilnya berosilasi naik-turun terus di sekitar target (tidak pernah benar-benar diam)
 - **Kontrol Proportional (P):** koreksi yang diberikan sebanding dengan besar error (`output = Kp × error`) — makin jauh dari target, makin besar koreksinya. Lebih halus dari on-off, tapi biasanya menyisakan sedikit selisih yang tidak pernah hilang (disebut **steady-state error**)
 
-![Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)](img/diagram_closed_loop.png)
+<img src="img/diagram_closed_loop.png" alt="Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)" width="85%">
+
+*Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)*
 
 ### C.5 Kontrol PID
 PID menyempurnakan kontrol P dengan menambah dua "asisten" koreksi lain:
@@ -163,7 +167,9 @@ Tiga hal praktis yang perlu diperhatikan saat menerapkan PID di dunia nyata:
 - **PWM minimum:** motor DC sering butuh tenaga minimum tertentu untuk mulai bergerak (melawan gesekan) — kalau output PID kecil tapi bukan nol, nilainya perlu dinaikkan ke ambang minimum ini
 - **Tuning:** mencari angka Kp, Ki, Kd yang pas biasanya lewat coba-coba terarah — ubah satu angka, amati responsnya, ulangi (ada juga metode lebih sistematis seperti **Ziegler-Nichols**, di luar cakupan modul ini)
 
-![Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning](img/diagram_blok_pid.png)
+<img src="img/diagram_blok_pid.png" alt="Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning" width="85%">
+
+*Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning*
 
 ---
 
