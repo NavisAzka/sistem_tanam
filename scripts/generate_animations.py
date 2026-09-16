@@ -35,6 +35,16 @@ def hold(seq, n):
     return seq + [seq[-1]] * n
 
 
+def draw_resistor_static(ax, x, y_bottom, y_top, n_zigzag=6, width=0.13, color="#333333"):
+    ys = np.linspace(y_bottom, y_top, n_zigzag * 2 + 1)
+    xs = [x]
+    for i in range(1, len(ys) - 1):
+        xs.append(x + (width if i % 2 == 1 else -width))
+    xs.append(x)
+    (ln,) = ax.plot(xs, ys, color=color, linewidth=1.6, zorder=3)
+    return ln
+
+
 # ---------------------------------------------------------------------------
 # 1) Arah putaran quadrature encoder — disc + sinyal + PENGHITUNG PULSA
 # ---------------------------------------------------------------------------
@@ -406,7 +416,108 @@ def gif_watchdog_timer():
     save_gif(fig, anim, "anim_watchdog_timer.gif", fps=9)
 
 
+# ---------------------------------------------------------------------------
+# 4) Pull-up vs pull-down — animasi arus (bola-bola) mengalir saat tombol
+#    ditekan (sirkuit tertutup), berhenti saat idle (sirkuit terbuka)
+# ---------------------------------------------------------------------------
+def gif_pullup_pulldown_current():
+    fig, axes = plt.subplots(1, 2, figsize=(9.5, 6.6))
+
+    def setup_panel(ax, title, resistor_range, switch_range, gpio_y, tap_color):
+        ax.set_title(title, fontsize=12, fontweight="bold")
+        ax.plot([0, 0], [0, 4], color="#333333", linewidth=1.6, zorder=1)
+        draw_resistor_static(ax, 0, *resistor_range)
+        ax.text(0, 4.15, "VCC (3.3V)", ha="center", fontsize=10, fontweight="bold")
+        ax.text(0, -0.35, "GND", ha="center", fontsize=10, fontweight="bold")
+        ax.plot([0, 1.2], [gpio_y, gpio_y], color=tap_color, linewidth=2, zorder=2)
+        gpio_label = ax.text(1.3, gpio_y, "", va="center", fontsize=10, fontweight="bold", color=tap_color)
+        state_dot = Circle((1.25, gpio_y), 0.09, facecolor="#cccccc", edgecolor="black", zorder=6)
+        ax.add_patch(state_dot)
+        r_mid = (resistor_range[0] + resistor_range[1]) / 2
+        ax.text(0.32, r_mid, "R", fontsize=10, color="gray")
+        ax.set_xlim(-1.6, 2.7)
+        ax.set_ylim(-1.7, 4.6)
+        ax.axis("off")
+        return gpio_label, state_dot
+
+    gpio_label_up, dot_up = setup_panel(axes[0], "Pull-Up Resistor", (2.6, 4.0), (0, 2.2), 2.3, "#1f4e8c")
+    gpio_label_dn, dot_dn = setup_panel(axes[1], "Pull-Down Resistor", (0, 1.4), (1.8, 4.0), 1.7, "#a3670a")
+
+    # elemen switch yang diganti tiap frame (garis pemutus + label)
+    (switch_line_up,) = axes[0].plot([], [], color="#333333", linewidth=1.6, zorder=3)
+    (switch_line_dn,) = axes[1].plot([], [], color="#333333", linewidth=1.6, zorder=3)
+    axes[0].text(-0.6, 1.1, "tombol", fontsize=9, ha="center", color="gray")
+    axes[1].text(-0.6, 2.9, "tombol", fontsize=9, ha="center", color="gray")
+
+    status_text = fig.text(0.5, 0.05, "", ha="center", va="bottom", fontsize=11.5, fontweight="bold")
+
+    n_dots = 5
+    (dots_up,) = axes[0].plot([], [], "o", color="#ffb300", markersize=9, zorder=5)
+    (dots_dn,) = axes[1].plot([], [], "o", color="#ffb300", markersize=9, zorder=5)
+
+    def draw_switch_state(y_bottom, y_top, closed):
+        gap0 = y_bottom + (y_top - y_bottom) * 0.28
+        gap1 = y_top - (y_top - y_bottom) * 0.28
+        if closed:
+            return [0, 0], [gap0, gap1]
+        else:
+            return [0, 0.22], [gap0, gap1]
+
+    # --- sekuens frame: idle(terbuka) -> ditekan(tertutup, arus mengalir) -> lepas ---
+    idle_frames = 14
+    closed_frames = 34
+    release_frames = 6
+    seq = ["idle"] * idle_frames + ["closed"] * closed_frames + ["idle"] * release_frames
+    n_frames = len(seq)
+
+    def init():
+        return [switch_line_up, switch_line_dn, dots_up, dots_dn]
+
+    def update(frame):
+        state = seq[frame]
+        closed = state == "closed"
+
+        xs, ys = draw_switch_state(0, 2.2, closed)
+        switch_line_up.set_data(xs, ys)
+        xs2, ys2 = draw_switch_state(1.8, 4.0, closed)
+        switch_line_dn.set_data(xs2, ys2)
+
+        if closed:
+            flow = (frame - idle_frames) / max(1, closed_frames)
+            # posisi y menurun dari VCC (4) ke GND (0) -> arus mengalir turun
+            positions = [4.0 - ((flow * 4 + i / n_dots) % 1.0) * 4.0 for i in range(n_dots)]
+            dots_up.set_data([0] * n_dots, positions)
+            dots_dn.set_data([0] * n_dots, positions)
+            gpio_label_up.set_text("GPIO baca: LOW")
+            dot_up.set_facecolor("#d62728")
+            gpio_label_dn.set_text("GPIO baca: HIGH")
+            dot_dn.set_facecolor("#2ca02c")
+            status_text.set_text(
+                "Tombol DITEKAN -> sirkuit TERTUTUP\narus mengalir dari VCC ke GND melalui R"
+            )
+            status_text.set_color("#a31515")
+        else:
+            dots_up.set_data([], [])
+            dots_dn.set_data([], [])
+            gpio_label_up.set_text("GPIO baca: HIGH")
+            dot_up.set_facecolor("#2ca02c")
+            gpio_label_dn.set_text("GPIO baca: LOW")
+            dot_dn.set_facecolor("#d62728")
+            status_text.set_text(
+                "Tombol TIDAK ditekan -> sirkuit TERBUKA\ntidak ada arus mengalir (GPIO hanya membaca tegangan)"
+            )
+            status_text.set_color("#1f4e8c")
+
+        return [switch_line_up, switch_line_dn, dots_up, dots_dn]
+
+    anim = FuncAnimation(fig, update, frames=n_frames, init_func=init, blit=False, interval=1000 / 12)
+    fig.suptitle("Aliran Arus pada Rangkaian Pull-Up vs Pull-Down", fontsize=13, y=0.98)
+    fig.tight_layout(rect=[0.02, 0.15, 0.98, 0.95])
+    save_gif(fig, anim, "anim_pullup_pulldown_arus.gif", fps=12)
+
+
 if __name__ == "__main__":
     gif_quadrature_direction()
     gif_isr_flow()
     gif_watchdog_timer()
+    gif_pullup_pulldown_current()

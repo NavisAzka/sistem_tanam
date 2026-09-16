@@ -106,9 +106,9 @@ Saat sebuah tombol/pushbutton tidak ditekan dan kedua kakinya tidak terhubung ke
 
 Resistor pull-up/pull-down di atas dapat dipasang secara **eksternal** (komponen resistor fisik pada breadboard), maupun diaktifkan secara **internal** melalui firmware tanpa resistor tambahan. ESP32 menyediakan keduanya pada framework Arduino: `pinMode(pin, INPUT_PULLUP)` untuk pull-up internal, dan `pinMode(pin, INPUT_PULLDOWN)` untuk pull-down internal. Perlu diperhatikan bahwa **tidak semua pin GPIO ESP32 mendukung resistor pull internal** — pin input-only (GPIO 34–39) sama sekali tidak memiliki resistor pull-up/pull-down internal, sehingga wajib menggunakan resistor eksternal jika digunakan sebagai input tombol.
 
-<img src="img/skematik_pullup_pulldown.png" alt="Gambar 3: Diagram skematik rangkaian pull-up resistor (GPIO ke VCC via resistor, tombol ke GND) berdampingan dengan pull-down resistor (GPIO ke GND via resistor, tombol ke VCC)" width="70%">
+<img src="img/anim_pullup_pulldown_arus.gif" alt="Gambar 3: Animasi aliran arus pada rangkaian pull-up vs pull-down — arus (bola-bola) hanya mengalir dari VCC ke GND saat tombol ditekan (sirkuit tertutup), berhenti saat idle (sirkuit terbuka)" width="75%">
 
-*Gambar 3: Diagram skematik rangkaian pull-up resistor (GPIO ke VCC via resistor, tombol ke GND) berdampingan dengan pull-down resistor (GPIO ke GND via resistor, tombol ke VCC)*
+*Gambar 3: Animasi aliran arus pada rangkaian pull-up vs pull-down. Perhatikan: arus (bola-bola oranye) hanya mengalir saat tombol ditekan (sirkuit tertutup) — saat idle (sirkuit terbuka), tidak ada arus sama sekali, GPIO hanya membaca level tegangan tanpa menarik arus*
 
 ### C.5 Debouncing
 Kontak mekanik pada tombol/saklar menghasilkan beberapa transisi sinyal HIGH-LOW dalam waktu sangat singkat akibat getaran fisik saat kontak bersentuhan/terlepas ("bouncing"). Tanpa penanganan, satu kali aksi tekan dapat terbaca sebagai beberapa kali event. **Debouncing** memastikan hanya satu transisi valid yang terdeteksi, dengan menunggu sinyal stabil selama periode waktu tertentu (mis. 20–50ms) sebelum event dianggap sah.
