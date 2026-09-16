@@ -7,6 +7,8 @@
 **IDE:** VSCode + PlatformIO
 
 > **Catatan:** Modul ini merupakan modul kapstone yang menggabungkan **Modul 2** (motor DC + PWM), **Modul 3** (MPU6500), dan **Modul 4 Percobaan 2** (quadrature encoder via external interrupt). Pastikan rangkaian motor+encoder+driver dan modul MPU6500 dari modul-modul tersebut sudah berfungsi sebelum memulai modul ini. Seluruh contoh kode menggunakan platform PlatformIO resmi `espressif32` (Arduino-ESP32 **core versi 2.0.x**), konsisten dengan Modul 2–4, termasuk API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`/`ledcWrite`) untuk kontrol PWM motor DC.
+>
+> Grafik sinyal contoh (quadrature encoder, filter alpha, filter Kalman, on-off vs P, respons PID) pada modul ini adalah **data simulasi/dummy**, bukan hasil pengukuran alat sungguhan — dibuat dengan skrip Python **[scripts/generate_modul5_signals.py](scripts/generate_modul5_signals.py)** (`matplotlib` + `numpy`) untuk memberi gambaran bentuk sinyal yang diharapkan di Serial Plotter. Bentuk sinyal asli hasil praktikum bisa berbeda.
 
 ---
 
@@ -94,7 +96,9 @@ RPM = (Jumlah_Pulsa_Bertambah / Waktu_dalam_detik) × (60 / CPR_TOTAL)
 
 Angka CPR dan rasio gearbox pada datasheet/toko online sering tidak akurat — cara paling presisi adalah **kalibrasi langsung** (memutar poros output sejumlah putaran penuh yang diketahui, lalu menghitung pulsa yang tercatat). Pada modul ini, `CPR_TOTAL` cukup memakai **nilai estimasi dari spesifikasi motor** (untuk JGA25-370 1000RPM: ±102, lihat Percobaan 2) — cukup memadai untuk keperluan praktikum, meski nilai motor Anda sendiri bisa sedikit berbeda.
 
-![Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros](img/diagram_quadrature_encoder.png)
+<img src="img/diagram_quadrature_encoder.png" alt="Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros" width="60%">
+
+*Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros*
 
 ### C.2 Menghaluskan Sinyal — Filter Alpha
 Nilai RPM mentah dari encoder biasanya **tidak mulus** — angkanya bisa melompat-lompat sedikit antar pembacaan (disebut *noise*), terutama saat motor berputar pelan. Cara paling sederhana untuk menghaluskannya adalah **filter alpha** (juga disebut *low-pass filter*), dengan rumus:
@@ -105,7 +109,9 @@ nilai_halus_baru = α × nilai_halus_lama + (1-α) × nilai_mentah_baru
 
 `α` (dibaca "alpha") adalah angka antara 0–1 yang menentukan seberapa besar nilai lama dipertahankan. Semakin besar `α`, hasilnya semakin halus — tapi juga semakin lambat mengikuti perubahan nyata (istilahnya *lag*, alias "telat merespons"). Filter ini cukup satu angka (`α`) untuk diatur, jadi paling mudah diterapkan — tapi karena angkanya tetap, filter ini tidak bisa "menyesuaikan diri" saat kondisi sinyal berubah.
 
-![Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag](img/grafik_filter_alpha.png)
+<img src="img/grafik_filter_alpha.png" alt="Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag" width="60%">
+
+*Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag*
 
 ### C.3 Filter yang Lebih Pintar — Kalman Filter
 Bayangkan Anda punya dua sumber informasi tentang kecepatan motor: **perkiraan** (berdasarkan pembacaan sebelumnya) dan **pengukuran baru** dari sensor. **Kalman filter** menggabungkan keduanya secara otomatis, dengan lebih "percaya" pada sumber mana pun yang saat itu lebih bisa diandalkan.
@@ -319,7 +325,9 @@ Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2)
 
 *Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2*
 
-![Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
+<img src="img/plot_filter_alpha_contoh.png" alt="Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus" width="60%">
+
+*Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus*
 
 **`platformio.ini`:**
 ```ini
@@ -438,7 +446,9 @@ Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif 
 
 > **Catatan:** Sama seperti Percobaan 2, fokusnya adalah **membandingkan bentuk tiga garis** pada grafik, bukan mengubah kecepatan motor.
 
-![Gambar 9: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual](img/plot_filter_kalman_contoh.png)
+<img src="img/plot_filter_kalman_contoh.png" alt="Gambar 9: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual" width="60%">
+
+*Gambar 9: Contoh tampilan Serial Plotter dengan tiga garis (RPM_Mentah, RPM_Alpha, RPM_Kalman) pada kondisi RPM yang sama, untuk perbandingan visual*
 
 **Skema Rangkaian:**
 
@@ -599,7 +609,9 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 
 ![Gambar 10: Wiring diagram gabungan encoder + driver motor (L298N) + ESP32 dalam satu rangkaian, digunakan mulai Percobaan 4 hingga akhir modul](img/wiring_motor_encoder_gabungan.png)
 
-![Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)](img/plot_onoff_vs_p_contoh.png)
+<img src="img/plot_onoff_vs_p_contoh.png" alt="Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)" width="60%">
+
+*Gambar 11: Contoh grafik Serial Plotter perbandingan mode on-off (berosilasi di sekitar target) vs mode Proportional (stabil namun menyisakan selisih dari target)*
 
 **Skema Rangkaian:**
 
@@ -778,7 +790,9 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 
 ![Gambar 12: Wiring diagram sistem lengkap Percobaan 5 — encoder + driver motor + 2 tombol target RPM, seluruhnya terhubung ke satu ESP32](img/wiring_pid_lengkap.png)
 
-![Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)](img/plot_pid_sebelum_sesudah_tuning.png)
+<img src="img/plot_pid_sebelum_sesudah_tuning.png" alt="Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)" width="60%">
+
+*Gambar 13: Contoh grafik Serial Plotter respons sistem sebelum tuning (lambat/berosilasi/overshoot besar) dibandingkan setelah tuning (cepat stabil, overshoot terkendali)*
 
 **Skema Rangkaian:**
 
