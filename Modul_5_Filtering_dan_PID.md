@@ -801,7 +801,7 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 | Encoder — Channel A / B | GPIO 32 / GPIO 33 | `INPUT_PULLUP`, decoding quadrature |
 | Driver motor — ENA / IN1 / IN2 | GPIO 25 / GPIO 26 / GPIO 27 | Sinyal PWM & arah putar motor |
 | Tombol Naik Target RPM | GPIO 14 | `INPUT_PULLUP` |
-| Tombol Turun Target RPM | GPIO 16 | `INPUT_PULLUP` |
+| Tombol Turun Target RPM | GPIO 16 (RX2) | `INPUT_PULLUP` |
 
 Lihat Gambar 12 untuk wiring gabungan seluruh komponen di atas dalam satu rangkaian.
 

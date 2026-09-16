@@ -183,9 +183,9 @@ Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif melal
 
 > **Catatan:** Pin **GPIO 34, 35, 27** yang digunakan joystick pada Percobaan ini sengaja dipertahankan **konsisten** di seluruh Percobaan 3–6 modul ini, karena joystick akan dipakai berulang sebagai input kontrol aktuator pada Percobaan-Percobaan tersebut.
 
-<img src="img/wiring_joystick_touch.png" alt="Gambar 9: Diagram wiring joystick KY-023 dan modul touch TTP223 ke ESP32 (hall effect sensor tidak ditampilkan, rangkai sesuai tabel di atas)" width="60%">
+<!-- <img src="img/wiring_joystick_touch.png" alt="Gambar 9: Diagram wiring joystick KY-023 dan modul touch TTP223 ke ESP32 (hall effect sensor tidak ditampilkan, rangkai sesuai tabel di atas)" width="60%"> -->
 
-*Gambar 9: Diagram wiring joystick KY-023 dan modul touch TTP223 ke ESP32 (hall effect sensor tidak ditampilkan, rangkai sesuai tabel di atas)*
+<!-- *Gambar 9: Diagram wiring joystick KY-023 dan modul touch TTP223 ke ESP32 (hall effect sensor tidak ditampilkan, rangkai sesuai tabel di atas)* -->
 
 **`platformio.ini`:**
 ```ini
@@ -491,8 +491,8 @@ Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal ste
 |---|---|---|
 | Joystick KY-023 — VRx | GPIO 34 | Arah & besar burst step |
 | Joystick KY-023 — SW | GPIO 27 | Stop darurat (nonaktifkan driver), aktif LOW |
-| Driver stepper — IN1 | GPIO 16 | Fasa koil 1 |
-| Driver stepper — IN2 | GPIO 17 | Fasa koil 1 |
+| Driver stepper — IN1 | GPIO 16 (RX2) | Fasa koil 1 |
+| Driver stepper — IN2 | GPIO 17 (TX2) | Fasa koil 1 |
 | Driver stepper — IN3 | GPIO 18 | Fasa koil 2 |
 | Driver stepper — IN4 | GPIO 19 | Fasa koil 2 |
 
