@@ -390,6 +390,68 @@ def plot_freertos_dualcore():
     save(fig, "diagram_freertos_dualcore.png")
 
 
+# ---------------------------------------------------------------------------
+# Modul 3 — Gambar: blocking vs DMA
+# ---------------------------------------------------------------------------
+def plot_blocking_vs_dma():
+    fig = plt.figure(figsize=(11, 6.6))
+    gs = fig.add_gridspec(2, 2, height_ratios=[1.4, 1], hspace=0.55, wspace=0.25)
+
+    # --- Panel kiri atas: blocking ---
+    ax = fig.add_subplot(gs[0, 0])
+    box(ax, (0, 1.6), 2.2, 1.2, "CPU", fc="#cfe8ff", ec="#1f4e8c")
+    box(ax, (5, 1.6), 2.2, 1.2, "Peripheral\n(mis. SPI)", fc="#d6f5d6", ec="#2e7d32")
+    for i, y in enumerate([2.5, 2.1, 1.7]):
+        arrow(ax, (2.2, y), (5.0, y), color="#a31515" if i == 1 else "#333333", lw=1.3)
+    ax.text(3.6, 2.9, "CPU minta & menunggu\nbyte demi byte", ha="center", fontsize=8.5, color="#a31515")
+    ax.set_xlim(-0.5, 7.7)
+    ax.set_ylim(1.3, 3.3)
+    ax.axis("off")
+    ax.set_title("Blocking — CPU Menangani Tiap Byte", fontsize=11.5, fontweight="bold")
+
+    # --- Panel kanan atas: DMA ---
+    ax = fig.add_subplot(gs[0, 1])
+    box(ax, (0, 1.6), 2.0, 1.2, "CPU", fc="#cfe8ff", ec="#1f4e8c")
+    box(ax, (2.9, 1.6), 2.2, 1.2, "DMA\nController", fc="#fff3cf", ec="#a3670a")
+    box(ax, (6.7, 1.6), 2.0, 1.2, "Peripheral", fc="#d6f5d6", ec="#2e7d32")
+    arrow(ax, (2.0, 2.35), (2.9, 2.35), text="trigger\n(1x saja)", color="#1f4e8c")
+    arrow(ax, (5.1, 2.2), (6.7, 2.2), text="semua byte", color="#a3670a")
+    arrow(ax, (2.9, 1.9), (2.0, 1.9), text="selesai (interrupt)", color="#2e7d32")
+    ax.set_xlim(-0.5, 9.1)
+    ax.set_ylim(1.2, 3.3)
+    ax.axis("off")
+    ax.set_title("DMA — Hardware Menangani Transfer", fontsize=11.5, fontweight="bold")
+
+    # --- Panel bawah: timeline perbandingan ---
+    ax = fig.add_subplot(gs[1, 0])
+    for start in range(0, 10, 2):
+        ax.broken_barh([(start, 1.5)], (0, 1), facecolors="#d62728", alpha=0.85)
+        ax.broken_barh([(start + 1.5, 0.5)], (0, 1), facecolors="#cfe8ff")
+    ax.set_yticks([0.5])
+    ax.set_yticklabels(["CPU"])
+    ax.set_xlabel("waktu")
+    ax.set_ylim(-0.3, 1.5)
+    ax.set_title("CPU sibuk sepanjang transfer", fontsize=10)
+
+    ax = fig.add_subplot(gs[1, 1])
+    for start in range(0, 10, 2):
+        ax.broken_barh([(start, 0.3)], (0, 1), facecolors="#d62728", alpha=0.85)
+        ax.broken_barh([(start + 0.3, 1.7)], (0, 1), facecolors="#cfe8ff")
+    ax.set_yticks([0.5])
+    ax.set_yticklabels(["CPU"])
+    ax.set_xlabel("waktu")
+    ax.set_ylim(-0.3, 1.5)
+    ax.set_title("CPU bebas selama DMA bekerja", fontsize=10)
+
+    legend_elems = [
+        Line2D([0], [0], color="#d62728", lw=6, alpha=0.85, label="CPU sibuk"),
+        Line2D([0], [0], color="#cfe8ff", lw=6, label="CPU bebas / idle"),
+    ]
+    fig.legend(handles=legend_elems, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 0.98), fontsize=9.5)
+    fig.suptitle("Perbandingan Alur Transfer Data: Blocking vs DMA", fontsize=13, y=1.04)
+    save(fig, "diagram_blocking_vs_dma.png")
+
+
 if __name__ == "__main__":
     plot_bouncing_debounce()
     plot_pullup_pulldown_concept()
@@ -400,3 +462,4 @@ if __name__ == "__main__":
     plot_delay_vs_timer_timeline()
     plot_watchdog_timer()
     plot_freertos_dualcore()
+    plot_blocking_vs_dma()
