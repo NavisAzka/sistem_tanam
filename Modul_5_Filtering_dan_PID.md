@@ -315,7 +315,9 @@ Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2)
 
 > Kabel daya motor (M1 Merah / M2 Putih) **tidak digunakan** pada percobaan ini — motor diputar dengan tangan.
 
-![Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2](img/wiring_encoder_esp32.png)
+<img src="img/wiring_encoder_esp32.png" alt="Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2" width="60%">
+
+*Gambar 7: Wiring diagram encoder quadrature (Channel A, Channel B, VCC, GND) ke ESP32, sama seperti Modul 4 Percobaan 2*
 
 ![Gambar 8: Contoh tampilan Serial Plotter yang diharapkan — garis RPM_Mentah bergerigi tajam berdampingan dengan garis RPM_Alpha yang jauh lebih halus](img/plot_filter_alpha_contoh.png)
 

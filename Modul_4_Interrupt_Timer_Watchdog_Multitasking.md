@@ -214,6 +214,10 @@ Mahasiswa mampu mengimplementasikan external interrupt untuk melakukan decoding 
 | Encoder : VCC | 3.3V–5V (sesuai modul) | kabel **Biru** |
 | Encoder : GND | GND | kabel **Hitam** |
 
+<img src="img/wiring_encoder_esp32.png" alt="Gambar 5: Wiring modul encoder quadrature (Channel A/kuning, Channel B/hijau, VCC/biru, GND/hitam) ke ESP32" width="60%">
+
+*Gambar 5: Wiring modul encoder quadrature (Channel A/kuning, Channel B/hijau, VCC/biru, GND/hitam) ke ESP32*
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]
