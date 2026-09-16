@@ -271,7 +271,9 @@ framework = arduino
 | Pushbutton 1 (pull-up eksternal) | GPIO 32 | Satu kaki ke GPIO **dan** ke 3.3V melalui resistor 10kΩ (pull-up), kaki lain ke GND |
 | Pushbutton 2 (pull-down eksternal) | GPIO 33 | Satu kaki ke GPIO **dan** ke GND melalui resistor 10kΩ (pull-down), kaki lain ke 3.3V |
 
-![Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32](img/skematik_pullup_pulldown_eksternal.png)
+<img src="img/skematik_pullup_pulldown_eksternal.png" alt="Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32" width="60%">
+
+*Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32*
 
 **Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
@@ -302,7 +304,9 @@ void loop() {
 | Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
 | Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
 
-![Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33](img/skematik_pullup_pulldown_internal.png)
+<img src="img/skematik_pullup_pulldown_internal.png" alt="Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33" width="60%">
+
+*Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
 
 **Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
@@ -347,7 +351,9 @@ Mahasiswa mampu mengidentifikasi permasalahan bouncing pada tombol mekanik dan m
 |---|---|---|
 | Pushbutton (tactile) | GPIO 25 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
 
-![Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal](img/skematik_debounce_percobaan.png)
+<img src="img/skematik_debounce_percobaan.png" alt="Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal" width="60%">
+
+*Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal*
 
 **`platformio.ini`:**
 ```ini

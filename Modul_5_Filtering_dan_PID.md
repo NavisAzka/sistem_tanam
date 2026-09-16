@@ -204,7 +204,9 @@ Mahasiswa mampu mengidentifikasi noise pada sinyal sensor mentah dan menerapkan 
 | MPU6500 — CS/NCS | 3.3V (ditarik tetap) | Wajib, agar modul beroperasi dalam mode I2C |
 | MPU6500 — VCC/GND | 3.3V, GND | — |
 
-![Gambar 6: Wiring MPU6500 mode I2C ke ESP32](img/wiring_mpu6500_p1.png)
+<img src="img/wiring_mpu6500_p1.png" alt="Gambar 6: Wiring MPU6500 mode I2C ke ESP32" width="60%">
+
+*Gambar 6: Wiring MPU6500 mode I2C ke ESP32*
 
 **`platformio.ini`:**
 ```ini
