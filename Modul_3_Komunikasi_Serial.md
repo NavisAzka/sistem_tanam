@@ -11,23 +11,26 @@
 ---
 
 ## Daftar Isi
-- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
-- [B. Alat dan Bahan](#b-alat-dan-bahan)
-- [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 UART (Universal Asynchronous Receiver-Transmitter)](#c1-uart-universal-asynchronous-receiver-transmitter)
-  - [C.2 I2C (Inter-Integrated Circuit)](#c2-i2c-inter-integrated-circuit)
-  - [C.3 SPI (Serial Peripheral Interface)](#c3-spi-serial-peripheral-interface)
-  - [C.4 DMA (Direct Memory Access)](#c4-dma-direct-memory-access)
-  - [C.5 SPI ke Ethernet (W5500)](#c5-spi-ke-ethernet-w5500)
-- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
-- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — Komunikasi UART Antar ESP32](#percobaan-1--komunikasi-uart-antar-esp32)
-  - [PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500](#percobaan-2--interfacing-multi-device-i2c-oled--mpu6500)
-  - [PERCOBAAN 3 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-3--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
-  - [PERCOBAAN 4 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-4--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
-  - [PERCOBAAN 5 — Komunikasi Ethernet via SPI (W5500)](#percobaan-5--komunikasi-ethernet-via-spi-w5500)
-- [F. Tugas Modul](#f-tugas-modul)
-- [G. Referensi](#g-referensi)
+- [MODUL 3](#modul-3)
+- [KOMUNIKASI SERIAL \& INTERFACING MODUL (UART/I2C/SPI/DMA)](#komunikasi-serial--interfacing-modul-uarti2cspidma)
+  - [Daftar Isi](#daftar-isi)
+  - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+  - [B. Alat dan Bahan](#b-alat-dan-bahan)
+  - [C. Dasar Teori](#c-dasar-teori)
+    - [C.1 UART (Universal Asynchronous Receiver-Transmitter)](#c1-uart-universal-asynchronous-receiver-transmitter)
+    - [C.2 I2C (Inter-Integrated Circuit)](#c2-i2c-inter-integrated-circuit)
+    - [C.3 SPI (Serial Peripheral Interface)](#c3-spi-serial-peripheral-interface)
+    - [C.4 DMA (Direct Memory Access)](#c4-dma-direct-memory-access)
+    - [C.5 SPI ke Ethernet (W5500)](#c5-spi-ke-ethernet-w5500)
+  - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+  - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+    - [PERCOBAAN 1 — Komunikasi UART Antar ESP32](#percobaan-1--komunikasi-uart-antar-esp32)
+    - [PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500](#percobaan-2--interfacing-multi-device-i2c-oled--mpu6500)
+    - [PERCOBAAN 3 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-3--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
+    - [PERCOBAAN 4 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-4--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
+    - [PERCOBAAN 5 — Komunikasi Ethernet via SPI (W5500)](#percobaan-5--komunikasi-ethernet-via-spi-w5500)
+  - [F. Tugas Modul](#f-tugas-modul)
+  - [G. Referensi](#g-referensi)
 
 ---
 
@@ -726,17 +729,11 @@ void loop() {
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) mendukung **simulasi multi-board dalam satu project** — dua (atau lebih) ESP32 dapat diletakkan pada satu diagram dan saling terhubung melalui pin virtual, cocok untuk mensimulasikan Percobaan board-to-board (UART) tanpa hardware fisik ganda. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
-
-> **Catatan:** Ketersediaan part **MPU6500**, **OLED SSD1306**, dan **W5500** pada Wokwi dapat berubah dari waktu ke waktu — periksa panel "Parts" pada editor Wokwi sebelum memulai. Jika sensor IMU tidak tersedia (mis. Wokwi hanya menyediakan part MPU6050), gunakan part tersebut sebagai pengganti sementara pada simulasi, atau ganti dengan **potensiometer** sebagai sumber data pengganti (nilai analog yang dikirim menggantikan pembacaan akselerometer).
-
-**Tugas 1 — UART Dua Board di Wokwi:**
-1. Buat satu project Wokwi dengan **dua board ESP32**, hubungkan TX2-RX2 (silang) dan GND keduanya sesuai skema Percobaan 1
-2. Implementasikan ulang kode Transmitter dan Receiver pada masing-masing board, verifikasi data diterima dengan benar melalui dua jendela Serial Monitor Wokwi (satu per board)
-3. Modifikasi agar data yang dikirim berupa **pembacaan potensiometer virtual** (bukan string statis "Hello ESP32"), sehingga Receiver menampilkan nilai yang berubah-ubah sesuai posisi potensiometer
-
-**Tugas 2 — I2C Multi-Device di Wokwi:**
+**Tugas 1 — I2C Multi-Device di Wokwi:**
 Simulasikan Percobaan 2 (OLED + MPU6500 pada satu bus I2C) di Wokwi — board ESP32 membaca data (potensiometer sebagai pengganti MPU6500 jika sensor IMU tidak tersedia) lalu menampilkannya pada OLED SSD1306, membuktikan kedua perangkat dapat berbagi SDA/SCL yang sama.
+
+**Tugas 2 — Monitoring Getaran 2 Titik Mesin:**
+Simulasikan sistem monitoring getaran dua titik mesin memakai dua sensor IMU dan dua layar OLED terpisah, seluruhnya berbagi jalur SDA/SCL yang sama. Bedakan keempat perangkat murni lewat alamat masing-masing. Tiap IMU wajib tampil di OLED pasangannya sendiri.
 
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 
