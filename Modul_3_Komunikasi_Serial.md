@@ -732,8 +732,8 @@ void loop() {
 **Tugas 1 — I2C Multi-Device di Wokwi:**
 Simulasikan Percobaan 2 (OLED + MPU6500 pada satu bus I2C) di Wokwi — board ESP32 membaca data (potensiometer sebagai pengganti MPU6500 jika sensor IMU tidak tersedia) lalu menampilkannya pada OLED SSD1306, membuktikan kedua perangkat dapat berbagi SDA/SCL yang sama.
 
-**Tugas 2 — Monitoring Getaran 2 Titik Mesin:**
-Simulasikan sistem monitoring getaran dua titik mesin memakai dua sensor IMU dan dua layar OLED terpisah, seluruhnya berbagi jalur SDA/SCL yang sama. Bedakan keempat perangkat murni lewat alamat masing-masing. Tiap IMU wajib tampil di OLED pasangannya sendiri.
+**Tugas 2 — Keterbatasan Pin:**
+Sebuah rancangan monitoring getaran 2 titik mesin butuh 2 sensor IMU dan 2 layar OLED sekaligus (4 komponen), namun pada ESP32 yang dipakai hanya tersisa 3 pin bebas. Tentukan cara menyambungkan seluruh komponen tanpa menambah pin, lalu buktikan lewat simulasi Wokwi — tiap IMU wajib tampil di OLED pasangannya sendiri.
 
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 
