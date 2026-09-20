@@ -1,6 +1,5 @@
 # Tugas Pendahuluan — Modul 2: Sensor dan Aktuator
 
-Kerjakan soal-soal berikut **sebelum** sesi praktikum berlangsung, sebagai persiapan agar Anda memiliki gambaran konsep dasar sebelum mempraktekkan Modul 2.
 
 1. Jelaskan prinsip kerja sensor resistif seperti joystick 2-axis dalam menghasilkan nilai analog yang bervariasi sesuai posisinya.
 2. Jelaskan perbedaan prinsip kerja sensor kapasitif (mis. touch sensor TTP223) dan sensor induktif (mis. hall effect sensor) dalam mendeteksi keberadaan suatu objek.

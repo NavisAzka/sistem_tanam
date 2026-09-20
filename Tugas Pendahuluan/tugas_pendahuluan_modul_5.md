@@ -1,6 +1,5 @@
 # Tugas Pendahuluan — Modul 5: Filtering dan PID
 
-Kerjakan soal-soal berikut **sebelum** sesi praktikum berlangsung, sebagai persiapan agar Anda memiliki gambaran konsep dasar sebelum mempraktekkan Modul 5.
 
 1. Jelaskan bagaimana jumlah pulsa yang dihasilkan encoder dalam periode waktu tertentu dapat dikonversi menjadi nilai kecepatan putar (RPM).
 2. Apa yang dimaksud dengan *noise* pada sinyal sensor, dan bagaimana filter alpha (low-pass filter) dapat mengurangi noise tersebut?
