@@ -735,6 +735,11 @@ Simulasikan Percobaan 2 (OLED + MPU6500 pada satu bus I2C) di Wokwi — board ES
 **Tugas 2 — Keterbatasan Pin:**
 Sebuah rancangan monitoring getaran 2 titik mesin butuh 2 sensor IMU dan 2 layar OLED sekaligus (4 komponen), namun pada ESP32 yang dipakai hanya tersisa 3 pin bebas. Tentukan cara menyambungkan seluruh komponen tanpa menambah pin, lalu buktikan lewat simulasi Wokwi — tiap IMU wajib tampil di OLED pasangannya sendiri.
 
+**Pertanyaan Analisis (Tugas 2):**
+1. Analisis bagaimana keempat perangkat bisa saling dibedakan meski berbagi pin yang sama — apa yang terjadi bila dua perangkat kebetulan memiliki pengenal yang identik?
+2. Andaikan salah satu sensor IMU dilepas dari rangkaian, analisis mengapa tiga perangkat lainnya tetap dapat berfungsi normal tanpa perubahan kode maupun wiring.
+3. Analisis mengapa pendekatan berbagi pin ini tidak bisa langsung diterapkan jika keempat komponen diganti dengan modul yang setiap unitnya butuh satu jalur data khusus sendiri (mis. sensor analog biasa) — apa yang membuat solusi ini hanya berlaku untuk jenis komunikasi tertentu?
+
 **Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 
 ---
