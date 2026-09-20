@@ -576,27 +576,9 @@ void loop()
 
 ## F. Tugas Modul
 
-**Tugas 1 — Reproduksi Manual Recovery (Wokwi):**
-1. Buat project Wokwi baru dengan board **ESP32**, rangkai pushbutton darurat (Percobaan 1) dan LED indikator
-2. Implementasikan ulang skenario program hang (`while(true){}` tanpa `yield`) beserta ISR tombol darurat yang memanggil `esp_restart()`
-3. Verifikasi pada Serial Monitor Wokwi bahwa sistem benar-benar restart (tampil ulang pesan boot) setelah tombol darurat ditekan, meskipun `loop()` sedang hang
-4. Bandingkan dengan pendekatan **watchdog timer** (Percobaan 4) pada skenario hang yang sama — mana yang lebih cepat memulihkan sistem, dan apa trade-off masing-masing (kontrol manual vs otomatis)?
 
-**Tugas 2 — Timer Interrupt + Queue (Wokwi):**
-Gabungkan timer interrupt (Percobaan 3, logging status tiap 1 detik) dengan multitasking FreeRTOS (Percobaan 5) dalam satu project Wokwi: satu task membaca status sebuah pushbutton virtual dan mengirim jumlah penekanan ke queue, sementara timer interrupt terpisah men-trigger flag yang dibaca task lain untuk mencetak status queue setiap detik ke Serial Monitor.
+*(Sementara dikosongkan — akan diisi ulang menyesuaikan struktur baru modul ini.)*
 
-**Tugas 3 (Bonus) — Implementasi Level Register:**
-Percobaan 4 (Watchdog Timer) pada modul ini dapat diimplementasikan ulang **tanpa `esp_task_wdt`**, langsung memanipulasi register Timer Group (MWDT0) sesuai Technical Reference Manual. Kerjakan (boleh dikerjakan di Wokwi maupun hardware asli):
-
-| Percobaan | API yang diganti | Register/peripheral terkait | Petunjuk |
-|---|---|---|---|
-| Percobaan 4 (Watchdog Timer) | `esp_task_wdt_init()`/`esp_task_wdt_add()`/`esp_task_wdt_reset()` | Register MWDT0 (`TIMG_WDTCONFIG0_REG`, `TIMG_WDTCONFIG1_REG`, `TIMG_WDTCONFIG2_REG`, `TIMG_WDTFEED_REG`, `TIMG_WDTWPROTECT_REG`) | Buka write-protect (`TIMG_WDT_WKEY_VALUE`) sebelum menulis config/feed, lalu kunci kembali setelahnya |
-
-> **Catatan:** register `TIMG_WDTCONFIG*` adalah watchdog hardware yang sama yang juga dipakai bootloader untuk *flashboot protection* — pastikan fungsi inisialisasi watchdog hanya dipanggil sekali di `setup()` (bukan berulang di `loop()`), dan verifikasi nama field terhadap versi ESP-IDF yang terpasang (`soc/timer_group_reg.h`) sebelum digunakan.
-
-**Deliverable:** kode program level-register, penjelasan tiap register yang ditulis (rujuk ke ESP32 Technical Reference Manual bab Timer Group), dan perbandingan perilaku dengan versi API tingkat tinggi pada Percobaan aslinya.
-
-**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
 
 ---
 

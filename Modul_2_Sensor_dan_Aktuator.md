@@ -790,8 +790,8 @@ framework = arduino
 1. Pastikan propeller **sudah dilepas** dari motor brushless
 2. Rangkai ESC (sinyal→GPIO25, GND disatukan dengan ESP32, daya dari baterai LiPo **terpisah**)
 3. Rangkai joystick (VRx→GPIO34, SW→GPIO27) — sama seperti Percobaan 1
-4. Pastikan joystick di posisi paling kiri **sebelum** menyalakan baterai ESC, lalu upload
-5. Amati Serial Monitor: **arming** (throttle minimum 1000µs, 5 detik) berjalan otomatis, ditandai *beep* dari ESC
+4. Pastikan joystick di posisi paling kiri, **lalu Build dan Upload kode** (baterai ESC masih **belum** tersambung — ESP32 masih ditenagai USB saja)
+5. Setelah upload selesai, baru sambungkan baterai LiPo ke ESC — amati Serial Monitor: **arming** (throttle minimum 1000µs, 5 detik) berjalan otomatis, ditandai *beep* dari ESC
 6. Setelah arming, geser joystick pelan dari kiri ke kanan, amati kecepatan motor naik
 7. Uji SW sebagai kill switch — tekan saat motor berputar, analisis apakah transisinya mulus atau menyentak
 8. Analisis mengapa proses arming penting bagi ESC, dan risikonya bila dilewati
@@ -879,21 +879,23 @@ void loop() {
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta potensiometer, servo motor, driver stepper (A4988), dan motor stepper — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-**Tugas 1 — Potensiometer Ganda Mengendalikan Servo & Stepper Terintegrasi:**
+**Potensiometer Ganda Mengendalikan Servo & Stepper Terintegrasi:**
 
-Buatlah simulasi Wokwi di mana **dua potensiometer** mengendalikan servo dan motor stepper secara terintegrasi (rangkaian dan kode program bebas dirancang sendiri):
+Buatlah simulasi di mana **dua potensiometer** mengendalikan servo dan motor stepper secara terintegrasi (rangkaian dan kode program bebas dirancang sendiri):
 1. Potensiometer 1 menentukan **posisi sudut servo** (0°–180°, boleh kontinu atau dibatasi ke beberapa posisi diskrit sesuai pilihan Anda)
 2. **Arah** motor stepper ditentukan oleh **posisi servo dari titik tengah (90°)** — Jika posisi servo berada pada sudut lebih dari 90°, maka motor stepper akan berputar searah jarum jam (CW). Jika posisi servo berada pada sudut kurang dari 90°, maka motor stepper akan berputar berlawanan arah jarum jam (CCW). Jika posisi servo sama dengan 90°, maka motor stepper berhenti total **(Terapkan mekanisme dead zone)**. 
 3. Potensiometer 2 menentukan **kecepatan dasar** (base frequency) putaran stepper.
+
+- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi (rekomendasi) atau Cirkit.
+
 
 **Pertanyaan Analisis:**
 1. Analisis bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan arah dair posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
 2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — analisis apa yang direpresentasikan oleh sinyal PWM pada servo dibanding pada stepper.
 3. Analisis mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja.
 
-**Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project Wokwi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
+**Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project simulasi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
 
 ---
 

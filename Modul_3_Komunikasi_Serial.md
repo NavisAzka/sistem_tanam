@@ -503,7 +503,7 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Gunakan rangkaian MPU6500 dari Percobaan 3
-2. Jalankan kode Percobaan 3 sebagai pembanding, catat estimasi waktu baca 6 byte secara byte-per-byte
+2. Ambil kode Percobaan 3 sebagai pembanding, tambahkan `micros()` di awal dan akhir pembacaan 6 byte (`ACCEL_XOUT_H` hingga `ACCEL_ZOUT_L`) untuk mengukur waktunya, lalu jalankan dan catat hasilnya
 3. Implementasikan pembacaan *burst* via driver `spi_master` dengan DMA diaktifkan
 4. Ukur waktu transaksi burst dengan `micros()`, bandingkan dengan langkah 2
 
@@ -729,18 +729,19 @@ void loop() {
 
 ## F. Tugas Modul
 
-**Tugas 1 — I2C Multi-Device di Wokwi:**
-Simulasikan Percobaan 2 (OLED + MPU6500 pada satu bus I2C) di Wokwi — board ESP32 membaca data (potensiometer sebagai pengganti MPU6500 jika sensor IMU tidak tersedia) lalu menampilkannya pada OLED SSD1306, membuktikan kedua perangkat dapat berbagi SDA/SCL yang sama.
 
-**Tugas 2 — Keterbatasan Pin:**
-Sebuah rancangan monitoring getaran 2 titik mesin butuh 2 sensor IMU dan 2 layar OLED sekaligus (4 komponen), namun pada ESP32 yang dipakai hanya tersisa 3 pin bebas. Tentukan cara menyambungkan seluruh komponen tanpa menambah pin, lalu buktikan lewat simulasi Wokwi — tiap IMU wajib tampil di OLED pasangannya sendiri.
+**Kontrol Multi Device**
 
-**Pertanyaan Analisis (Tugas 2):**
-1. Analisis bagaimana keempat perangkat bisa saling dibedakan meski berbagi pin yang sama — apa yang terjadi bila dua perangkat kebetulan memiliki pengenal yang identik?
-2. Andaikan salah satu sensor IMU dilepas dari rangkaian, analisis mengapa tiga perangkat lainnya tetap dapat berfungsi normal tanpa perubahan kode maupun wiring.
-3. Analisis mengapa pendekatan berbagi pin ini tidak bisa langsung diterapkan jika keempat komponen diganti dengan modul yang setiap unitnya butuh satu jalur data khusus sendiri (mis. sensor analog biasa) — apa yang membuat solusi ini hanya berlaku untuk jenis komunikasi tertentu?
+Sebuah rancangan monitoring getaran 2 titik mesin butuh 2 sensor IMU dan 2 layar OLED sekaligus (4 komponen), namun pada ESP32 yang dipakai hanya tersisa 3 GPIO bebas. Tentukan cara menyambungkan seluruh komponen tanpa menambah pin, lalu buktikan lewat simulasi — tiap IMU wajib tampil di OLED pasangannya sendiri.
 
-**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi.
+
+
+**Pertanyaan Analisis:**
+1. Analisis bagaimana keempat perangkat bisa saling dibedakan meski berbagi pin yang sama?
+2. Andaikan salah satu sensor IMU dilepas dari rangkaian, apakah tiga perangkat lainnya tetap dapat berfungsi normal tanpa perubahan kode maupun wiring? jelaskan!
+3. Analisis mengapa pendekatan berbagi pin ini tidak bisa langsung diterapkan jika keempat komponen diganti dengan modul yang setiap unitnya butuh satu jalur data khusus sendiri (mis. sensor analog biasa), apa yang membuat solusi ini hanya berlaku untuk jenis komunikasi tertentu?
+
 
 ---
 

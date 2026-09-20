@@ -46,7 +46,7 @@ Setelah menyelesaikan Modul 1, praktikan mampu:
 
 | No | Nama Komponen | Spesifikasi | Jumlah |
 |---|---|---|---|
-| 1 | Board STM32 Blackpill | STM32F401CCU6 / STM32F411CEU6 | 1 |
+| 1 | Board STM32 Blackpill | STM32F401CCU6 | 1 |
 | 2 | ST-Link V2 | programmer/debugger via SWD | 1 |
 | 3 | Board ESP32 DevKit | ESP32 DevKit v1 | 1 |
 | 4 | Kabel jumper female-female | untuk ST-Link ke Blackpill | 4 |
@@ -73,9 +73,9 @@ Struktur project PlatformIO terdiri atas:
 - `lib/` — folder library tambahan
 
 ### C.2 STM32 Blackpill dan Framework Arduino
-Blackpill adalah development board berbasis mikrokontroler STM32F401/F411 (ARM Cortex-M4, 32-bit). Karakteristik utama:
-- CPU ARM Cortex-M4 dengan FPU, clock hingga 84–100 MHz
-- Memori Flash 256–512 KB, RAM 64–128 KB
+Blackpill adalah development board berbasis mikrokontroler STM32F401CC (ARM Cortex-M4, 32-bit). Karakteristik utama:
+- CPU ARM Cortex-M4 dengan FPU, clock hingga 84 MHz
+- Memori Flash 256 KB, RAM 64 KB
 - LED onboard di pin **PC13** (aktif LOW), tombol user di pin **PA0**
 - Tidak memiliki programmer onboard — memerlukan **ST-Link** eksternal via protokol **SWD** (SWDIO, SWCLK, GND, 3.3V)
 
@@ -153,9 +153,9 @@ Mahasiswa mampu memahami arsitektur board STM Blackpill, dan berhasil melakukan 
 
 **`platformio.ini`:**
 ```ini
-[env:blackpill_f411ce]
+[env:blackpill_f401cc]
 platform = ststm32
-board = blackpill_f411ce
+board = blackpill_f401cc
 framework = arduino
 upload_protocol = stlink
 debug_tool = stlink
@@ -165,7 +165,7 @@ debug_tool = stlink
 **Langkah Kerja:**
 1. Pastikan project Modul 1 sudah dibuat (Bagian D) dengan `platformio.ini` berisi konfigurasi Blackpill di atas
 2. Sambungkan ST-Link ke Blackpill (SWDIO, SWCLK, GND, 3.3V), lalu ke PC via USB
-3. Tulis kode Blink berikut pada `src/main.cpp` (board **F401CC** bisa jadi pengganti sesuai chip Anda), lalu **Build** dan **Upload**
+3. Tulis kode Blink berikut pada `src/main.cpp`, lalu **Build** dan **Upload**
 4. Amati LED onboard (PC13) berkedip 1 kali per detik (nyala 500ms, mati 500ms)
 
 **Kode Program (Blink STM32 Arduino):**
@@ -290,11 +290,11 @@ framework = arduino
 *Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
 
 **Langkah Kerja:**
-1. Ganti isi `platformio.ini` kembali ke board ESP32 + framework **Arduino**; hapus `src/main.c`, pakai lagi `src/main.cpp`
+1. Ganti isi `platformio.ini` kembali ke board ESP32 + framework **Arduino**; hapus `src/main.c`, buat ulang file `src/main.cpp`
 2. Rangkai kedua pushbutton pada GPIO 32 dan 33 beserta resistor eksternalnya sesuai skema Bagian A
-3. Upload **Kode Program A (Eksternal)**, uji kedua tombol, catat hasilnya
+3. Tulis **Kode Program A (Eksternal)** di bawah pada `src/main.cpp`, lalu Build dan Upload, uji kedua tombol, catat hasilnya
 4. Lepas kedua resistor eksternal sesuai skema Bagian B
-5. Upload **Kode Program B (Internal)**, uji tombol yang sama, catat hasilnya
+5. Ganti isi `src/main.cpp` dengan **Kode Program B (Internal)** di bawah, lalu Build dan Upload, uji tombol yang sama, catat hasilnya
 6. Bandingkan A dan B — keduanya harus **logika identik** (pull-up: default HIGH, LOW saat ditekan; pull-down: default LOW, HIGH saat ditekan)
 7. Kalau hasilnya kebalik/tidak konsisten, cek apakah resistor eksternal benar-benar sudah dilepas
 
@@ -509,14 +509,15 @@ void loop() {
 
 **Matrix Pushbutton 3x3 Mengendalikan Matrix LED 3x3:**
 
-Buatlah simulasi di Wokwi untuk Matrix Pushbutton 3x3 yang mengendalikan Matrix LED 3x3, dimana tombol pada posisi (baris, kolom) tertentu menyalakan LED pada posisi yang sama — mis. tombol baris 1 kolom 1 menyalakan LED baris 1 kolom 1. Program **wajib menerapkan debouncing** pada setiap tombol (mengacu pada Percobaan 4), sehingga LED hanya berubah status setelah pembacaan tombol benar-benar stabil, bukan langsung mengikuti setiap perubahan sinyal mentah yang masih mungkin bouncing.
+Buatlah simulasi untuk Matrix Pushbutton 3x3 yang mengendalikan Matrix LED 3x3, dimana tombol pada posisi (baris, kolom) tertentu menyalakan LED pada posisi yang sama — mis. tombol baris 1 kolom 1 menyalakan LED baris 1 kolom 1. Program **wajib menerapkan debouncing** pada setiap tombol (mengacu pada Percobaan 4), sehingga LED hanya berubah status setelah pembacaan tombol benar-benar stabil, bukan langsung mengikuti setiap perubahan sinyal mentah yang masih mungkin bouncing.
+
+- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi (rekomendasi) atau Cirkit.
 
 **Pertanyaan Analisis:**
 1. Analisis mengapa debouncing tetap diperlukan pada rangkaian matrix pushbutton ini, walaupun pada satu waktu hanya satu tombol yang biasanya ditekan — kaitkan dengan penyebab bouncing pada C.5 Debouncing
 2. Analisis konfigurasi pull-up atau pull-down (sesuai rancangan Anda) yang digunakan pada pembacaan kolom tombol — apa kondisi (HIGH/LOW) pin tersebut saat tombol **tidak** ditekan, dan mengapa kondisi tersebut tidak boleh dibiarkan *floating*?
 3. Andaikan salah satu LED pada matrix ini digantikan dengan LDR yang dibaca melalui ADC (seperti Percobaan 5), analisis perbedaan mendasar antara membaca GPIO sebagai **digital input** (tombol, hanya HIGH/LOW) dan sebagai **analog input** (ADC) — mengapa ADC dapat merepresentasikan lebih dari dua kondisi?
 
-**Pengumpulan:** Sertakan project (folder PlatformIO beserta `diagram.json`, atau link project Wokwi mode *share* dengan visibility public/unlisted bila dikerjakan lewat browser) beserta jawaban Pertanyaan Analisis pada laporan singkat.
 
 ---
 
