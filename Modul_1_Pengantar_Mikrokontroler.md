@@ -149,6 +149,8 @@ Sebelum memulai kegiatan praktikum:
 **Tujuan:**
 Mahasiswa mampu memahami arsitektur board STM Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework Arduino).
 
+> Percobaan ini tidak memerlukan rangkaian tambahan — cukup gunakan LED onboard (PC13) dan koneksi ST-Link.
+
 **`platformio.ini`:**
 ```ini
 [env:blackpill_f411ce]
@@ -200,6 +202,8 @@ void loop()
 
 **Tujuan:**
 Mahasiswa mampu memahami arsitektur ESP32 dan struktur program berbasis ESP-IDF, serta berhasil menjalankan program Blink menggunakan framework tersebut.
+
+> Percobaan ini tidak memerlukan rangkaian tambahan — cukup gunakan LED onboard ESP32.
 
 **`platformio.ini`:**
 ```ini
@@ -263,15 +267,6 @@ framework = arduino
 ```
 > **Catatan:** Mengganti isi `platformio.ini` di atas akan memicu proses *refresh* konfigurasi PlatformIO — tunggu hingga selesai (lihat catatan pada Percobaan 1) sebelum Build/Upload.
 
-**Langkah Kerja:**
-1. Ganti isi `platformio.ini` kembali ke board ESP32 + framework **Arduino**; hapus `src/main.c`, pakai lagi `src/main.cpp`
-2. Rangkai kedua pushbutton pada GPIO 32 dan 33 beserta resistor eksternalnya sesuai skema Bagian A
-3. Upload **Kode Program A (Eksternal)**, uji kedua tombol, catat hasilnya
-4. Lepas kedua resistor eksternal sesuai skema Bagian B
-5. Upload **Kode Program B (Internal)**, uji tombol yang sama, catat hasilnya
-6. Bandingkan A dan B — keduanya harus **logika identik** (pull-up: default HIGH, LOW saat ditekan; pull-down: default LOW, HIGH saat ditekan)
-7. Kalau hasilnya kebalik/tidak konsisten, cek apakah resistor eksternal benar-benar sudah dilepas
-
 **Skema Rangkaian — Bagian A (Pull-up/Pull-down Eksternal):**
 
 | Komponen | Pin ESP32 | Keterangan |
@@ -282,6 +277,26 @@ framework = arduino
 <img src="img/skematik_pullup_pulldown_eksternal.png" alt="Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32" width="60%">
 
 *Gambar 6: Diagram wiring dua pushbutton dengan resistor pull-up dan pull-down eksternal ke GPIO 32 dan 33 ESP32*
+
+**Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
+| Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
+
+<img src="img/skematik_pullup_pulldown_internal.png" alt="Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33" width="60%">
+
+*Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
+
+**Langkah Kerja:**
+1. Ganti isi `platformio.ini` kembali ke board ESP32 + framework **Arduino**; hapus `src/main.c`, pakai lagi `src/main.cpp`
+2. Rangkai kedua pushbutton pada GPIO 32 dan 33 beserta resistor eksternalnya sesuai skema Bagian A
+3. Upload **Kode Program A (Eksternal)**, uji kedua tombol, catat hasilnya
+4. Lepas kedua resistor eksternal sesuai skema Bagian B
+5. Upload **Kode Program B (Internal)**, uji tombol yang sama, catat hasilnya
+6. Bandingkan A dan B — keduanya harus **logika identik** (pull-up: default HIGH, LOW saat ditekan; pull-down: default LOW, HIGH saat ditekan)
+7. Kalau hasilnya kebalik/tidak konsisten, cek apakah resistor eksternal benar-benar sudah dilepas
 
 **Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
@@ -304,17 +319,6 @@ void loop() {
   delay(200);
 }
 ```
-
-
-**Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
-| Komponen | Pin ESP32 | Keterangan |
-|---|---|---|
-| Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
-| Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
-
-<img src="img/skematik_pullup_pulldown_internal.png" alt="Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33" width="60%">
-
-*Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
 
 **Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
