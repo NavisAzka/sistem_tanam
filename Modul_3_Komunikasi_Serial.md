@@ -11,23 +11,26 @@
 ---
 
 ## Daftar Isi
-- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
-- [B. Alat dan Bahan](#b-alat-dan-bahan)
-- [C. Dasar Teori](#c-dasar-teori)
-  - [C.1 UART (Universal Asynchronous Receiver-Transmitter)](#c1-uart-universal-asynchronous-receiver-transmitter)
-  - [C.2 I2C (Inter-Integrated Circuit)](#c2-i2c-inter-integrated-circuit)
-  - [C.3 SPI (Serial Peripheral Interface)](#c3-spi-serial-peripheral-interface)
-  - [C.4 DMA (Direct Memory Access)](#c4-dma-direct-memory-access)
-  - [C.5 SPI ke Ethernet (W5500)](#c5-spi-ke-ethernet-w5500)
-- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
-- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
-  - [PERCOBAAN 1 — Komunikasi UART Antar ESP32](#percobaan-1--komunikasi-uart-antar-esp32)
-  - [PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500](#percobaan-2--interfacing-multi-device-i2c-oled--mpu6500)
-  - [PERCOBAAN 3 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-3--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
-  - [PERCOBAAN 4 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-4--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
-  - [PERCOBAAN 5 — Komunikasi Ethernet via SPI (W5500)](#percobaan-5--komunikasi-ethernet-via-spi-w5500)
-- [F. Tugas Modul](#f-tugas-modul)
-- [G. Referensi](#g-referensi)
+- [MODUL 3](#modul-3)
+- [KOMUNIKASI SERIAL \& INTERFACING MODUL (UART/I2C/SPI/DMA)](#komunikasi-serial--interfacing-modul-uarti2cspidma)
+  - [Daftar Isi](#daftar-isi)
+  - [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+  - [B. Alat dan Bahan](#b-alat-dan-bahan)
+  - [C. Dasar Teori](#c-dasar-teori)
+    - [C.1 UART (Universal Asynchronous Receiver-Transmitter)](#c1-uart-universal-asynchronous-receiver-transmitter)
+    - [C.2 I2C (Inter-Integrated Circuit)](#c2-i2c-inter-integrated-circuit)
+    - [C.3 SPI (Serial Peripheral Interface)](#c3-spi-serial-peripheral-interface)
+    - [C.4 DMA (Direct Memory Access)](#c4-dma-direct-memory-access)
+    - [C.5 SPI ke Ethernet (W5500)](#c5-spi-ke-ethernet-w5500)
+  - [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+  - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+    - [PERCOBAAN 1 — Komunikasi UART Antar ESP32](#percobaan-1--komunikasi-uart-antar-esp32)
+    - [PERCOBAAN 2 — Interfacing Multi-Device I2C: OLED + MPU6500](#percobaan-2--interfacing-multi-device-i2c-oled--mpu6500)
+    - [PERCOBAAN 3 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-3--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
+    - [PERCOBAAN 4 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-4--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
+    - [PERCOBAAN 5 — Komunikasi Ethernet via SPI (W5500)](#percobaan-5--komunikasi-ethernet-via-spi-w5500)
+  - [F. Tugas Modul](#f-tugas-modul)
+  - [G. Referensi](#g-referensi)
 
 ---
 
@@ -500,7 +503,7 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Gunakan rangkaian MPU6500 dari Percobaan 3
-2. Jalankan kode Percobaan 3 sebagai pembanding, catat estimasi waktu baca 6 byte secara byte-per-byte
+2. Ambil kode Percobaan 3 sebagai pembanding, tambahkan `micros()` di awal dan akhir pembacaan 6 byte (`ACCEL_XOUT_H` hingga `ACCEL_ZOUT_L`) untuk mengukur waktunya, lalu jalankan dan catat hasilnya
 3. Implementasikan pembacaan *burst* via driver `spi_master` dengan DMA diaktifkan
 4. Ukur waktu transaksi burst dengan `micros()`, bandingkan dengan langkah 2
 
@@ -726,19 +729,19 @@ void loop() {
 
 ## F. Tugas Modul
 
-[Wokwi](https://wokwi.com) mendukung **simulasi multi-board dalam satu project** — dua (atau lebih) ESP32 dapat diletakkan pada satu diagram dan saling terhubung melalui pin virtual, cocok untuk mensimulasikan Percobaan board-to-board (UART) tanpa hardware fisik ganda. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
 
-> **Catatan:** Ketersediaan part **MPU6500**, **OLED SSD1306**, dan **W5500** pada Wokwi dapat berubah dari waktu ke waktu — periksa panel "Parts" pada editor Wokwi sebelum memulai. Jika sensor IMU tidak tersedia (mis. Wokwi hanya menyediakan part MPU6050), gunakan part tersebut sebagai pengganti sementara pada simulasi, atau ganti dengan **potensiometer** sebagai sumber data pengganti (nilai analog yang dikirim menggantikan pembacaan akselerometer).
+**Kontrol Multi Device**
 
-**Tugas 1 — UART Dua Board di Wokwi:**
-1. Buat satu project Wokwi dengan **dua board ESP32**, hubungkan TX2-RX2 (silang) dan GND keduanya sesuai skema Percobaan 1
-2. Implementasikan ulang kode Transmitter dan Receiver pada masing-masing board, verifikasi data diterima dengan benar melalui dua jendela Serial Monitor Wokwi (satu per board)
-3. Modifikasi agar data yang dikirim berupa **pembacaan potensiometer virtual** (bukan string statis "Hello ESP32"), sehingga Receiver menampilkan nilai yang berubah-ubah sesuai posisi potensiometer
+Sebuah rancangan monitoring getaran 2 titik mesin butuh 2 sensor IMU dan 2 layar OLED sekaligus (4 komponen), namun pada ESP32 yang dipakai hanya tersisa 3 GPIO bebas. Tentukan cara menyambungkan seluruh komponen tanpa menambah pin, lalu buktikan lewat simulasi — tiap IMU wajib tampil di OLED pasangannya sendiri.
 
-**Tugas 2 — I2C Multi-Device di Wokwi:**
-Simulasikan Percobaan 2 (OLED + MPU6500 pada satu bus I2C) di Wokwi — board ESP32 membaca data (potensiometer sebagai pengganti MPU6500 jika sensor IMU tidak tersedia) lalu menampilkannya pada OLED SSD1306, membuktikan kedua perangkat dapat berbagi SDA/SCL yang sama.
+- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi.
 
-**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+
+**Pertanyaan Analisis:**
+1. Analisis bagaimana keempat perangkat bisa saling dibedakan meski berbagi pin yang sama?
+2. Andaikan salah satu sensor IMU dilepas dari rangkaian, apakah tiga perangkat lainnya tetap dapat berfungsi normal tanpa perubahan kode maupun wiring? jelaskan!
+3. Analisis mengapa pendekatan berbagi pin ini tidak bisa langsung diterapkan jika keempat komponen diganti dengan modul yang setiap unitnya butuh satu jalur data khusus sendiri (mis. sensor analog biasa), apa yang membuat solusi ini hanya berlaku untuk jenis komunikasi tertentu?
+
 
 ---
 
