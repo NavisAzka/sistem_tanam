@@ -163,10 +163,19 @@ debug_tool = stlink
 > **Catatan:** Setiap kali isi `platformio.ini` diganti (termasuk pada Percobaan-Percobaan berikutnya di modul ini), PlatformIO akan otomatis melakukan *refresh*/re-index konfigurasi project — proses ini butuh beberapa saat (terlihat pada status bar VSCode bagian bawah). **Tunggu hingga proses tersebut selesai** sebelum menekan Build/Upload, agar tidak gagal atau tanpa sadar masih memakai konfigurasi lama.
 
 **Langkah Kerja:**
-1. Pastikan project Modul 1 sudah dibuat (Bagian D) dengan `platformio.ini` berisi konfigurasi Blackpill di atas
-2. Sambungkan ST-Link ke Blackpill (SWDIO, SWCLK, GND, 3.3V), lalu ke PC via USB
-3. Tulis kode Blink berikut pada `src/main.cpp`, lalu **Build** dan **Upload**
-4. Amati LED onboard (PC13) berkedip 1 kali per detik (nyala 500ms, mati 500ms)
+1. Pastikan project Modul 1 sudah dibuat (Bagian D) dan isi `platformio.ini` sama seperti di atas
+2. Hubungkan ST-Link ke Blackpill dengan kabel, lalu colokkan ST-Link ke komputer lewat USB. Cocokkan nama pinnya, karena letak pin ST-Link bisa berbeda-beda:
+
+   | Pin ST-Link | Pin Blackpill | Fungsi |
+   |---|---|---|
+   | SWDIO | SWDIO | Jalur data/debug |
+   | SWCLK | SWCLK | Jalur clock/debug |
+   | GND | GND | Referensi ground bersama |
+   | 3.3V | 3V3 | Referensi/tegangan target board |
+
+   Pastikan ST-Link memakai tegangan 3.3V.
+3. Tulis kode Blink di bawah pada `src/main.cpp`, lalu klik **Build** dan **Upload**
+4. Lihat LED di board (PC13): nyala setengah detik, mati setengah detik, berulang terus
 
 **Kode Program (Blink STM32 Arduino):**
 ```cpp
@@ -215,10 +224,10 @@ framework = espidf
 > **Catatan:** Mengganti isi `platformio.ini` di atas akan memicu proses *refresh* konfigurasi PlatformIO — tunggu hingga selesai (lihat catatan pada Percobaan 1) sebelum Build/Upload.
 
 **Langkah Kerja:**
-1. Ganti isi `platformio.ini` menjadi konfigurasi di atas — board berpindah ke **ESP32 DevKit**, framework ke **ESP-IDF**
-2. Sambungkan ESP32 ke PC via USB, pastikan port terdeteksi
-3. Hapus `src/main.cpp`, buat file baru `src/main.c` dan tulis kode Blink berikut, lalu **Build** dan **Upload**
-4. Analisis perbedaan framework ESP-IDF dengan Arduino
+1. Ganti isi `platformio.ini` dengan konfigurasi di atas (board ESP32 DevKit, framework ESP-IDF)
+2. Colokkan ESP32 ke komputer lewat USB, lalu pastikan komputer mengenali port-nya
+3. Hapus file `src/main.cpp`, buat file baru `src/main.c`, tulis kode Blink di bawah, lalu klik **Build** dan **Upload**
+4. Analisis apa perbedaan memprogram dengan ESP-IDF dan dengan Arduino
 
 **Kode Program (Blink ESP32 ESP-IDF):**
 ```c
@@ -280,6 +289,8 @@ framework = arduino
 
 **Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
 
+Pada pushbutton tactile, gunakan pasangan kaki yang benar seperti pada Gambar 8.
+
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
 | Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
@@ -289,17 +300,21 @@ framework = arduino
 
 *Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
 
+![Gambar 8: Orientasi kaki pushbutton tactile empat kaki. Tiap pasangan kaki pada sisi yang sama terhubung; kontak antarsisi tersambung saat tombol ditekan.](img/orientasi_kaki_pushbutton.svg)
+
 **Langkah Kerja:**
-1. Ganti isi `platformio.ini` kembali ke board ESP32 + framework **Arduino**; hapus `src/main.c`, buat ulang file `src/main.cpp`
-2. Rangkai kedua pushbutton pada GPIO 32 dan 33 beserta resistor eksternalnya sesuai skema Bagian A
-3. Tulis **Kode Program A (Eksternal)** di bawah pada `src/main.cpp`, lalu Build dan Upload, uji kedua tombol, catat hasilnya
-4. Lepas kedua resistor eksternal sesuai skema Bagian B
-5. Ganti isi `src/main.cpp` dengan **Kode Program B (Internal)** di bawah, lalu Build dan Upload, uji tombol yang sama, catat hasilnya
-6. Bandingkan A dan B — keduanya harus **logika identik** (pull-up: default HIGH, LOW saat ditekan; pull-down: default LOW, HIGH saat ditekan)
-7. Kalau hasilnya kebalik/tidak konsisten, cek apakah resistor eksternal benar-benar sudah dilepas
+1. Ganti isi `platformio.ini` kembali ke konfigurasi Arduino di atas. Hapus `src/main.c`, lalu buat lagi file `src/main.cpp`
+2. Pasang dua tombol di GPIO 32 dan 33 lengkap dengan resistornya, sesuai Skema Bagian A
+3. Tulis **Kode Program A (Eksternal)** di bawah pada `src/main.cpp`, klik Build dan Upload, lalu coba tekan kedua tombol dan catat hasilnya
+4. Lepas kedua resistor sesuai Skema Bagian B (Gambar 7), tombol tetap terpasang. Lihat Gambar 8 untuk memastikan pasangan kaki tombol yang benar
+5. Ganti isi `src/main.cpp` dengan **Kode Program B (Internal)** di bawah, klik Build dan Upload, lalu coba tombol yang sama dan catat hasilnya
+6. Bandingkan hasil A dan B. Seharusnya sama: pull-up bernilai HIGH saat tidak ditekan dan LOW saat ditekan, pull-down kebalikannya
+7. Jika hasilnya terbalik atau berbeda, periksa apakah kedua resistor sudah benar-benar dilepas
 
 **Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
+#include <Arduino.h>
+
 #define BUTTON_PULLUP_PIN 32   // pull-up eksternal
 #define BUTTON_PULLDOWN_PIN 33 // pull-down eksternal
 
@@ -322,6 +337,8 @@ void loop() {
 
 **Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
+#include <Arduino.h>
+
 #define BUTTON_PULLUP_PIN 32   // pull-up internal, pin sama seperti Kode Program A
 #define BUTTON_PULLDOWN_PIN 33 // pull-down internal, pin sama seperti Kode Program A
 
@@ -377,16 +394,18 @@ framework = arduino
 > Konfigurasi sama seperti Percobaan 3 — bila `platformio.ini` project Anda belum diubah sejak Percobaan 3, langkah ini bisa dilewati (tidak perlu menunggu refresh ulang).
 
 **Langkah Kerja:**
-1. Rangkai pushbutton sesuai skema di atas
-2. Implementasikan dua counter sesuai kode di bawah — tanpa debouncing (`counterNoDebounce`) dan dengan debouncing (`counterWithDebounce`)
-3. Tekan tombol sekali, bandingkan kedua nilai counter di Serial Monitor
-4. Ulangi dengan gaya berbeda (cepat/tegas vs pelan/ragu-ragu) — `counterNoDebounce` sering lompat lebih dari 1, `counterWithDebounce` tetap konsisten +1
-5. Ubah `DEBOUNCE_DELAY` ke `10` (10ms), **Build & Upload**, ulangi penekanan
-6. Ubah ke `200` (200ms), **Build & Upload**, tekan cepat berulang
-7. Bandingkan ketiga nilai (10/50/200ms) — analisis *trade-off* menyaring bouncing vs responsivitas tombol
+1. Pasang tombol sesuai skema di atas
+2. Tulis kode di bawah. Kode ini punya dua penghitung: `counterNoDebounce` (tanpa penyaring getaran tombol) dan `counterWithDebounce` (dengan penyaring)
+3. Tekan tombol satu kali, lalu bandingkan nilai kedua penghitung di Serial Monitor
+4. Ulangi dengan cara menekan yang berbeda (cepat dan tegas, lalu pelan dan ragu-ragu). `counterNoDebounce` bisa naik lebih dari 1 untuk satu tekanan, sedangkan `counterWithDebounce` seharusnya naik tepat 1. Jika keduanya terlihat sama, coba tekan lagi karena getaran tombol tidak selalu muncul
+5. Ubah `DEBOUNCE_DELAY` menjadi `10` (10 ms), klik Build dan Upload, lalu tekan tombol lagi
+6. Ubah menjadi `200` (200 ms), klik Build dan Upload, lalu tekan tombol dengan cepat berulang kali
+7. Bandingkan ketiga nilai (10, 50, dan 200 ms). Analisis untung ruginya: makin besar nilainya makin bersih dari getaran, tetapi tombol makin lambat merespons
 
 **Kode Program (Perbandingan Counter Tanpa vs Dengan Debouncing):**
 ```cpp
+#include <Arduino.h>
+
 #define BUTTON_PIN 25
 #define DEBOUNCE_DELAY 50 // ms
 
@@ -471,11 +490,11 @@ framework = arduino
 > Konfigurasi sama seperti Percobaan 3–4 — bila `platformio.ini` project Anda belum diubah, langkah ini bisa dilewati.
 
 **Langkah Kerja:**
-1. Rangkai LDR sebagai pembagi tegangan sesuai skema, hubungkan titik tengah ke GPIO 34
-2. Tulis program pembacaan ADC mentah sekaligus konversinya ke tegangan
-3. **Build** dan **Upload**, buka Serial Monitor
-4. Tutup LDR dengan tangan lalu sinari langsung — amati perubahan nilai raw (0–4095)
-5. Analisis kenapa sinyal analog bisa merepresentasikan lebih dari dua kondisi (bukan hanya HIGH/LOW)
+1. Pasang LDR bersama resistor sesuai skema, lalu hubungkan titik tengah keduanya ke GPIO 34
+2. Tulis program yang membaca nilai ADC mentah dan mengubahnya menjadi tegangan
+3. Klik **Build** dan **Upload**, lalu buka Serial Monitor
+4. Tutup LDR dengan tangan, lalu sinari dengan lampu. Lihat nilai mentahnya (0 sampai 4095) berubah
+5. Analisis mengapa sinyal analog bisa menunjukkan banyak kondisi, tidak hanya HIGH atau LOW
 
 **Kode Program (Pembacaan ADC dengan LDR):**
 ```cpp

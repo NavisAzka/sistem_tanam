@@ -229,11 +229,11 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai MPU6500 mode I2C sesuai skema
-2. Upload kode di bawah, amati akselerometer mentah di **Serial Plotter**
-3. Ketuk meja pelan atau goyangkan sensor — amati `Accel_Mentah` naik-turun tajam (noise)
-4. Implementasikan low-pass filter alpha, tampilkan `Accel_Mentah` dan `Accel_Alpha` bersamaan
-5. Uji α = 0.3, lalu 0.7, lalu 0.9 — Build & Upload ulang tiap nilai. Analisis trade-off: α besar lebih halus tapi lebih telat merespons
+1. Pasang MPU6500 sesuai skema (dengan cara I2C)
+2. Upload kode di bawah, lalu lihat nilai akselerometer mentah di **Serial Plotter**
+3. Ketuk meja pelan atau goyangkan sensor. Lihat garis `Accel_Mentah` naik turun tajam (ini disebut noise)
+4. Tambahkan filter alpha (penghalus sinyal) pada kode, lalu tampilkan `Accel_Mentah` dan `Accel_Alpha` bersamaan
+5. Coba α = 0.3, lalu 0.7, lalu 0.9. Klik Build dan Upload ulang untuk tiap nilai. Analisis untung ruginya: makin besar α makin halus, tetapi makin lambat mengikuti perubahan
 
 **Kode Program (MPU6500 + Low-Pass Filter Alpha):**
 ```cpp
@@ -344,12 +344,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Gunakan kode decoding quadrature dari Modul 4 Percobaan 2 sebagai basis
-2. Tambahkan rumus RPM dari Dasar Teori C.1, pakai `PULSES_PER_REV = 102.0` (lihat kode di bawah)
-3. Upload, putar poros dengan tangan — amati RPM berubah langsung. Kalau tetap 0, cek Channel A/B tertukar pin
-4. Amati RPM mentah di **Serial Plotter** — lebih bergerigi dibanding akselerometer di Percobaan 1
-5. Implementasikan filter alpha yang sama seperti Percobaan 1, tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 8)
-6. Uji α = 0.3, lalu 0.7, lalu 0.9 — Build & Upload ulang tiap nilai. Analisis kapan α besar/kecil lebih menguntungkan
+1. Pakai kode pembacaan encoder dari Modul 4 Percobaan 2 sebagai dasar
+2. Tambahkan rumus RPM dari Dasar Teori C.1 dengan `PULSES_PER_REV = 102.0` (lihat kode di bawah)
+3. Upload, lalu putar poros dengan tangan. Nilai RPM harus ikut berubah. Jika tetap 0, periksa apakah kabel Channel A dan B tertukar
+4. Lihat nilai RPM mentah di **Serial Plotter**. Garisnya lebih bergerigi dibanding akselerometer di Percobaan 1
+5. Pakai filter alpha yang sama seperti Percobaan 1, lalu tampilkan `RPM_Mentah` dan `RPM_Alpha` bersamaan (lihat Gambar 8)
+6. Coba α = 0.3, lalu 0.7, lalu 0.9. Klik Build dan Upload ulang untuk tiap nilai. Analisis kapan α besar atau kecil lebih menguntungkan
 
 **Kode Program (Encoder + RPM + Low-Pass Filter Alpha — Program Lengkap):**
 ```cpp
@@ -473,11 +473,11 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Upload kode di bawah — sudah mencakup RPM + filter alpha sebagai pembanding, ditambah Kalman filter baru
-2. Perhatikan implementasi kelas `KalmanFilter` pada kode
+1. Upload kode di bawah. Kode ini sudah berisi RPM dan filter alpha sebagai pembanding, ditambah filter Kalman yang baru
+2. Perhatikan bagian kelas `KalmanFilter` pada kode
 3. Tampilkan `RPM_Mentah`, `RPM_Alpha`, dan `RPM_Kalman` bersamaan di Serial Plotter (lihat Gambar 9)
-4. Uji Q/R default (0.001, 0.1), lalu ubah ke Q=0.1, R=5 — amati perubahan bentuk garis `RPM_Kalman`
-5. Bandingkan visual: `RPM_Kalman` harus lebih halus namun lebih cepat merespons dibanding `RPM_Alpha` — tuliskan pengamatan ini
+4. Coba nilai awal Q dan R (0.001 dan 0.1), lalu ubah menjadi Q=0.1 dan R=5. Lihat perubahan bentuk garis `RPM_Kalman`
+5. Bandingkan grafiknya: `RPM_Kalman` seharusnya lebih halus tetapi lebih cepat mengikuti perubahan dibanding `RPM_Alpha`. Tulis pengamatan Anda
 
 **Kode Program (Encoder + RPM + Filter Alpha + Kalman Filter — Program Lengkap):**
 ```cpp
@@ -644,12 +644,12 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai motor DC + driver + encoder sesuai Gambar 10, pakai catu daya eksternal untuk motor (bukan 5V USB)
-2. Tentukan target RPM = 100 di kode
-3. Coba mode **on-off** dulu — amati Serial Plotter: RPM naik-turun terus di sekitar target dan motor bergetar, ini **normal** untuk mode on-off (bandingkan Gambar 11)
-4. Ganti ke mode **Proportional** (`Kp = 3.0`) — RPM lebih stabil, tapi berhenti sedikit di bawah target (disebut *steady-state error*), ini juga normal untuk kontrol P
-5. Screenshot Serial Plotter kedua mode, lalu hitung kasar *steady-state error* mode P (target dikurangi RPM rata-rata saat stabil)
-6. Kalau motor tidak bergerak sama sekali, cek wiring driver (Gambar 10) dan urutan `IN1`/`IN2` sebelum `ledcWrite()` dipanggil
+1. Pasang motor DC, driver, dan encoder sesuai Gambar 10. Pakai catu daya terpisah untuk motor (bukan 5V dari USB)
+2. Tetapkan target RPM = 100 di kode
+3. Coba mode **on-off** dulu. Di Serial Plotter, RPM akan naik turun terus di sekitar target dan motor bergetar. Ini **normal** untuk mode on-off (bandingkan dengan Gambar 11)
+4. Ganti ke mode **Proportional** (`Kp = 3.0`). RPM menjadi lebih stabil, tetapi berhenti sedikit di bawah target (disebut *steady-state error*). Ini juga normal untuk kontrol P
+5. Ambil screenshot Serial Plotter untuk kedua mode, lalu hitung kasar selisih target dengan RPM rata-rata saat mode P sudah stabil
+6. Jika motor tidak bergerak sama sekali, periksa kabel driver (Gambar 10) dan urutan `IN1` dan `IN2` sebelum `ledcWrite()` dipanggil
 
 **Kode Program (Encoder + Filter + Kontrol On-Off/Proportional — Program Lengkap):**
 ```cpp
@@ -824,20 +824,20 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Rangkai encoder, driver motor, dan dua tombol target RPM sesuai Gambar 12
+1. Pasang encoder, driver motor, dan dua tombol target RPM sesuai Gambar 12
 2. Upload kode di bawah
-3. Tekan tombol naik sampai target ≈ 100 RPM — motor otomatis mengejar
-4. Amati Serial Plotter — respons awal biasanya belum bagus. Screenshot sebagai **"sebelum tuning"**
-5. **Tuning** satu parameter per waktu:
-   - Naikkan **Kp** sampai respons cepat tapi belum berosilasi liar
-   - Tambah **Ki** sampai target tercapai (steady-state error hilang)
-   - Tambah **Kd** kalau masih overshoot
-   - Screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan Gambar 13)
-6. Bandingkan bentuk respons yang Anda dapatkan di sepanjang proses tuning dengan jenis-jenis hasil umum pada Gambar 14 — analisis kombinasi Kp/Ki/Kd apa yang kira-kira menyebabkan tiap jenis respons tersebut
+3. Tekan tombol naik sampai target sekitar 100 RPM. Motor akan mengejar target sendiri
+4. Lihat Serial Plotter. Responsnya biasanya belum bagus. Ambil screenshot sebagai **"sebelum tuning"**
+5. Lakukan **tuning** (mencari nilai terbaik), ubah satu parameter dalam satu waktu:
+   - Naikkan **Kp** sampai responsnya cepat tetapi belum bergoyang berlebihan
+   - Tambah **Ki** sampai RPM tepat di target (selisih yang tersisa hilang)
+   - Tambah **Kd** jika RPM masih melewati target
+   - Ambil screenshot hasil akhir sebagai **"setelah tuning"** (bandingkan dengan Gambar 13)
+6. Bandingkan bentuk respons yang Anda dapat selama tuning dengan jenis-jenis hasil umum di Gambar 14. Analisis kira-kira kombinasi Kp, Ki, dan Kd apa yang menyebabkan tiap jenis respons
 
-<img src="img/jenis_respons_pid.png" alt="Gambar 14: Jenis-jenis hasil respons kontrol PID — overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup" width="90%">
+<img src="img/jenis_respons_pid.png" alt="Gambar 14: Jenis-jenis hasil respons kontrol PID: overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup" width="90%">
 
-*Gambar 14: Jenis-jenis hasil respons kontrol PID — overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup*
+*Gambar 14: Jenis-jenis hasil respons kontrol PID: overdamped, underdamped, kritis/well-tuned, tidak stabil, steady-state error, dan integral windup*
 
 **Kode Program (Kontrol PID Lengkap — Encoder, Filter, PID, Tombol Target):**
 ```cpp

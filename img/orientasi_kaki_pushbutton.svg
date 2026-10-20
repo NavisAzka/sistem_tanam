@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="460" viewBox="0 0 1000 460" role="img" aria-labelledby="title desc">
+  <title id="title">Orientasi kaki pushbutton tactile empat kaki</title>
+  <desc id="desc">Tampak atas pushbutton dan diagram koneksi internal: dua kaki pada tiap sisi sudah terhubung, dan saat ditekan kedua sisi terhubung.</desc>
+  <defs>
+    <style>
+      text { font-family: sans-serif; fill: #172033; }
+      .title { font-size: 25px; font-weight: 700; }
+      .label { font-size: 18px; }
+      .small { font-size: 15px; }
+      .lead { stroke: #26364a; stroke-width: 5; fill: none; stroke-linecap: round; }
+      .pin { fill: #d7dde6; stroke: #26364a; stroke-width: 3; }
+      .body { fill: #dbeafe; stroke: #2563eb; stroke-width: 3; }
+      .contact { stroke: #15803d; stroke-width: 7; stroke-linecap: round; }
+      .switch { stroke: #dc2626; stroke-width: 5; stroke-linecap: round; }
+    </style>
+  </defs>
+  <rect width="1000" height="460" fill="#ffffff"/>
+  <text x="40" y="45" class="title">Pushbutton tactile 4 kaki: pasangan kaki dan kontak</text>
+
+  <text x="75" y="95" class="label" font-weight="700">Tampak atas</text>
+  <rect x="90" y="130" width="320" height="210" rx="22" class="body"/>
+  <rect x="182" y="180" width="136" height="110" rx="16" fill="#fff" stroke="#64748b" stroke-width="3"/>
+  <circle cx="250" cy="235" r="25" fill="#94a3b8" stroke="#475569" stroke-width="3"/>
+  <path d="M145 130 V95 M355 130 V95 M145 340 V375 M355 340 V375" class="lead"/>
+  <rect x="131" y="80" width="28" height="32" rx="4" class="pin"/>
+  <rect x="341" y="80" width="28" height="32" rx="4" class="pin"/>
+  <rect x="131" y="360" width="28" height="32" rx="4" class="pin"/>
+  <rect x="341" y="360" width="28" height="32" rx="4" class="pin"/>
+  <text x="110" y="420" class="small">Kaki pada sisi yang sama berpasangan</text>
+  <text x="460" y="145" class="label" font-weight="700">Koneksi internal</text>
+  <text x="465" y="185" class="small">Tidak ditekan</text>
+  <circle cx="535" cy="240" r="12" class="pin"/><circle cx="535" cy="300" r="12" class="pin"/>
+  <circle cx="735" cy="240" r="12" class="pin"/><circle cx="735" cy="300" r="12" class="pin"/>
+  <path d="M535 240 V300 M735 240 V300" class="contact"/>
+  <text x="495" y="340" class="small">Sisi kiri</text><text x="695" y="340" class="small">Sisi kanan</text>
+  <text x="465" y="390" class="small">Saat ditekan, kontak di dalam menghubungkan kedua sisi.</text>
+  <path d="M555 270 H715" stroke="#94a3b8" stroke-width="3" stroke-dasharray="8 8"/>
+  <text x="560" y="230" class="small" fill="#64748b">terbuka saat dilepas</text>
+</svg>
