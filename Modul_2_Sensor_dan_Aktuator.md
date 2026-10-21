@@ -32,7 +32,7 @@
     - [PERCOBAAN 3 — Aktuator Motor DC](#percobaan-3--aktuator-motor-dc)
     - [PERCOBAAN 4 — Aktuator Motor Stepper](#percobaan-4--aktuator-motor-stepper)
     - [PERCOBAAN 5 — Aktuator Motor Servo](#percobaan-5--aktuator-motor-servo)
-    - [PERCOBAAN 6 — Aktuator ESC \& Motor Brushless (BLDC) (Dikendalikan Joystick)](#percobaan-6--aktuator-esc--motor-brushless-bldc-dikendalikan-joystick)
+    - [PERCOBAAN 6 — Aktuator ESC \& Motor Brushless (BLDC)](#percobaan-6--aktuator-esc--motor-brushless-bldc)
   - [F. Tugas Modul](#f-tugas-modul)
   - [G. Referensi](#g-referensi)
 
@@ -48,7 +48,7 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 5. Mengimplementasikan kontrol kecepatan dan arah motor DC menggunakan sinyal PWM, dikendalikan secara interaktif melalui joystick
 6. Mengimplementasikan kontrol motor stepper 4-fasa melalui driver ULN2003 untuk memutar motor sejauh sudut tertentu berdasarkan jumlah step
 7. Mengimplementasikan kontrol posisi motor servo menggunakan sinyal PWM untuk menggerakkan servo bolak-balik antara dua sudut
-8. Menjelaskan prinsip kerja ESC (Electronic Speed Controller) serta mengimplementasikan proses arming dan kontrol kecepatan motor brushless (BLDC) menggunakan sinyal PWM, dikendalikan secara interaktif melalui joystick
+8. Menjelaskan prinsip kerja ESC (Electronic Speed Controller) serta mengimplementasikan proses arming dan kontrol kecepatan motor brushless (BLDC) menggunakan sinyal PWM
 
 ---
 
@@ -83,7 +83,7 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 ### C.1 Sensor Resistif — Joystick 2-Axis sebagai Input Kontrol
 **Modul 1 Percobaan 5** telah memperkenalkan sensor resistif melalui LDR — sebuah resistor variabel yang dibaca lewat rangkaian pembagi tegangan ke ADC. **Joystick 2-axis (mis. modul KY-023)** bekerja dengan basis transduksi yang **sama persis (resistif)**, namun memperluas penerapannya: di dalam modul terdapat **dua potensiometer** (masing-masing untuk sumbu X dan sumbu Y) yang porosnya digerakkan secara mekanis oleh gerakan stick, ditambah satu **tombol tekan (push button, SW)** yang aktif saat stick ditekan ke bawah.
 
-Perbedaan mendasar dengan LDR terletak pada **peran** sensor tersebut dalam sistem: LDR di Modul 1 murni berfungsi sebagai sensor pasif (membaca besaran lingkungan berupa intensitas cahaya), sedangkan joystick di sini berfungsi sebagai **input kontrol interaktif (Human-Machine Interface/HMI)** — nilai ADC yang dihasilkan tidak merepresentasikan besaran fisik lingkungan, melainkan **perintah** yang diberikan pengguna secara langsung untuk mengendalikan aktuator (motor DC dan BLDC pada Percobaan 3 dan 6 modul ini).
+Perbedaan mendasar dengan LDR terletak pada **peran** sensor tersebut dalam sistem: LDR di Modul 1 murni berfungsi sebagai sensor pasif (membaca besaran lingkungan berupa intensitas cahaya), sedangkan joystick di sini berfungsi sebagai **input kontrol interaktif (Human-Machine Interface/HMI)** — nilai ADC yang dihasilkan tidak merepresentasikan besaran fisik lingkungan, melainkan **perintah** yang diberikan pengguna secara langsung untuk mengendalikan aktuator (motor DC pada Percobaan 3 modul ini).
 
 Setiap sumbu joystick menghasilkan nilai ADC 12-bit (0–4095) dengan **titik tengah (netral)** di sekitar nilai 2048 saat stick tidak disentuh — nilai ini umumnya tidak presisi tepat 2048 karena toleransi komponen, sehingga diperlukan **dead zone** (rentang toleransi di sekitar titik tengah yang dianggap "netral") agar motor tidak bergerak sendiri akibat noise pembacaan ADC saat stick dalam posisi diam.
 
@@ -202,7 +202,7 @@ Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif melal
 | Hall effect sensor — DO/OUT | GPIO 26 | Output digital (umumnya aktif LOW saat magnet terdeteksi) |
 | Hall effect sensor — VCC / GND | 3.3V / GND | Sesuai datasheet modul |
 
-> **Catatan:** Pin **GPIO 34, 35, 27** yang digunakan joystick pada Percobaan ini sengaja dipertahankan **konsisten** di Percobaan 3 dan 6 modul ini, karena joystick akan dipakai berulang sebagai input kontrol aktuator pada Percobaan-Percobaan tersebut.
+> **Catatan:** Pin **GPIO 34, 35, 27** yang digunakan joystick pada Percobaan ini sengaja dipertahankan **konsisten** di Percobaan 3 modul ini, karena joystick akan dipakai kembali sebagai input kontrol aktuator pada percobaan tersebut.
 
 <img src="img/wiring_joystick_touch.png" alt="Gambar 9: Diagram wiring joystick KY-023, modul touch TTP223, dan hall effect sensor ke ESP32" width="60%">
 
@@ -743,30 +743,27 @@ void loop() {
 
 ---
 
-### PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC) (Dikendalikan Joystick)
+### PERCOBAAN 6 — Aktuator ESC & Motor Brushless (BLDC)
 
 **Tujuan:**
-Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, serta mengimplementasikan proses arming dan kontrol kecepatan motor secara langsung melalui **LEDC** (tanpa library ESP32Servo), dikendalikan secara interaktif melalui sumbu X joystick KY-023.
+Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, serta mengimplementasikan proses arming dan kontrol kecepatan motor secara langsung melalui **LEDC** (tanpa library ESP32Servo) dengan perubahan nilai PWM naik-turun secara bertahap (0 ke 128 dan 128 ke 0).
 
-**Prinsip Kontrol:** Setelah proses arming selesai, posisi joystick VRx dipetakan langsung menjadi throttle (1000–2000µs) — posisi paling kiri menghasilkan throttle minimum (motor idle/berhenti), semakin ke kanan semakin besar throttle. Tombol **SW** berfungsi sebagai **kill switch**: selama ditekan, throttle dipaksa ke nilai minimum (1000µs) terlepas dari posisi joystick — penting sebagai mekanisme keselamatan untuk motor bertenaga besar seperti BLDC.
+**Prinsip Kontrol:** Setelah proses arming selesai (menahan sinyal throttle minimum 1000µs / PWM 0 selama 5 detik), program menaikkan nilai PWM secara bertahap dari **0 hingga 128** (setengah kapasitas dari skala 8-bit 0–255, dipetakan ke lebar pulsa 1000–1500µs demi keamanan pengujian), lalu menurunkannya kembali dari **128 ke 0** secara berulang.
 
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 / Sumber | Keterangan |
 |---|---|---|
-| Joystick KY-023 — VRx | GPIO 34 | Besar throttle (setelah arming) |
-| Joystick KY-023 — SW | GPIO 27 | Kill switch (paksa throttle minimum), aktif LOW (`INPUT_PULLUP`) |
-| Joystick KY-023 — VCC / GND | 3.3V / GND | Suplai daya modul joystick |
-| ESC — Sinyal PWM (kabel Putih/Oranye) | GPIO 25 | Sinyal kontrol dari ESP32 ke ESC, via channel LEDC |
-| ESC — BEC 5V (kabel Merah tengah konektor sinyal) | **Tidak dihubungkan** | Biarkan lepas karena ESP32 sudah mendapat daya dari USB (**jangan** hubungkan ke 3.3V ESP32) |
+| ESC — Sinyal PWM (kabel Putih/Kuning/Oranye) | GPIO 25 | Sinyal kontrol dari ESP32 ke ESC, via channel LEDC |
+| ESC — BEC 5V (kabel Merah tengah konektor sinyal) | **Tidak dihubungkan** | Biarkan lepas jika ESP32 sudah mendapat daya dari USB (**jangan** hubungkan ke 3.3V ESP32) |
 | ESC — GND sinyal (kabel Hitam/Cokelat) | GND ESP32 | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
 | ESC — Power input (+ / −) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
-| ESC — 3 kabel fasa output | 3 kabel Motor Brushless (BLDC) | Menukar 2 dari 3 kabel fasa akan membalik arah putar motor |
+| ESC — 3 kabel fasa output (A, B, C) | 3 kabel Motor Brushless (BLDC) | Menukar 2 dari 3 kabel fasa akan membalik arah putar motor |
 
-<img src="img/wiring_esc_bldc.png" alt="Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_esc_bldc.png" alt="Gambar 14: Diagram wiring ESC, motor brushless (BLDC), dan baterai ke ESP32" width="60%">
 
-*Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 14: Diagram wiring ESC, motor brushless (BLDC), dan baterai ke ESP32*
 
 **`platformio.ini`:**
 ```ini
@@ -780,82 +777,78 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Pastikan baling-baling (propeller) **sudah dilepas** dari motor brushless
-2. Pasang ESC: kabel sinyal ke GPIO 25, GND ESC disatukan dengan GND ESP32, dan daya ESC dari sumber **terpisah** (bukan dari 5V ESP32)
-3. Pasang joystick (VRx ke GPIO 34, SW ke GPIO 27), sama seperti Percobaan 1
-4. Geser joystick sampai paling kiri, lalu klik **Build** dan **Upload**. Baterai ESC belum boleh disambungkan, ESP32 cukup memakai daya dari USB
-5. Biarkan joystick tetap paling kiri dan tahan tombol SW. Saat Serial Monitor menampilkan "Sekarang nyalakan PSU ESC", segera sambungkan baterai LiPo. Kode menahan sinyal terendah selama 5 detik, jadi lakukan sebelum waktu itu habis. Tunggu bunyi *beep* dari ESC dan pesan "Arming selesai", dan tetap tahan SW sampai itu terjadi
-6. Setelah arming berhasil, lepas SW. Geser joystick pelan dari kiri ke kanan dan lihat kecepatan motor naik
-7. Tekan SW saat motor berputar sebagai tombol berhenti darurat. Analisis apakah motor berhenti dengan halus atau menyentak
-8. Analisis mengapa proses arming penting bagi ESC, dan apa risikonya jika dilewati
-9. Bandingkan cara di percobaan ini (mengatur sinyal PWM sendiri lewat `pulseToDuty()`) dengan cara memakai library ESP32Servo di Percobaan 5 (`attach()` dan `write()`). Diskusikan kelebihan dan kekurangannya
+2. Pasang ESC sesuai skema: kabel sinyal ke GPIO 25, GND ESC disatukan dengan GND ESP32, dan daya utama ESC dihubungkan ke sumber daya/baterai **terpisah** (jangan sambungkan baterai terlebih dahulu)
+3. Tulis program di bawah, lalu klik **Build** dan **Upload** dengan ESP32 menyala dari USB
+4. Buka Serial Monitor. Saat muncul pesan *"Sekarang nyalakan PSU ESC"*, segera sambungkan baterai LiPo sebelum jeda arming 5 detik habis. Tunggu bunyi *beep* dari ESC dan pesan *"Arming selesai"*
+5. Amati putaran motor brushless saat nilai PWM naik bertahap dari 0 ke 128, lalu turun kembali dari 128 ke 0, dan bandingkan dengan nilai PWM serta lebar pulsa (µs) yang tampil di Serial Monitor
+6. Analisis mengapa proses arming penting bagi ESC, dan apa risikonya jika dilewati
+7. Bandingkan cara di percobaan ini (mengatur sinyal PWM sendiri lewat `pulseToDuty()`) dengan cara memakai library ESP32Servo di Percobaan 5 (`attach()` dan `write()`). Diskusikan kelebihan dan kekurangannya
 
-> **Mengapa urutan ini penting:** Jeda 5 detik pada kode dimulai saat ESP32 reboot, bukan saat baterai ESC dipasang. Jika baterai baru dipasang setelah jeda berakhir, loop mungkin sudah mengirim nilai throttle dari joystick; nilai paling kiri pun dapat sedikit lebih tinggi dari 1000µs karena toleransi ADC. ESC bisa menolak arming dan memberi bunyi peringatan, atau merespons throttle sesuai perilaku model ESC. Bila jeda terlewat sebelum baterai dipasang, lepaskan baterai ESC, reset ESP32, lalu ulangi urutan sambil menahan SW dan memastikan joystick di kiri. Tetap tanpa propeller selama pengujian.
+> **Mengapa urutan ini penting:** Jeda 5 detik pada kode dimulai saat ESP32 reboot, bukan saat baterai ESC dipasang. Jika baterai baru dipasang setelah jeda berakhir, `loop()` sudah mulai menaikkan sinyal throttle di atas 1000µs sehingga ESC akan menolak arming demi keamanan. Bila jeda terlewat sebelum baterai dipasang, lepaskan baterai ESC, tekan tombol EN/Reset pada ESP32, lalu sambungkan kembali baterai saat pesan *"Sekarang nyalakan PSU ESC"* muncul.
 
-**Kode Program (Arming ESC & Kontrol Kecepatan Motor Brushless via Joystick, berbasis LEDC):**
+**Kode Program (Arming ESC & Kontrol Kecepatan Motor Brushless Naik-Turun 0–128 PWM, berbasis LEDC):**
 ```cpp
 #include <Arduino.h>
 
-//==================== JOYSTICK ====================
-#define JOY_VRX 34
-#define JOY_SW  27
-
-//==================== ESC ====================
 #define ESC_PIN 25
 #define ESC_CHANNEL 0
 
 const uint32_t PWM_FREQ = 50;
 const uint8_t PWM_RESOLUTION = 16;
 
-const uint16_t THROTTLE_MIN = 1000; // us
-const uint16_t THROTTLE_MAX = 2000; // us
+const uint16_t THROTTLE_MIN = 1000; // us (0 PWM)
+const uint16_t THROTTLE_MAX = 2000; // us (255 PWM)
+const uint8_t MAX_PWM_TEST = 128;   // Batas uji setengah kecepatan (128 dari 255)
 
 uint32_t pulseToDuty(uint16_t pulseUs) {
   return ((uint32_t)pulseUs * 65535UL) / 20000UL;
 }
 
-void setThrottle(uint16_t pulseUs) {
+void setThrottlePWM(uint8_t pwmValue) {
+  uint16_t pulseUs = map(pwmValue, 0, 255, THROTTLE_MIN, THROTTLE_MAX);
   uint32_t duty = pulseToDuty(pulseUs);
   ledcWrite(ESC_CHANNEL, duty);
+  Serial.printf("PWM: %3d | Throttle: %4d us\n", pwmValue, pulseUs);
 }
 
 void setup() {
   Serial.begin(115200);
-  pinMode(JOY_SW, INPUT_PULLUP);
 
   ledcSetup(ESC_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
   ledcAttachPin(ESC_PIN, ESC_CHANNEL);
 
   Serial.println("=======================");
-  Serial.println("BLDC VIA JOYSTICK");
+  Serial.println("KONTROL ESC & BLDC");
   Serial.println("=======================");
 
-  // Harus sudah aktif SEBELUM ESC dinyalakan
-  setThrottle(THROTTLE_MIN);
+  // Kirim sinyal minimum (PWM 0 = 1000 us) SEBELUM ESC dinyalakan
+  setThrottlePWM(0);
 
   Serial.println("PWM minimum aktif.");
   Serial.println("Sekarang nyalakan PSU ESC.");
 
-  // Beri ESC waktu untuk arming
+  // Beri ESC waktu 5 detik untuk arming
   delay(5000);
 
-  Serial.println("Arming selesai. Kontrol joystick aktif.");
+  Serial.println("Arming selesai. Motor bergerak naik-turun (0 - 128 PWM).");
 }
 
 void loop() {
-  bool killSwitch = (digitalRead(JOY_SW) == LOW);
-
-  uint16_t throttle;
-  if (killSwitch) {
-    throttle = THROTTLE_MIN;
-  } else {
-    int vrx = analogRead(JOY_VRX);
-    throttle = map(vrx, 0, 4095, THROTTLE_MIN, THROTTLE_MAX);
+  // Naik bertahap dari 0 ke 128 PWM
+  for (int pwm = 0; pwm <= MAX_PWM_TEST; pwm += 4) {
+    setThrottlePWM(pwm);
+    delay(100);
   }
 
-  setThrottle(throttle);
-  Serial.printf("Throttle = %d us %s\n", throttle, killSwitch ? "(KILL SWITCH)" : "");
+  delay(500);
 
-  delay(100);
+  // Turun bertahap dari 128 ke 0 PWM
+  for (int pwm = MAX_PWM_TEST; pwm >= 0; pwm -= 4) {
+    setThrottlePWM(pwm);
+    delay(100);
+  }
+
+  delay(1000);
 }
 ```
 
@@ -864,9 +857,9 @@ void loop() {
 |---|---|
 | `pulseToDuty(pulseUs)` | Mengonversi lebar pulsa (mikrodetik) menjadi nilai duty cycle LEDC 16-bit (0–65535) relatif terhadap periode 20ms (`20000` mikrodetik) — rumus manual yang digantikan abstraksinya oleh `writeMicroseconds()` pada library ESP32Servo |
 | `ledcSetup(ESC_CHANNEL, PWM_FREQ, PWM_RESOLUTION)` | Mengonfigurasi channel LEDC 0 dengan frekuensi 50Hz dan resolusi 16-bit — resolusi tinggi diperlukan agar pemetaan mikrodetik ke duty cycle cukup presisi |
-| `setThrottle(THROTTLE_MIN)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum selama 5 detik sebelum ESC menerima perintah throttle lain, sesuai prinsip arming pada Dasar Teori C.8 |
-| `map(vrx, 0, 4095, THROTTLE_MIN, THROTTLE_MAX)` | Memetakan posisi joystick langsung menjadi nilai throttle dalam mikrodetik, tanpa dead zone (seluruh rentang joystick digunakan sebagai skala throttle 0–100%) |
-| `killSwitch` diperiksa sebelum `setThrottle()` | Tombol SW pada joystick berfungsi sebagai kill switch — memaksa throttle minimum kapan pun ditekan, mekanisme keselamatan penting untuk motor bertenaga besar |
+| `setThrottlePWM(0)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum (PWM 0 = 1000µs) selama 5 detik sebelum ESC menerima perintah putaran, sesuai prinsip arming pada Dasar Teori C.8 |
+| `map(pwmValue, 0, 255, THROTTLE_MIN, THROTTLE_MAX)` | Memetakan skala nilai PWM 8-bit (`0–255`) ke rentang lebar pulsa standar ESC (`1000–2000µs`), sehingga `128` menghasilkan sekitar `1502µs` (50% throttle) |
+| Dua loop `for` (`0` ke `128` dan `128` ke `0`) | Menaikkan kecepatan motor secara bertahap hingga setengah kapasitas (`MAX_PWM_TEST = 128`), menahannya sejenak, lalu menurunkannya kembali hingga berhenti (`0`) |
 
 
 ---
