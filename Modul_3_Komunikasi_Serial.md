@@ -152,6 +152,10 @@ Mahasiswa mampu mengimplementasikan komunikasi UART antara dua board ESP32 mengg
 
 > Kedua board tetap terhubung ke PC melalui USB masing-masing (untuk power dan Serial Monitor UART0), sehingga total terdapat 3 kabel yang menghubungkan kedua board: TX↔RX (silang) dan GND bersama.
 
+<img src="img/wiring_uart_esp32.png" alt="Gambar 6: Diagram wiring komunikasi UART2 silang antara dua board ESP32 (GPIO 17 ke GPIO 16, GPIO 16 ke GPIO 17, dan GND ke GND)" width="60%">
+
+*Gambar 6: Diagram wiring komunikasi UART2 silang antara dua board ESP32 (GPIO 17 ke GPIO 16, GPIO 16 ke GPIO 17, dan GND ke GND)*
+
 **`platformio.ini`** (sama untuk project Transmitter maupun Receiver):
 ```ini
 [env:esp32dev]
@@ -244,9 +248,9 @@ Mahasiswa mampu mengimplementasikan interfacing lebih dari satu modul I2C nyata 
 
 > Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6500 = `0x68`). Perhatikan juga bahwa modul MPU6500 ini adalah **modul yang sama** yang nanti dipakai ulang pada Percobaan 3–4 melalui SPI — cukup pindahkan wiring CS dari "ditarik ke 3.3V" menjadi "terhubung ke GPIO CS ESP32" saat berpindah Percobaan.
 
-<img src="img/wiring_oled_mpu6500.png" alt="Gambar 6: Wiring OLED dan MPU6500 berbagi bus I2C (SDA/SCL) yang sama pada ESP32" width="60%">
+<img src="img/wiring_oled_mpu6500.png" alt="Gambar 7: Wiring OLED dan MPU6500 berbagi bus I2C (SDA/SCL) yang sama pada ESP32" width="60%">
 
-*Gambar 6: Wiring OLED dan MPU6500 berbagi bus I2C (SDA/SCL) yang sama pada ESP32*
+*Gambar 7: Wiring OLED dan MPU6500 berbagi bus I2C (SDA/SCL) yang sama pada ESP32*
 
 **`platformio.ini`:**
 ```ini
@@ -496,6 +500,10 @@ Mahasiswa mampu mengimplementasikan komunikasi SPI dengan membaca data akselerom
 | MPU6500 — SCK (SCL pada mode I2C) | GPIO 18 | SPI default ESP32 |
 | MPU6500 — VCC/GND | 3.3V, GND | MPU6500 umumnya hanya toleran 3.3V |
 
+<img src="img/wiring_mpu6500_spi.png" alt="Gambar 8: Diagram wiring modul MPU6500 ke ESP32 melalui antarmuka SPI (CS=GPIO 5, SCK=GPIO 18, MISO/AD0=GPIO 19, MOSI/SDA=GPIO 23)" width="60%">
+
+*Gambar 8: Diagram wiring modul MPU6500 ke ESP32 melalui antarmuka SPI (CS=GPIO 5, SCK=GPIO 18, MISO/AD0=GPIO 19, MOSI/SDA=GPIO 23)*
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]
@@ -682,7 +690,7 @@ Mahasiswa mampu menjelaskan konsep DMA pada SPI dan mengimplementasikan pembacaa
 > **Catatan:** Percobaan ini menggunakan driver SPI master dari ESP-IDF (`driver/spi_master.h`) yang tetap dapat dipanggil langsung dari sketch Arduino karena Arduino-ESP32 core dibangun di atas ESP-IDF. API ini (termasuk `SPI_DMA_CH_AUTO`) sudah tersedia sejak ESP-IDF 4.x yang dibawa oleh **Arduino-ESP32 core 2.0.x** (platform `espressif32` resmi tanpa versi khusus), sehingga tidak memerlukan platform komunitas tambahan seperti pada Modul 2.
 
 **Skema Rangkaian:**
-Gunakan rangkaian MPU6500 yang sama dengan **Percobaan 3** (CS=GPIO 5, MOSI=GPIO 23, MISO=GPIO 19, SCK=GPIO 18).
+Gunakan rangkaian MPU6500 yang sama dengan **Percobaan 3** (CS=GPIO 5, MOSI=GPIO 23, MISO=GPIO 19, SCK=GPIO 18 — lihat **Gambar 8**).
 
 **`platformio.ini`:**
 ```ini
@@ -954,9 +962,9 @@ Mahasiswa mampu mengimplementasikan komunikasi Ethernet menggunakan modul W5500 
 > - **Via switch/router (DHCP aktif):** colokkan W5500 dan PC ke switch/router yang sama. PC tetap dapat internet, cukup pilih `ip(...)` pada kode yang satu subnet dengan router dan belum dipakai perangkat lain.
 > - **Koneksi langsung (kabel RJ45 W5500 → port Ethernet laptop):** tidak ada DHCP, sehingga **IP statis wajib diatur manual di kedua sisi** (ESP32 lewat kode, PC lewat setelan Windows di bawah). Cara ini paling sederhana untuk praktikum karena tidak bergantung pada jaringan lab.
 
-<img src="img/wiring_w5500_percobaan5.png" alt="Gambar 7: Contoh wiring modul W5500 ke ESP32 via SPI (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_w5500_percobaan5.png" alt="Gambar 9: Contoh wiring modul W5500 ke ESP32 via SPI (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 7: Contoh wiring modul W5500 ke ESP32 via SPI (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 9: Contoh wiring modul W5500 ke ESP32 via SPI (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
@@ -982,7 +990,7 @@ Kode contoh memberi ESP32 alamat `192.168.1.177`. Atur PC pada subnet yang sama 
    - **DNS:** kosongkan
 5. Klik **Save**
 
-![Gambar 8: Tangkapan layar Settings Windows 11 — Network & internet → Ethernet → IP assignment diatur ke Manual, IPv4 aktif dengan IP address 192.168.1.10 dan subnet mask 255.255.255.0](img/win_static_ip_settings.png)
+![Gambar 10: Tangkapan layar Settings Windows 11 — Network & internet → Ethernet → IP assignment diatur ke Manual, IPv4 aktif dengan IP address 192.168.1.10 dan subnet mask 255.255.255.0](img/network_internet_win.png)
 
 *Cara 2 — Control Panel (semua versi Windows):*
 1. Tekan `Win + R`, ketik `ncpa.cpl`, tekan Enter
@@ -994,7 +1002,7 @@ Kode contoh memberi ESP32 alamat `192.168.1.177`. Atur PC pada subnet yang sama 
    - **Default gateway:** kosong
 5. Biarkan DNS kosong → **OK** → **Close**
 
-![Gambar 9: Tangkapan layar dialog "Internet Protocol Version 4 (TCP/IPv4) Properties" pada Control Panel Windows, dengan opsi "Use the following IP address" dipilih dan diisi IP 192.168.1.10 / subnet 255.255.255.0](img/win_static_ip_ncpa.png)
+![Gambar 11: Tangkapan layar dialog "Internet Protocol Version 4 (TCP/IPv4) Properties" pada Control Panel Windows, dengan opsi "Use the following IP address" dipilih dan diisi IP 192.168.1.10 / subnet 255.255.255.0](img/ip_setting_win.png)
 
 *Verifikasi & pengembalian setelan:*
 - Buka **Command Prompt**, jalankan `ipconfig` — pastikan adapter Ethernet menampilkan `IPv4 Address` = `192.168.1.10`

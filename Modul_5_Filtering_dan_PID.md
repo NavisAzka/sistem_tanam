@@ -474,6 +474,8 @@ Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif 
 | Encoder — VCC (kabel Biru) | 3.3V–5V | Suplai daya sensor encoder |
 | Encoder — GND (kabel Hitam) | GND | — |
 
+> Rangkaian sama persis dengan **Percobaan 2** (lihat **Gambar 7**).
+
 **`platformio.ini`:**
 ```ini
 [env:esp32dev]

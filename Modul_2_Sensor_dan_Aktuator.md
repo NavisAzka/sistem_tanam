@@ -204,9 +204,9 @@ Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif melal
 
 > **Catatan:** Pin **GPIO 34, 35, 27** yang digunakan joystick pada Percobaan ini sengaja dipertahankan **konsisten** di Percobaan 3 dan 6 modul ini, karena joystick akan dipakai berulang sebagai input kontrol aktuator pada Percobaan-Percobaan tersebut.
 
-<!-- <img src="img/wiring_joystick_touch.png" alt="Gambar 9: Diagram wiring joystick KY-023 dan modul touch TTP223 ke ESP32 (hall effect sensor tidak ditampilkan, rangkai sesuai tabel di atas)" width="60%"> -->
+<img src="img/wiring_joystick_touch.png" alt="Gambar 9: Diagram wiring joystick KY-023, modul touch TTP223, dan hall effect sensor ke ESP32" width="60%">
 
-<!-- *Gambar 9: Diagram wiring joystick KY-023 dan modul touch TTP223 ke ESP32 (hall effect sensor tidak ditampilkan, rangkai sesuai tabel di atas)* -->
+*Gambar 9: Diagram wiring joystick KY-023, modul touch TTP223, dan hall effect sensor ke ESP32*
 
 **`platformio.ini`:**
 ```ini
@@ -285,9 +285,9 @@ Mahasiswa mampu mengimplementasikan pembacaan sensor ultrasonik (basis akustik) 
 | Sensor IR obstacle — OUT | GPIO 19 | Output digital (umumnya aktif LOW saat objek terdeteksi) |
 | Sensor IR obstacle — VCC / GND | 3.3V / GND | Sesuai datasheet modul |
 
-<img src="img/wiring_ultrasonik_ir.png" alt="Gambar 9: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32" width="60%">
+<img src="img/wiring_ultrasonik_ir.png" alt="Gambar 10: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32" width="60%">
 
-*Gambar 9: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32*
+*Gambar 10: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32*
 
 **`platformio.ini`:**
 ```ini
@@ -388,9 +388,9 @@ Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC me
 | Motor DC — M1 (kabel Merah, +) | Driver OUT1 | Menukar M1/M2 membalik arah putar default motor |
 | Motor DC — M2 (kabel Putih, −) | Driver OUT2 | — |
 
-<img src="img/wiring_motor_dc_l298n.png" alt="Gambar 10: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_motor_dc_l298n.png" alt="Gambar 11: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 10: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 11: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
@@ -530,9 +530,9 @@ Mahasiswa mampu mengimplementasikan kontrol motor stepper 4-fasa melalui driver 
 
 > **Catatan:** Skema ini menggunakan driver stepper 4-fasa (mis. ULN2003 untuk motor stepper 28BYJ-48), sesuai kode program yang mengatur `stepSequence` 4-bit secara langsung — berbeda dari driver STEP/DIR (A4988/DRV8825) yang dibahas pada **C.7 Motor Stepper**. Jika menggunakan driver STEP/DIR, sesuaikan fungsi `setStep()`/`stopMotor()` menjadi pulsa pada pin STEP dan level pada pin DIR.
 
-<img src="img/wiring_motor_stepper_percobaan4.png" alt="Gambar 11: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal" width="70%">
+<img src="img/wiring_motor_stepper_percobaan4.png" alt="Gambar 12: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal" width="70%">
 
-*Gambar 11: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal*
+*Gambar 12: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal*
 
 **`platformio.ini`:**
 ```ini
@@ -659,9 +659,9 @@ Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan
 | Servo motor — VCC (kabel Merah) | Pin 5V ESP32 | Daya servo diambil dari pin 5V board (**jangan** gunakan pin 3.3V) |
 | Servo motor — GND (kabel Cokelat/Hitam) | GND ESP32 | — |
 
-<img src="img/wiring_servo.png" alt="Gambar 12: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)" width="60%">
+<img src="img/wiring_servo.png" alt="Gambar 13: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)" width="60%">
 
-*Gambar 12: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)*
+*Gambar 13: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)*
 
 **`platformio.ini`:**
 ```ini
@@ -764,9 +764,9 @@ Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, s
 | ESC — Power input (+ / −) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
 | ESC — 3 kabel fasa output | 3 kabel Motor Brushless (BLDC) | Menukar 2 dari 3 kabel fasa akan membalik arah putar motor |
 
-<img src="img/wiring_esc_bldc.png" alt="Gambar 13: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_esc_bldc.png" alt="Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 13: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
