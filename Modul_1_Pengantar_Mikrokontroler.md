@@ -1,6 +1,11 @@
 # MODUL 1
 # PENGANTAR MIKROKONTROLER & DASAR PEMROGRAMAN
 
+**Mata Kuliah:** Praktikum Mikrokontroler & Embedded System
+**Alokasi Waktu:** 5 x Percobaan (@ 100–150 menit)
+**Platform:** STM32 Blackpill (Framework Arduino) & ESP32 (Framework ESP-IDF & Arduino)
+**IDE:** VSCode + PlatformIO
+
 ---
 
 ## Daftar Isi
@@ -126,9 +131,9 @@ ADC mengubah tegangan analog pada suatu pin menjadi nilai digital yang dapat dio
 
 > **Catatan:** Percobaan ADC pada modul ini hanya memperkenalkan *cara mengakses* GPIO sebagai input analog menggunakan satu sensor sederhana (LDR). Pembahasan lebih lanjut mengenai klasifikasi sensor berdasarkan basis pengukurannya (resistif, kapasitif, induktif, dan basis lain) beserta ragam sensor/aktuator lain akan dibahas lebih mendalam pada **Modul 2**.
 
-<img src="img/modul_ldr_pembagi_tegangan.png" alt="Gambar 5: Foto komponen LDR (Light Dependent Resistor) — rangkai sebagai pembagi tegangan bersama resistor 10kΩ sesuai tabel Skema Rangkaian di atas" width="45%">
+<img src="img/modul_ldr_pembagi_tegangan.png" alt="Gambar 5: Foto komponen LDR (Light Dependent Resistor) — dirangkai sebagai pembagi tegangan bersama resistor 10kΩ pada Percobaan 5" width="45%">
 
-*Gambar 5: Foto komponen LDR (Light Dependent Resistor) — rangkai sebagai pembagi tegangan bersama resistor 10kΩ sesuai tabel Skema Rangkaian di atas*
+*Gambar 5: Foto komponen LDR (Light Dependent Resistor) — dirangkai sebagai pembagi tegangan bersama resistor 10kΩ pada Percobaan 5*
 
 ---
 
@@ -147,7 +152,7 @@ Sebelum memulai kegiatan praktikum:
 ### PERCOBAAN 1 — Pengenalan STM32 Blackpill (Blink)
 
 **Tujuan:**
-Mahasiswa mampu memahami arsitektur board STM Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework Arduino).
+Mahasiswa mampu memahami arsitektur board STM32 Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework Arduino).
 
 > Percobaan ini tidak memerlukan rangkaian tambahan — cukup gunakan LED onboard (PC13) dan koneksi ST-Link.
 
@@ -289,7 +294,7 @@ framework = arduino
 
 **Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
 
-Pada pushbutton tactile, gunakan pasangan kaki yang benar seperti pada Gambar 8.
+Pada pushbutton tactile, gunakan pasangan kaki yang benar seperti pada Gambar 8 dan Gambar 9.
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
@@ -300,13 +305,19 @@ Pada pushbutton tactile, gunakan pasangan kaki yang benar seperti pada Gambar 8.
 
 *Gambar 7: Diagram wiring dua pushbutton tanpa resistor eksternal (memanfaatkan pull-up/pull-down internal ESP32) ke GPIO 32 dan 33*
 
-![Gambar 8: Orientasi kaki pushbutton tactile empat kaki. Tiap pasangan kaki pada sisi yang sama terhubung; kontak antarsisi tersambung saat tombol ditekan.](img/orientasi_kaki_pushbutton.svg)
+<img src="img/orientasi_kaki_pushbutton.png" alt="Gambar 8: Orientasi kaki pushbutton tactile empat kaki. Tiap pasangan kaki pada sisi yang sama terhubung; kontak antarsisi tersambung saat tombol ditekan." width="55%">
+
+*Gambar 8: Orientasi kaki pushbutton tactile empat kaki. Tiap pasangan kaki pada sisi yang sama terhubung; kontak antarsisi tersambung saat tombol ditekan.*
+
+<img src="img/modul_pushbutton.png" alt="Gambar 9: Layout modul pushbutton yang digunakan pada praktikum, memperlihatkan jalur kaki tombol ke pin header" width="45%">
+
+*Gambar 9: Layout modul pushbutton yang digunakan pada praktikum, memperlihatkan jalur kaki tombol ke pin header*
 
 **Langkah Kerja:**
 1. Ganti isi `platformio.ini` kembali ke konfigurasi Arduino di atas. Hapus `src/main.c`, lalu buat lagi file `src/main.cpp`
 2. Pasang dua tombol di GPIO 32 dan 33 lengkap dengan resistornya, sesuai Skema Bagian A
 3. Tulis **Kode Program A (Eksternal)** di bawah pada `src/main.cpp`, klik Build dan Upload, lalu coba tekan kedua tombol dan catat hasilnya
-4. Lepas kedua resistor sesuai Skema Bagian B (Gambar 7), tombol tetap terpasang. Lihat Gambar 8 untuk memastikan pasangan kaki tombol yang benar
+4. Lepas kedua resistor sesuai Skema Bagian B (Gambar 7), tombol tetap terpasang. Lihat Gambar 8 dan Gambar 9 untuk memastikan pasangan kaki tombol yang benar
 5. Ganti isi `src/main.cpp` dengan **Kode Program B (Internal)** di bawah, klik Build dan Upload, lalu coba tombol yang sama dan catat hasilnya
 6. Bandingkan hasil A dan B. Seharusnya sama: pull-up bernilai HIGH saat tidak ditekan dan LOW saat ditekan, pull-down kebalikannya
 7. Jika hasilnya terbalik atau berbeda, periksa apakah kedua resistor sudah benar-benar dilepas
@@ -380,9 +391,9 @@ Mahasiswa mampu mengidentifikasi permasalahan bouncing pada tombol mekanik dan m
 |---|---|---|
 | Pushbutton (tactile) | GPIO 25 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
 
-<img src="img/skematik_debounce_percobaan.png" alt="Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal" width="60%">
+<img src="img/skematik_debounce_percobaan.png" alt="Gambar 10: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal" width="60%">
 
-*Gambar 8: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal*
+*Gambar 10: Diagram wiring pushbutton pada GPIO 25 ESP32, menggunakan pull-up internal*
 
 **`platformio.ini`:**
 ```ini
@@ -478,7 +489,11 @@ Mahasiswa mampu memahami ADC sebagai mode akses GPIO ketiga (analog input) — m
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| LDR (pembagi tegangan dengan resistor 10kΩ) | GPIO 34 | Titik tengah pembagi tegangan ke ADC |
+| LDR (pembagi tegangan dengan resistor 10kΩ) | GPIO 34 | Satu kaki LDR ke 3.3V, kaki lain ke GPIO 34 **dan** ke GND melalui resistor 10kΩ (titik tengah pembagi tegangan ke ADC) |
+
+<img src="img/skematik_pembagi_tegangan_ldr.png" alt="Gambar 11: Skema rangkaian pembagi tegangan LDR pada Percobaan 5 (Vin = 3.3V, R = LDR, Vo ke GPIO 34, dan R1 = resistor 10kΩ ke GND)" width="30%">
+
+*Gambar 11: Skema rangkaian pembagi tegangan LDR pada Percobaan 5 ($V_{\text{in}} = 3.3\text{V}$, $R = \text{LDR}$, $V_o$ ke GPIO 34, dan $R_1 = \text{resistor } 10\text{k}\Omega$ ke GND)*
 
 **`platformio.ini`:**
 ```ini
@@ -530,7 +545,7 @@ void loop() {
 
 Buatlah simulasi untuk Matrix Pushbutton 3x3 yang mengendalikan Matrix LED 3x3, dimana tombol pada posisi (baris, kolom) tertentu menyalakan LED pada posisi yang sama — mis. tombol baris 1 kolom 1 menyalakan LED baris 1 kolom 1. Program **wajib menerapkan debouncing** pada setiap tombol (mengacu pada Percobaan 4), sehingga LED hanya berubah status setelah pembacaan tombol benar-benar stabil, bukan langsung mengikuti setiap perubahan sinyal mentah yang masih mungkin bouncing.
 
-- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi (rekomendasi) atau Cirkit.
+- Kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi (rekomendasi) atau Cirkit.
 
 **Pertanyaan Analisis:**
 1. Analisis mengapa debouncing tetap diperlukan pada rangkaian matrix pushbutton ini, walaupun pada satu waktu hanya satu tombol yang biasanya ditekan — kaitkan dengan penyebab bouncing pada C.5 Debouncing

@@ -129,8 +129,8 @@ Mahasiswa mampu membuktikan bahwa external interrupt tetap dapat berjalan meskip
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| LED (+resistor 220Ω) | GPIO 2 | Sebagai indikator visual sistem berjalan normal (akan dipakai kembali pada Percobaan 3 — Timer Interrupt) |
-| Pushbutton "Darurat" | GPIO 27 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `FALLING`) |
+| LED (+resistor 220Ω) | GPIO 2 | Anoda ke GPIO 2, katoda ke GND melalui resistor 220Ω (sebagai indikator visual sistem berjalan normal, dipakai kembali pada Percobaan 3) |
+| Pushbutton "Darurat" | GPIO 27 | Satu kaki ke GPIO 27, kaki lain ke GND; gunakan `INPUT_PULLUP`, dipasang ke interrupt (trigger `FALLING`) |
 
 **`platformio.ini`:**
 ```ini
@@ -217,10 +217,11 @@ Mahasiswa mampu mengimplementasikan external interrupt untuk melakukan decoding 
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Encoder : Channel A (C1) | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) : kabel **Kuning** |
-| Encoder : Channel B (C2) | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah : kabel **Hijau** |
-| Encoder : VCC | 3.3V–5V (sesuai modul) | kabel **Biru** |
-| Encoder : GND | GND | kabel **Hitam** |
+| Encoder — Channel A (C1, kabel Kuning) | GPIO 32 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `RISING`) |
+| Encoder — Channel B (C2, kabel Hijau) | GPIO 33 | `INPUT_PULLUP`, dibaca di dalam ISR untuk menentukan arah |
+| Encoder — VCC (kabel Biru) | 3.3V–5V (sesuai modul) | Suplai daya sensor encoder |
+| Encoder — GND (kabel Hitam) | GND | Referensi ground bersama |
+| Motor DC — M1 (Merah) & M2 (Putih) | **Tidak dihubungkan** | Poros motor diputar manual dengan tangan pada percobaan ini |
 
 <img src="img/wiring_encoder_esp32.png" alt="Gambar 5: Wiring modul encoder quadrature (Channel A/kuning, Channel B/hijau, VCC/biru, GND/hitam) ke ESP32" width="60%">
 
@@ -235,14 +236,11 @@ framework = arduino
 ```
 
 **Langkah Kerja:**
-1. Pasang encoder sesuai skema. Kabel motor tidak dipakai di percobaan ini
-2. Buat interrupt pada Channel A (saat sinyal naik, `RISING`) yang membaca Channel B untuk menentukan arah putar
-3. Lindungi `encoderCount` dengan `portMUX_TYPE` karena nilainya diubah oleh interrupt dan dibaca oleh `loop()`
-4. Tampilkan jumlah pulsa dan arah tiap 100 ms memakai `millis()` (tanpa `delay()`)
-5. Putar poros ke dua arah dan lihat jumlah pulsa dan arahnya di Serial Monitor
-6. Putar poros pelan lalu cepat, lalu analisis hubungan kecepatan putar dengan nilai `Delta`
-7. Tukar kabel Channel A dan B tanpa mengubah kode, lalu lihat arah yang terbaca
-8. Analisis mengapa menukar kabel itu membalik arah yang terbaca
+1. Pasang encoder sesuai skema (kabel daya motor tidak dipakai pada percobaan ini)
+2. Upload kode di bawah, lalu buka Serial Monitor
+3. Putar poros dengan tangan ke dua arah (searah dan berlawanan jarum jam), lalu amati perubahan `Total Pulsa` dan `Arah`
+4. Putar poros secara pelan lalu cepat, dan analisis hubungan kecepatan putar dengan nilai `Delta`
+5. Tukar kabel Channel A dan Channel B tanpa mengubah kode, lalu analisis mengapa arah yang terbaca menjadi terbalik
 
 **Kode Program (Decoding Quadrature Encoder via External Interrupt):**
 ```cpp
@@ -301,7 +299,16 @@ void loop()
         currentCount = encoderCount;
         portEXIT_CRITICAL(&encoderMux);
 
-        int32_t deltaCount = currentCount - previousCount;
+        int32_t deltaCount;
+        if (abs(currentCount - previousCount) > 600) // filter noise
+        {
+            deltaCount = 0;
+        }
+        else
+        {
+            deltaCount = currentCount - previousCount;
+        }
+
         previousCount = currentCount;
 
         Serial.printf("Total Pulsa: %ld | Delta: %ld | Arah: %s\n",
@@ -344,12 +351,9 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Pasang LED sesuai skema
-2. Upload kode di bawah. Timer di dalam chip sudah diatur untuk memicu interrupt setiap 500 ms
-3. Perhatikan polanya: interrupt hanya mengubah satu penanda (`volatile bool`), sedangkan LED dinyalakan dan dimatikan di `loop()`
-4. Lihat LED berkedip tiap 500 ms dan Serial Monitor mencetak pesan setiap interrupt terjadi
-5. Hapus tanda `//` pada `// Serial.println("loop jalan terus");`, upload ulang, lalu lihat kedipan LED tetap stabil tiap 500 ms
-6. Ubah nilai alarm pada `timerAlarmWrite(timer, 500000, true)` menjadi `100000`, lalu `1000000`. Lihat kecepatan kedip di tiap nilai
-7. Catat hubungan antara nilai alarm dan lama kedipan yang terlihat
+2. Upload kode di bawah, lalu amati LED berkedip tiap 500 ms dan pesan yang tercetak di Serial Monitor setiap interrupt terpicu
+3. Hapus tanda `//` pada `// Serial.println("loop jalan terus");`, upload ulang, dan amati bahwa kedipan LED tetap stabil tiap 500 ms meskipun `loop()` terus mencetak pesan
+4. Ubah nilai alarm pada `timerAlarmWrite(timer, 500000, true)` menjadi `100000`, lalu `1000000`. Upload ulang untuk tiap nilai dan analisis hubungan nilai alarm dengan kecepatan kedip LED
 
 **Kode Program (Timer Interrupt — Toggle LED):**
 ```cpp
@@ -387,7 +391,7 @@ void loop()
         Serial.println("Timer interrupt terpicu");
     }
 
-    // Langkah 5: uncomment baris berikut, lalu amati kedip LED tetap stabil 500 ms
+    // Langkah 3: uncomment baris berikut, lalu amati kedip LED tetap stabil 500 ms
     // Serial.println("loop jalan terus");
 }
 ```
@@ -486,13 +490,10 @@ framework = arduino
 
 **Langkah Kerja:**
 1. Pasang LED (GPIO 2) dan tombol (GPIO 27) sesuai skema
-2. Upload kode di bawah. Tiga task dibuat di `setup()`, sedangkan `loop()` dibiarkan kosong
-3. Lihat LED berkedip tiap 500 ms tanpa berhenti sambil menekan tombol beberapa kali. Kedua hal ini berjalan bersamaan tanpa saling menunggu
-4. Perhatikan aliran datanya: `taskButton` mengirim data lewat `xQueueSend()`, lalu `taskDisplay` menerimanya lewat `xQueueReceive()` dan mencetaknya
-5. Naikkan prioritas `taskButton` supaya lebih tinggi dari `taskBlink` (misalnya `2` dan `1`), lalu lihat apakah kedipan LED terpengaruh
-6. Analisis bagaimana FreeRTOS mengatur task yang punya prioritas berbeda pada core yang sama
-7. Pindahkan `taskButton` ke core yang sama dengan `taskBlink`, lalu lihat apakah tombol masih responsif
-8. Diskusikan untung rugi memakai satu core dibanding dua core untuk banyak task
+2. Upload kode di bawah, lalu tekan tombol beberapa kali sambil mengamati LED tetap berkedip tiap 500 ms tanpa terhenti dan jumlah tekanan tampil di Serial Monitor
+3. Pindahkan `taskButton` ke core yang sama dengan `taskBlink` (ubah argumen terakhir dari `0` menjadi `1`), upload ulang, lalu amati apakah tombol dan LED masih responsif
+4. Naikkan prioritas `taskButton` menjadi `2` (lebih tinggi dari `taskBlink` yang bernilai `1`), upload ulang, lalu amati apakah kedipan LED terpengaruh
+5. Analisis bagaimana FreeRTOS mengatur task dengan prioritas berbeda di core yang sama (kaitkan dengan peran `vTaskDelay()`), serta bandingkan untung rugi memakai satu core vs dua core
 
 **Kode Program (Multitasking FreeRTOS — 3 Task + Queue):**
 ```cpp
@@ -553,7 +554,7 @@ void setup()
     pressQueue = xQueueCreate(10, sizeof(int));
 
     xTaskCreatePinnedToCore(taskBlink,   "Blink",   2048, NULL, 1, NULL, 1);
-    xTaskCreatePinnedToCore(taskButton,  "Button",  2048, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(taskButton,  "Button",  2048, NULL, 1, NULL, 0);
     xTaskCreatePinnedToCore(taskDisplay, "Display", 2048, NULL, 1, NULL, 0);
 }
 

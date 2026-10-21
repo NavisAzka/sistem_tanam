@@ -235,11 +235,12 @@ Mahasiswa mampu mengimplementasikan interfacing lebih dari satu modul I2C nyata 
 |---|---|---|
 | OLED (SSD1306/SH1106) — SDA | GPIO 21 | Bus I2C default — **dibagi bersama** dengan MPU6500 |
 | OLED (SSD1306/SH1106) — SCL | GPIO 22 | Bus I2C default — **dibagi bersama** dengan MPU6500 |
-| OLED (SSD1306/SH1106) — VCC/GND | 3.3V, GND | Periksa datasheet modul (umumnya toleran 3.3–5V) |
+| OLED (SSD1306/SH1106) — VCC / GND | 3.3V / GND | Periksa datasheet modul (umumnya toleran 3.3–5V) |
 | MPU6500 — SDA (pin SDI pada mode SPI) | GPIO 21 | Bus I2C default — pin **sama persis** dengan OLED |
 | MPU6500 — SCL (pin SCLK pada mode SPI) | GPIO 22 | Bus I2C default — pin **sama persis** dengan OLED |
+| MPU6500 — AD0 (pin SDO pada mode SPI) | GND | Mengunci alamat I2C MPU6500 pada `0x68` (jika ke 3.3V menjadi `0x69`) |
 | MPU6500 — CS/NCS | **3.3V (ditarik tetap, bukan di-toggle)** | **Wajib** — inilah yang memilih mode I2C, berbeda dari Percobaan 3–4 di mana CS di-toggle sebagai chip select SPI |
-| MPU6500 — VCC/GND | 3.3V, GND | MPU6500 umumnya hanya toleran 3.3V |
+| MPU6500 — VCC / GND | 3.3V / GND | MPU6500 umumnya hanya toleran 3.3V |
 
 > Kedua perangkat disambungkan ke **pin SDA/SCL yang sama** — ini adalah inti dari percobaan ini: membuktikan bahwa I2C dapat melayani banyak perangkat pada satu bus fisik, selama alamatnya berbeda (OLED = `0x3C`, MPU6500 = `0x68`). Perhatikan juga bahwa modul MPU6500 ini adalah **modul yang sama** yang nanti dipakai ulang pada Percobaan 3–4 melalui SPI — cukup pindahkan wiring CS dari "ditarik ke 3.3V" menjadi "terhubung ke GPIO CS ESP32" saat berpindah Percobaan.
 
@@ -697,6 +698,7 @@ framework = arduino
 2. Tulis kode di bawah pada `src/main.cpp`, lalu klik **Build** dan **Upload**. Pastikan muncul `WHO_AM_I: 0x70` dan tulisan "MPU6500 SPI DMA ready!"
 3. Catat **Waktu baca 14 byte (DMA)** (dalam µs) di Serial Monitor. Ambil rata-ratanya dari beberapa pembacaan
 4. Bandingkan dengan **Waktu baca 14 byte (SPI.transfer)** yang sudah Anda catat di Percobaan 3
+5. Analisis mengapa untuk transfer kecil (14 byte pada clock SPI 1 MHz) selisih waktu total (`elapsed`) antara DMA dan `SPI.transfer()` bisa terlihat tipis (atau bahkan sedikit dipengaruhi overhead antrean transaksi FreeRTOS), serta jelaskan keunggulan utama DMA yang sebenarnya (membebaskan CPU selama transfer berlangsung dan efisiensi pada transfer blok data berukuran besar)
 
 **Kode Program (Pembacaan Burst MPU6500 via SPI Master + DMA):**
 ```cpp
@@ -911,7 +913,7 @@ void loop() {
 
     Serial.printf("Waktu baca 14 byte (DMA): %lu us\n", elapsed);
 
-    delay(10);
+    delay(100);
 }
 ```
 
@@ -1077,7 +1079,7 @@ void loop() {
 
 Sebuah rancangan monitoring getaran 2 titik mesin butuh 2 sensor IMU dan 2 layar OLED sekaligus (4 komponen), namun pada ESP32 yang dipakai hanya tersisa 3 GPIO bebas. Tentukan cara menyambungkan seluruh komponen tanpa menambah pin, lalu buktikan lewat simulasi — tiap IMU wajib tampil di OLED pasangannya sendiri.
 
-- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi.
+- Kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi.
 
 
 **Pertanyaan Analisis:**

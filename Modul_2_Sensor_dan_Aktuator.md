@@ -69,7 +69,7 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 | 11 | Motor DC + driver | Motor: JGA25-370 12V (1000RPM), kabel M1 (Merah, +) / M2 (Putih, −); Driver: L298N | 1 |
 | 12 | Motor stepper | 28BYJ-48 (unipolar, 5V) — sesuai kode Percobaan 4 | 1 |
 | 13 | Driver motor stepper | ULN2003 (modul driver 4-fasa bawaan 28BYJ-48) — sesuai kode Percobaan 4 | 1 |
-| 14 | Servo motor | SG90 | 1 |
+| 14 | Servo motor | SG90 / MG90S | 1 |
 | 15 | Catu daya eksternal | 12V untuk motor DC dan sesuai kebutuhan stepper (jangan gunakan pin 3.3V ESP32 untuk menyuplai motor) | sesuai kebutuhan |
 | 16 | ESC (Electronic Speed Controller) | ESC brushless 20A (RC hobby) | 1 |
 | 17 | Motor brushless (BLDC) | Motor brushless RC 2200KV, **tanpa propeller/baling-baling terpasang** | 1 |
@@ -130,11 +130,13 @@ Motor servo juga dikendalikan menggunakan sinyal PWM, namun dengan prinsip yang 
 *Gambar 6: Diagram lebar pulsa sinyal servo (1ms–2ms dalam periode 20ms) beserta sudut yang dihasilkan (0°–180°)*
 
 ### C.7 Motor Stepper
-Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **langkah-langkah diskret (step)** sesuai jumlah pulsa yang diberikan — misalnya 1.8° per step pada motor stepper standar (200 step per putaran penuh). Motor stepper dikendalikan melalui **driver motor stepper** (mis. A4988, DRV8825), yang menerima sinyal:
-- **STEP:** setiap pulsa (transisi LOW→HIGH) menyebabkan motor berputar satu step
-- **DIR:** menentukan arah putaran motor
-- **EN (Enable):** mengaktifkan/menonaktifkan driver — saat dinonaktifkan, motor dapat diputar bebas secara manual
-- **RESET/SLEEP:** beberapa driver memiliki pin ini untuk mereset atau menonaktifkan mode tidur driver, umumnya perlu ditarik HIGH agar driver aktif normal
+Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **langkah-langkah diskret (step)** sesuai urutan pengaktifan kumparan (koil) di dalamnya. Berdasarkan cara pengendaliannya dari mikrokontroler, terdapat dua jenis modul driver yang umum dijumpai:
+1. **Driver 4-Fasa (mis. ULN2003 untuk motor unipolar 28BYJ-48):** Mikrokontroler mengatur langsung nyala-mati keempat koil (`IN1`–`IN4`) secara berurutan (mis. pola *half-step* 8 langkah). Pada motor 28BYJ-48 yang dilengkapi *gearbox* reduksi internal, satu putaran penuh poros luar membutuhkan sekitar **4096 step**.
+2. **Driver STEP/DIR (mis. A4988, DRV8825 untuk motor bipolar NEMA17):** Urutan pengaktifan koil sudah ditangani secara otomatis oleh IC driver, sehingga mikrokontroler cukup mengirimkan sinyal:
+   - **STEP:** setiap pulsa (transisi LOW→HIGH) menyebabkan motor berputar satu step (mis. 1.8° per step atau 200 step per putaran penuh)
+   - **DIR:** menentukan arah putaran motor (CW atau CCW)
+   - **EN (Enable):** mengaktifkan/menonaktifkan arus penahan pada koil — saat dinonaktifkan, motor tidak menahan torsi dan dapat diputar bebas secara manual (*freewheel*)
+   - **RESET/SLEEP:** beberapa driver memiliki pin ini untuk mereset atau menonaktifkan mode tidur driver, umumnya perlu ditarik HIGH agar driver aktif normal
 
 <img src="img/wiring_motor_stepper.png" alt="Gambar 7: Contoh wiring motor stepper NEMA17 ke driver STEP/DIR (mis. A4988/DRV8825) dan mikrokontroler (board pada gambar ilustratif, prinsip pin STEP/DIR/EN sama pada ESP32)" width="70%">
 
@@ -143,7 +145,7 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 ### C.8 ESC (Electronic Speed Controller) dan Motor Brushless
 Motor **brushless (BLDC — Brushless DC Motor)** tidak dapat dikendalikan langsung oleh driver H-bridge sederhana seperti motor DC biasa, karena memerlukan **komutasi elektronik** — pengaturan urutan pemberian arus ke tiga lilitan stator secara presisi agar rotor berputar. Tugas ini dilakukan oleh **ESC (Electronic Speed Controller)**, rangkaian elektronik yang menerima sinyal kontrol sederhana dari mikrokontroler dan menerjemahkannya menjadi pola komutasi 3-fasa untuk motor.
 
-Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz (periode 20ms), dengan lebar pulsa menentukan besar throttle — umumnya **1000µs merepresentasikan throttle minimum** (motor berhenti/idle) dan **2000µs merepresentasikan throttle maksimum**. Karena kesamaan format sinyal ini, ESC dapat dikendalikan menggunakan library yang sama dengan motor servo (mis. **ESP32Servo**), cukup menggunakan fungsi `writeMicroseconds()` untuk mengatur lebar pulsa secara langsung (dalam mikrodetik), alih-alih `write(angle)` yang bekerja dalam satuan derajat.
+Sinyal kontrol ESC **identik dengan sinyal kontrol servo**: pulsa periodik 50Hz (periode 20ms), dengan lebar pulsa menentukan besar throttle — umumnya **1000µs merepresentasikan throttle minimum** (motor berhenti/idle) dan **2000µs merepresentasikan throttle maksimum**. Karena kesamaan format sinyal ini, ESC dapat dikendalikan baik menggunakan library servo (mis. **ESP32Servo** melalui fungsi `writeMicroseconds()`), maupun **dibangkitkan langsung melalui peripheral PWM hardware (`LEDC`)** dengan menghitung nilai *duty cycle* yang setara dengan lebar pulsa 1000–2000µs (pendekatan yang digunakan pada **Percobaan 6**).
 
 **Arming ESC:** hampir seluruh ESC mengharuskan proses **arming** sebelum dapat menjalankan motor — yaitu mengirim sinyal throttle minimum (1000µs) secara stabil selama beberapa detik setelah ESC dinyalakan. Ini adalah mekanisme keamanan: ESC akan menolak menjalankan motor pada throttle sembarang saat pertama kali menyala, untuk mencegah motor tiba-tiba berputar kencang akibat sinyal acak/tidak valid (mis. saat mikrokontroler baru boot). Banyak ESC memberikan bunyi *beep* khas sebagai indikasi proses arming berhasil.
 
@@ -194,10 +196,11 @@ Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif melal
 | Joystick KY-023 — VRx | GPIO 34 | Output analog sumbu X (ADC1) |
 | Joystick KY-023 — VRy | GPIO 35 | Output analog sumbu Y (ADC1) |
 | Joystick KY-023 — SW | GPIO 27 | Tombol tekan, aktif LOW (gunakan `INPUT_PULLUP`) |
-| Joystick KY-023 — VCC/GND | 3.3V, GND | Sesuai datasheet modul |
+| Joystick KY-023 — VCC / GND | 3.3V / GND | Sesuai datasheet modul |
 | Modul TTP223 — OUT | GPIO 4 | Output digital, umumnya aktif HIGH saat pad disentuh |
-| Modul TTP223 — VCC/GND | 3.3V, GND | Sesuai datasheet modul |
-| Hall effect sensor module | GPIO 26 | Output digital |
+| Modul TTP223 — VCC / GND | 3.3V / GND | Sesuai datasheet modul |
+| Hall effect sensor — DO/OUT | GPIO 26 | Output digital (umumnya aktif LOW saat magnet terdeteksi) |
+| Hall effect sensor — VCC / GND | 3.3V / GND | Sesuai datasheet modul |
 
 > **Catatan:** Pin **GPIO 34, 35, 27** yang digunakan joystick pada Percobaan ini sengaja dipertahankan **konsisten** di Percobaan 3 dan 6 modul ini, karena joystick akan dipakai berulang sebagai input kontrol aktuator pada Percobaan-Percobaan tersebut.
 
@@ -278,11 +281,13 @@ Mahasiswa mampu mengimplementasikan pembacaan sensor ultrasonik (basis akustik) 
 |---|---|---|
 | HC-SR04 — Trig | GPIO 5 | Output dari ESP32 ke sensor |
 | HC-SR04 — Echo | GPIO 18 | Input ke ESP32; gunakan pembagi tegangan bila level Echo 5V (contoh: 1kΩ seri dari Echo ke GPIO, 2kΩ dari GPIO ke GND) |
-| Sensor IR obstacle | GPIO 19 | Output digital |
+| HC-SR04 — VCC / GND | 5V / GND | Kebanyakan modul HC-SR04 membutuhkan suplai 5V |
+| Sensor IR obstacle — OUT | GPIO 19 | Output digital (umumnya aktif LOW saat objek terdeteksi) |
+| Sensor IR obstacle — VCC / GND | 3.3V / GND | Sesuai datasheet modul |
 
-<img src="img/wiring_ultrasonik_ir.png" alt="Gambar 10: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32" width="60%">
+<img src="img/wiring_ultrasonik_ir.png" alt="Gambar 9: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32" width="60%">
 
-*Gambar 10: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32*
+*Gambar 9: Diagram wiring sensor ultrasonik HC-SR04 dan sensor IR obstacle ke ESP32*
 
 **`platformio.ini`:**
 ```ini
@@ -370,19 +375,22 @@ Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC me
 
 **Skema Rangkaian:**
 
-| Komponen | Pin ESP32 | Keterangan |
+| Komponen | Pin ESP32 / Tujuan | Keterangan |
 |---|---|---|
 | Joystick KY-023 — VRx | GPIO 34 | Kecepatan & arah (sama seperti Percobaan 1) |
-| Joystick KY-023 — SW | GPIO 27 | Stop darurat, aktif LOW |
-| Driver motor (ENA) | GPIO 25 | Sinyal PWM kecepatan |
-| Driver motor (IN1) | GPIO 26 | Arah putar motor |
-| Driver motor (IN2) | GPIO 33 | Arah putar motor |
+| Joystick KY-023 — SW | GPIO 27 | Stop darurat, aktif LOW (`INPUT_PULLUP`) |
+| Joystick KY-023 — VCC / GND | 3.3V / GND | Suplai daya modul joystick |
+| Driver motor L298N — ENA | GPIO 25 | Sinyal PWM kecepatan (lepas jumper ENA pada modul L298N) |
+| Driver motor L298N — IN1 | GPIO 26 | Arah putar motor |
+| Driver motor L298N — IN2 | GPIO 33 | Arah putar motor |
+| Driver motor L298N — +12V | (+) Catu daya eksternal 12V | **Jangan** sambungkan 12V ke pin ESP32 |
+| Driver motor L298N — GND | (−) Catu daya 12V **dan** GND ESP32 | Wajib disatukan (*common ground*) |
 | Motor DC — M1 (kabel Merah, +) | Driver OUT1 | Menukar M1/M2 membalik arah putar default motor |
 | Motor DC — M2 (kabel Putih, −) | Driver OUT2 | — |
 
-<img src="img/wiring_motor_dc_l298n.png" alt="Gambar 11: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_motor_dc_l298n.png" alt="Gambar 10: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 11: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 10: Contoh wiring motor DC via driver L298N dikendalikan joystick (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
@@ -479,11 +487,11 @@ void loop() {
     motorStop();
     Serial.println("Motor: idle (joystick netral)");
   } else if (deviation > 0) {
-    uint8_t speed = map(deviation, JOY_DEADZONE, JOY_CENTER, 0, 255);
+    uint8_t speed = constrain(map(deviation, JOY_DEADZONE, JOY_CENTER, 0, 255), 0, 255);
     motorForward(speed);
     Serial.printf("Motor: MAJU, PWM = %d\n", speed);
   } else {
-    uint8_t speed = map(-deviation, JOY_DEADZONE, JOY_CENTER, 0, 255);
+    uint8_t speed = constrain(map(-deviation, JOY_DEADZONE, JOY_CENTER, 0, 255), 0, 255);
     motorBackward(speed);
     Serial.printf("Motor: MUNDUR, PWM = %d\n", speed);
   }
@@ -522,9 +530,9 @@ Mahasiswa mampu mengimplementasikan kontrol motor stepper 4-fasa melalui driver 
 
 > **Catatan:** Skema ini menggunakan driver stepper 4-fasa (mis. ULN2003 untuk motor stepper 28BYJ-48), sesuai kode program yang mengatur `stepSequence` 4-bit secara langsung — berbeda dari driver STEP/DIR (A4988/DRV8825) yang dibahas pada **C.7 Motor Stepper**. Jika menggunakan driver STEP/DIR, sesuaikan fungsi `setStep()`/`stopMotor()` menjadi pulsa pada pin STEP dan level pada pin DIR.
 
-<img src="img/wiring_motor_stepper_percobaan4.png" alt="Gambar 12: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal" width="70%">
+<img src="img/wiring_motor_stepper_percobaan4.png" alt="Gambar 11: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal" width="70%">
 
-*Gambar 12: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal*
+*Gambar 11: Wiring motor stepper 28BYJ-48 via driver ULN2003 ke ESP32 (IN1–IN4 ke GPIO 16, 17, 18, 19) dengan catu daya eksternal*
 
 **`platformio.ini`:**
 ```ini
@@ -563,8 +571,8 @@ const int stepSequence[8][4] = {
     {0, 1, 1, 0},
     {0, 0, 1, 0},
     {0, 0, 1, 1},
-    {0, 0, 1, 0},
-    {0, 0, 0, 1}
+    {0, 0, 0, 1},
+    {1, 0, 0, 1}
 };
 
 //==================== KONFIGURASI ====================
@@ -647,13 +655,13 @@ Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Servo motor (sinyal) | GPIO 13 | Sinyal PWM servo (50Hz) |
-| Servo motor (VCC) | Pin 5V ESP32 | Daya servo diambil dari pin 5V board (bukan 3.3V) |
-| Servo motor (GND) | GND ESP32 | — |
+| Servo motor — Sinyal (kabel Oranye/Kuning) | GPIO 13 | Sinyal PWM servo (50Hz) |
+| Servo motor — VCC (kabel Merah) | Pin 5V ESP32 | Daya servo diambil dari pin 5V board (**jangan** gunakan pin 3.3V) |
+| Servo motor — GND (kabel Cokelat/Hitam) | GND ESP32 | — |
 
-<img src="img/wiring_servo.png" alt="Gambar 13: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)" width="60%">
+<img src="img/wiring_servo.png" alt="Gambar 12: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)" width="60%">
 
-*Gambar 13: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)*
+*Gambar 12: Wiring motor servo ke ESP32 (sinyal ke GPIO 13, daya servo dan GND ke pin 5V dan GND ESP32)*
 
 **`platformio.ini`:**
 ```ini
@@ -748,14 +756,17 @@ Mahasiswa mampu memahami prinsip kerja ESC sebagai pengendali motor brushless, s
 | Komponen | Pin ESP32 / Sumber | Keterangan |
 |---|---|---|
 | Joystick KY-023 — VRx | GPIO 34 | Besar throttle (setelah arming) |
-| Joystick KY-023 — SW | GPIO 27 | Kill switch (paksa throttle minimum), aktif LOW |
-| ESC — Sinyal (PWM) | GPIO 25 | Sinyal kontrol dari ESP32 ke ESC, via channel LEDC |
-| ESC — GND (sinyal) | GND | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
-| ESC — Power (input daya) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
+| Joystick KY-023 — SW | GPIO 27 | Kill switch (paksa throttle minimum), aktif LOW (`INPUT_PULLUP`) |
+| Joystick KY-023 — VCC / GND | 3.3V / GND | Suplai daya modul joystick |
+| ESC — Sinyal PWM (kabel Putih/Oranye) | GPIO 25 | Sinyal kontrol dari ESP32 ke ESC, via channel LEDC |
+| ESC — BEC 5V (kabel Merah tengah konektor sinyal) | **Tidak dihubungkan** | Biarkan lepas karena ESP32 sudah mendapat daya dari USB (**jangan** hubungkan ke 3.3V ESP32) |
+| ESC — GND sinyal (kabel Hitam/Cokelat) | GND ESP32 | Disatukan dengan GND ESP32 (**common ground** dengan baterai) |
+| ESC — Power input (+ / −) | Baterai LiPo 2S–3S (7.4V–11.1V) | Jalur daya utama motor, **terpisah** dari power ESP32 |
+| ESC — 3 kabel fasa output | 3 kabel Motor Brushless (BLDC) | Menukar 2 dari 3 kabel fasa akan membalik arah putar motor |
 
-<img src="img/wiring_esc_bldc.png" alt="Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
+<img src="img/wiring_esc_bldc.png" alt="Gambar 13: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)" width="60%">
 
-*Gambar 14: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
+*Gambar 13: Contoh wiring ESC, motor brushless (BLDC), baterai LiPo, dan joystick ke ESP32 (nomor GPIO pada gambar ilustratif, ikuti tabel di atas untuk pin yang sesuai kode)*
 
 **`platformio.ini`:**
 ```ini
@@ -853,7 +864,7 @@ void loop() {
 |---|---|
 | `pulseToDuty(pulseUs)` | Mengonversi lebar pulsa (mikrodetik) menjadi nilai duty cycle LEDC 16-bit (0–65535) relatif terhadap periode 20ms (`20000` mikrodetik) — rumus manual yang digantikan abstraksinya oleh `writeMicroseconds()` pada library ESP32Servo |
 | `ledcSetup(ESC_CHANNEL, PWM_FREQ, PWM_RESOLUTION)` | Mengonfigurasi channel LEDC 0 dengan frekuensi 50Hz dan resolusi 16-bit — resolusi tinggi diperlukan agar pemetaan mikrodetik ke duty cycle cukup presisi |
-| `setThrottle(THROTTLE_MIN)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum selama 5 detik sebelum ESC menerima perintah throttle lain, sama seperti prinsip arming pada Percobaan sebelumnya |
+| `setThrottle(THROTTLE_MIN)` diikuti `delay(5000)` | Proses **arming** — menahan sinyal throttle minimum selama 5 detik sebelum ESC menerima perintah throttle lain, sesuai prinsip arming pada Dasar Teori C.8 |
 | `map(vrx, 0, 4095, THROTTLE_MIN, THROTTLE_MAX)` | Memetakan posisi joystick langsung menjadi nilai throttle dalam mikrodetik, tanpa dead zone (seluruh rentang joystick digunakan sebagai skala throttle 0–100%) |
 | `killSwitch` diperiksa sebelum `setThrottle()` | Tombol SW pada joystick berfungsi sebagai kill switch — memaksa throttle minimum kapan pun ditekan, mekanisme keselamatan penting untuk motor bertenaga besar |
 
@@ -870,11 +881,11 @@ Buatlah simulasi di mana **dua potensiometer** mengendalikan servo dan motor ste
 2. **Arah** motor stepper ditentukan oleh **posisi servo dari titik tengah (90°)** — Jika posisi servo berada pada sudut lebih dari 90°, maka motor stepper akan berputar searah jarum jam (CW). Jika posisi servo berada pada sudut kurang dari 90°, maka motor stepper akan berputar berlawanan arah jarum jam (CCW). Jika posisi servo sama dengan 90°, maka motor stepper berhenti total **(Terapkan mekanisme dead zone)**. 
 3. Potensiometer 2 menentukan **kecepatan dasar** (base frequency) putaran stepper.
 
-- kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi (rekomendasi) atau Cirkit.
+- Kumpulkan tangkapan layar dari hasil simulasi beserta source code-nya. Simulasi dapat dilakukan pada website seperti Wokwi (rekomendasi) atau Cirkit.
 
 
 **Pertanyaan Analisis:**
-1. Analisis bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan arah dair posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
+1. Analisis bagaimana rancangan Anda menggabungkan dua nilai (kecepatan dasar dari potensiometer 2, dan arah dari posisi servo) menjadi satu nilai kecepatan akhir stepper — apa fungsi *dead zone* di sekitar 90° pada rancangan ini?
 2. Sinyal kontrol servo dan sinyal STEP pada driver stepper sama-sama berbasis PWM, namun diinterpretasikan berbeda oleh masing-masing aktuator — analisis apa yang direpresentasikan oleh sinyal PWM pada servo dibanding pada stepper.
 3. Analisis mengapa pin EN (enable) pada driver stepper perlu dinonaktifkan (motor dibiarkan bebas berputar/*freewheel*) saat servo berada tepat di titik tengah, bukan hanya menghentikan pulsa STEP saja.
 
